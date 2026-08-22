@@ -12,3 +12,4 @@ dist/
 *.db
 tmp/
 .streamlit/secrets.toml
+mlruns/

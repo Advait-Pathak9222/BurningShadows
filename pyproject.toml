@@ -31,6 +31,9 @@ models = [
   "presidio-analyzer>=2.2,<3",
   "transformers>=4.45,<6",
 ]
+tracking = [
+  "mlflow>=3,<4",
+]
 
 [project.scripts]
 controlplane = "controlplane.cli:main"

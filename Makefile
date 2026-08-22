@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report api console test lint typecheck check clean
+.PHONY: install data demo report api console mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -19,6 +19,9 @@ api:
 
 console: report
 	$(PYTHON) -m streamlit run console/streamlit_app.py
+
+mlflow-ui:
+	$(PYTHON) -m mlflow ui --backend-store-uri ./mlruns
 
 test:
 	$(PYTHON) -m pytest
