@@ -121,9 +121,13 @@ def summarize(rows: list[EvaluationRow], budget_inr: float) -> dict[str, float |
         ),
         "coverage": _rate(len(interventions), len(rows)),
         "abstention_rate": _rate(sum(row.abstained for row in rows), len(rows)),
-        "p99_text_latency_ms": _percentile([row.text_latency_ms for row in rows], 0.99),
-        "p99_effect_latency_ms": _percentile(
-            [row.effect_latency_ms for row in rows if row.effect_count], 0.99
+        # Rounded because these are wall-clock stub timings: sub-0.1ms precision is
+        # run-to-run noise, and it would churn the committed results on every run.
+        "p99_text_latency_ms": round(
+            _percentile([row.text_latency_ms for row in rows], 0.99), 1
+        ),
+        "p99_effect_latency_ms": round(
+            _percentile([row.effect_latency_ms for row in rows if row.effect_count], 0.99), 1
         ),
         "budget_variance": (spend - budget_inr) / budget_inr if budget_inr else 0.0,
         "cost_per_1k_inr": spend * 1000 / len(rows) if rows else 0.0,
