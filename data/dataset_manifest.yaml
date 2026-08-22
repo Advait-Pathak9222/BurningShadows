@@ -1,31 +1,50 @@
-manifest_version: 1
-generated_on: "2026-08-22"
-seed: 20260822
+manifest_version: 2
+generated_on: "2026-08-23"
+seed: 20260823
 generator: controlplane.sim.traffic.generate_corpus
 licence: not-declared
 contains_real_personal_data: false
 files:
   interactions.jsonl:
-    rows: 600
+    rows: 1800
     purpose: complete seeded corpus
   calibration.jsonl:
-    rows: 300
-    purpose: isotonic maps and per-route conformal threshold fitting
+    rows: 900
+    purpose: isotonic fitting and per-route conformal threshold selection, on disjoint folds
   test.jsonl:
-    rows: 300
+    rows: 900
     purpose: held-out baseline and metric evaluation
 partitions:
   routes:
-    support-assistant: 200
-    internal-kb: 200
-    finops-agent: 200
+    support-assistant: 600
+    internal-kb: 600
+    finops-agent: 600
   jurisdictions:
-    eu: 300
-    india: 300
+    eu: 900
+    india: 900
+  evidence_regime:
+    grounded: 1116
+    ungrounded_but_estimable: 322
+    unverifiable: 362
+labels:
+  rows_with_any_harm: 295
+  rows_with_two_or_more_axes: 81
+  hallucination: 133
+  pii_leak: 126
+  bias: 33
+  unsafe_content: 31
+  injection_or_exfil: 53
+  distinct_response_strings: 552
 known_design_choices:
-  - late shifted injection pattern begins in the back third
-  - internal-kb has extra near-miss templates
-  - finops-agent has extra factual-failure templates and financial tool calls
+  - harm prevalence is held near 0.16 so allocation is a search problem, not a coin flip
+  - evidence availability is drawn independently of the label, so an absent source
+    document carries no information about harm (harm rate 0.164 grounded, 0.174 unverifiable)
+  - every harm family emits loud and quiet realisations, so detector recall stays below one
+  - clean decoy families (policy discussion, refusals, permitted PII, format drift) resemble
+    the loud harmful forms, so detector precision stays below one
+  - calibration and test are split i.i.d. within each route to preserve the exchangeability
+    the conformal bound depends on
+  - a novel exfiltration pattern appears only in the back third of the stream
 external_sources_not_vendored:
   - name: LLM-AggreFact
     reason: gated evaluation dataset; do not train or redistribute
