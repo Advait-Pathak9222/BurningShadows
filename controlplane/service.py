@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -126,17 +127,19 @@ class AssessmentEngine:
         return trace
 
     def calibrate(self, interactions: list[Interaction]) -> dict[str, ConformalCalibration]:
-        self.calibrators = self._fit_calibrators(interactions)
+        """Fit the score map and select thresholds on disjoint folds of the calibration split."""
+        fitting, selection = _split_folds(interactions)
+        self.calibrators = self._fit_calibrators(fitting)
         calibrations: dict[str, ConformalCalibration] = {}
         for route in self.conformal_thresholds:
-            route_items = [item for item in interactions if item.route == route]
-            scores = [self.detect(item).harm.maximum() for item in route_items]
-            labels = [item.truth.has_harm() for item in route_items]
+            route_items = [item for item in selection if item.route == route]
+            if not route_items:
+                raise ValueError(f"No selection-fold rows for route {route!r}")
             policy = self.policy_store.resolve(route, route_items[0].jurisdiction)
             calibrations[route] = learn_then_test(
                 route=route,
-                scores=scores,
-                harmed=labels,
+                scores=[self.detect(item).harm.maximum() for item in route_items],
+                harmed=[item.truth.has_harm() for item in route_items],
                 alpha=policy.alpha,
                 delta=policy.delta,
             )
@@ -160,3 +163,22 @@ class AssessmentEngine:
                 for axis in raw[0].values_by_name()
             }
         return fitted
+
+
+def _split_folds(
+    interactions: list[Interaction],
+) -> tuple[list[Interaction], list[Interaction]]:
+    """Learn-Then-Test is only valid when the score map is fixed before the labels are read.
+
+    Fitting the isotonic maps and selecting thresholds on the same rows made the bound
+    optimistic by roughly a factor of nine on finops-agent. The split is keyed off the
+    interaction id so both folds are stable across runs and machines.
+    """
+    fitting: list[Interaction] = []
+    selection: list[Interaction] = []
+    for item in interactions:
+        digest = hashlib.sha256(f"fold:{item.interaction_id}".encode()).digest()
+        # The isotonic map converges on less data than the finite-sample test needs,
+        # so the selection fold gets the larger share.
+        (fitting if digest[0] < 90 else selection).append(item)
+    return fitting, selection
