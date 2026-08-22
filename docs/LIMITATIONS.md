@@ -20,10 +20,10 @@
 ## What the corpus is and is not
 
 The corpus is synthetic and generated compositionally from entity and phrasing pools. It is built to
-avoid a specific failure that the first version had, documented in
-`docs/audit/A-implementation-audit.md`: 600 rows drawn from 10 response templates, with source
-documents attached only to the clean ones, which made harm perfectly predictable from row structure
-and pushed calibrated detector AUC to 1.000 on two of three routes.
+avoid a specific failure the first version had: 600 rows drawn from 10 response templates, with
+source documents attached only to the clean ones. That made harm perfectly predictable from row
+structure and pushed calibrated detector AUC to 1.000 on two of three routes, so the evaluation
+measured the fixture rather than the system.
 
 `tests/test_corpus_integrity.py` now enforces that evidence availability carries no label
 information, that detection is imperfect in both directions, and that the response surface is not a

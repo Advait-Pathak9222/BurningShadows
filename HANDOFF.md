@@ -2,6 +2,9 @@
 
 Shared state between Claude Code and Codex. Read this first. Update it at the end of every session.
 
+Internal working file. **Delete this and `audits/` before submission.** Nothing in `README.md`,
+`docs/` or the code links to either, so both can be removed without leaving dead references.
+
 Last updated: 2026-08-23 by claude-code.
 
 ## Where things stand
@@ -9,7 +12,7 @@ Last updated: 2026-08-23 by claude-code.
 Branch `verify/mlflow-harness`, based on `main` at `e88f1c9`. Not merged. Not pushed yet.
 `main` has not moved since the first implementation.
 
-Phase A produced `docs/audit/A-implementation-audit.md`, an audit of `e88f1c9`. Phase B acted on it.
+Phase A produced `audits/A-implementation-audit.md`, an audit of `e88f1c9`. Phase B acted on it.
 Read the audit before touching the evaluation — it explains why most of it was rewritten.
 
 ## What changed in Phase B, and why
