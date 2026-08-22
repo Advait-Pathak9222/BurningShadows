@@ -110,7 +110,7 @@ class AssessmentEngine:
         )
         if trace.selected_tier == 2:
             bundle = self.detect(interaction, include_tier2=True)
-            trace = allocate_verification(
+            reviewed = allocate_verification(
                 interaction_id=interaction.interaction_id,
                 bundle=bundle,
                 policy=policy,
@@ -118,6 +118,15 @@ class AssessmentEngine:
                 shadow_price=shadow_price,
                 conformal_threshold=threshold,
                 tool_calls=interaction.tool_calls,
+            )
+            # Tier 2 has already run and been paid for. The second pass may revise the
+            # verdict on better evidence, but it must not report the check as skipped.
+            trace = reviewed.model_copy(
+                update={
+                    "selected_tier": 2,
+                    "assurance_spend_inr": trace.assurance_spend_inr,
+                    "forced_by_conformal": trace.forced_by_conformal,
+                }
             )
 
         actions = gate_effects(interaction.tool_calls, trace.verdict, policy)
