@@ -1,0 +1,210 @@
+{
+  "agentic_hold": {
+    "effect_actions": [
+      "transfer_funds:financial:hold"
+    ],
+    "evidence_regime": "grounded",
+    "expected_loss_inr": 38333.33333333333,
+    "forced_by_conformal": true,
+    "policy_hash": "846d7dfbcac38b59",
+    "policy_version": "india-dpdp-2025.11",
+    "reason": "text may stream, but the proposed effect waits",
+    "risk": {
+      "bias": 0.0,
+      "hallucination": 0.8333333333333334,
+      "injection_or_exfil": 0.0,
+      "pii_leak": 0.3333333333333333,
+      "unsafe_content": 0.0
+    },
+    "selected_tier": 2,
+    "spend_inr": 3.2,
+    "transfer_fired": false,
+    "verdict": "hold"
+  },
+  "alert_fatigue": {
+    "allocator_false_positive_rate": 0.01666666666666672,
+    "allocator_loss_averted_inr": 2813500.0,
+    "allocator_precision": 0.9833333333333333,
+    "allocator_spend_inr": 384.0,
+    "budget_fraction": 0.4,
+    "fixed_rate_false_positive_rate": 0.008333333333333304,
+    "fixed_rate_loss_averted_inr": 2775500.0,
+    "fixed_rate_precision": 0.9916666666666667,
+    "fixed_rate_spend_inr": 384.0
+  },
+  "budget_shock": {
+    "budget_cut_percent": 40,
+    "conformal_floor_coverage_after": 1.0,
+    "conformal_thresholds_unchanged": {
+      "finops-agent": 0.8,
+      "internal-kb": 0.65,
+      "support-assistant": 0.55
+    },
+    "coverage_after": 0.4888888888888889,
+    "coverage_before": 0.5777777777777777,
+    "coverage_definition": "share receiving Tier 2 verification",
+    "expected_loss_averted_after_inr": 318531.9000933707,
+    "expected_loss_averted_before_inr": 318789.67787114845,
+    "finops_checks_after": 8,
+    "lambda_at_cut": 0.0,
+    "lambda_final": 5.55965821934493,
+    "lambda_peak_after_cut": 32.42550181300182,
+    "spend_after_inr": 71.12,
+    "spend_before_inr": 83.2
+  },
+  "drift": {
+    "new_failure_mode_misses": 16,
+    "recommended_tier": 2,
+    "response": "promote the route to Tier 2 while the shifted detector is recalibrated",
+    "selected_tier_after": 2,
+    "selected_tier_before": 1,
+    "tier1_catch_rate_after": 0.5,
+    "tier1_catch_rate_before": 0.8
+  },
+  "jurisdiction_switch": {
+    "eu": {
+      "consent_required": true,
+      "effect_actions": [],
+      "evidence_regime": "grounded",
+      "expected_loss_inr": 2750.0,
+      "forced_by_conformal": true,
+      "policy_hash": "09523a45b34e529d",
+      "policy_version": "eu-2026.07",
+      "reason": "verification is worth its cost and found material uncertainty",
+      "retention_days": 30,
+      "risk": {
+        "bias": 0.0,
+        "hallucination": 0.55,
+        "injection_or_exfil": 0.0,
+        "pii_leak": 0.0,
+        "unsafe_content": 0.0
+      },
+      "selected_tier": 2,
+      "spend_inr": 3.2,
+      "verdict": "annotate"
+    },
+    "india": {
+      "consent_required": true,
+      "effect_actions": [],
+      "evidence_regime": "grounded",
+      "expected_loss_inr": 2475.0,
+      "forced_by_conformal": true,
+      "policy_hash": "846d7dfbcac38b59",
+      "policy_version": "india-dpdp-2025.11",
+      "reason": "verification is worth its cost and found material uncertainty",
+      "retention_days": 45,
+      "risk": {
+        "bias": 0.0,
+        "hallucination": 0.55,
+        "injection_or_exfil": 0.0,
+        "pii_leak": 0.0,
+        "unsafe_content": 0.0
+      },
+      "selected_tier": 2,
+      "spend_inr": 3.2,
+      "verdict": "annotate"
+    }
+  },
+  "no_ground_truth": {
+    "effect_actions": [],
+    "evidence_regime": "unverifiable",
+    "expected_loss_inr": 1000.0,
+    "forced_by_conformal": true,
+    "policy_hash": "846d7dfbcac38b59",
+    "policy_version": "india-dpdp-2025.11",
+    "reason": "no evidence can support a confident release",
+    "risk": {
+      "bias": 0.0,
+      "hallucination": 1.0,
+      "injection_or_exfil": 0.0,
+      "pii_leak": 0.0,
+      "unsafe_content": 0.0
+    },
+    "selected_tier": 2,
+    "spend_inr": 3.2,
+    "verdict": "abstain"
+  },
+  "overlapping_harm": {
+    "effect_actions": [],
+    "evidence_regime": "unverifiable",
+    "expected_loss_inr": 23000.0,
+    "forced_by_conformal": true,
+    "policy_hash": "09523a45b34e529d",
+    "policy_version": "eu-2026.07",
+    "reason": "no evidence can support a confident release",
+    "risk": {
+      "bias": 0.0,
+      "hallucination": 1.0,
+      "injection_or_exfil": 0.0,
+      "pii_leak": 1.0,
+      "unsafe_content": 0.0
+    },
+    "selected_tier": 2,
+    "spend_inr": 3.2,
+    "verdict": "abstain"
+  },
+  "same_response_three_routes": {
+    "response": "The customer qualifies for a credit.",
+    "routes": {
+      "finops-agent": {
+        "effect_actions": [
+          "issue_credit:financial:hold"
+        ],
+        "evidence_regime": "grounded",
+        "expected_loss_inr": 13000.0,
+        "forced_by_conformal": false,
+        "policy_hash": "846d7dfbcac38b59",
+        "policy_version": "india-dpdp-2025.11",
+        "reason": "text may stream, but the proposed effect waits",
+        "risk": {
+          "bias": 0.0,
+          "hallucination": 0.5,
+          "injection_or_exfil": 0.0,
+          "pii_leak": 0.0,
+          "unsafe_content": 0.0
+        },
+        "selected_tier": 1,
+        "spend_inr": 0.18,
+        "verdict": "hold"
+      },
+      "internal-kb": {
+        "effect_actions": [],
+        "evidence_regime": "grounded",
+        "expected_loss_inr": 500.0,
+        "forced_by_conformal": false,
+        "policy_hash": "846d7dfbcac38b59",
+        "policy_version": "india-dpdp-2025.11",
+        "reason": "risk is below both the guarantee floor and priced cut line",
+        "risk": {
+          "bias": 0.0,
+          "hallucination": 0.5,
+          "injection_or_exfil": 0.0,
+          "pii_leak": 0.0,
+          "unsafe_content": 0.0
+        },
+        "selected_tier": null,
+        "spend_inr": 0.0,
+        "verdict": "allow"
+      },
+      "support-assistant": {
+        "effect_actions": [],
+        "evidence_regime": "grounded",
+        "expected_loss_inr": 2475.0,
+        "forced_by_conformal": true,
+        "policy_hash": "846d7dfbcac38b59",
+        "policy_version": "india-dpdp-2025.11",
+        "reason": "verification is worth its cost and found material uncertainty",
+        "risk": {
+          "bias": 0.0,
+          "hallucination": 0.55,
+          "injection_or_exfil": 0.0,
+          "pii_leak": 0.0,
+          "unsafe_content": 0.0
+        },
+        "selected_tier": 1,
+        "spend_inr": 0.18,
+        "verdict": "annotate"
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+manifest_version: 1
+generated_on: "2026-08-22"
+seed: 20260822
+generator: controlplane.sim.traffic.generate_corpus
+licence: not-declared
+contains_real_personal_data: false
+files:
+  interactions.jsonl:
+    rows: 600
+    purpose: complete seeded corpus
+  calibration.jsonl:
+    rows: 300
+    purpose: isotonic maps and per-route conformal threshold fitting
+  test.jsonl:
+    rows: 300
+    purpose: held-out baseline and metric evaluation
+partitions:
+  routes:
+    support-assistant: 200
+    internal-kb: 200
+    finops-agent: 200
+  jurisdictions:
+    eu: 300
+    india: 300
+known_design_choices:
+  - late shifted injection pattern begins in the back third
+  - internal-kb has extra near-miss templates
+  - finops-agent has extra factual-failure templates and financial tool calls
+external_sources_not_vendored:
+  - name: LLM-AggreFact
+    reason: gated evaluation dataset; do not train or redistribute
+    url: https://huggingface.co/datasets/lytang/LLM-AggreFact
+  - name: BBQ
+    reason: planned independent bias evaluation
+    url: https://github.com/nyu-mll/BBQ
+  - name: AI4Privacy pii-masking-400k
+    reason: academic/non-commercial restrictions require review
+    url: https://huggingface.co/datasets/ai4privacy/pii-masking-400k

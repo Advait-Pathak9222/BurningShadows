@@ -1,0 +1,40 @@
+version: india-dpdp-2025.11
+jurisdiction: india
+defaults:
+  alpha: 0.20
+  delta: 0.10
+  retention_days: 45
+  consent_required: true
+  human_review_required_for: [financial, irreversible_write, external_facing]
+routes:
+  support-assistant:
+    hourly_budget_inr: 420
+    text_latency_slo_ms: 150
+    effect_latency_slo_ms: 1500
+    consequence_inr:
+      hallucination: 4500
+      pii_leak: 20000
+      bias: 8500
+      unsafe_content: 6500
+      injection_or_exfil: 14000
+  internal-kb:
+    hourly_budget_inr: 160
+    text_latency_slo_ms: 350
+    effect_latency_slo_ms: 2500
+    consequence_inr:
+      hallucination: 1000
+      pii_leak: 8000
+      bias: 2200
+      unsafe_content: 1600
+      injection_or_exfil: 6500
+  finops-agent:
+    hourly_budget_inr: 850
+    text_latency_slo_ms: 250
+    effect_latency_slo_ms: 3500
+    consequence_inr:
+      hallucination: 26000
+      pii_leak: 50000
+      bias: 7500
+      unsafe_content: 5500
+      injection_or_exfil: 55000
+

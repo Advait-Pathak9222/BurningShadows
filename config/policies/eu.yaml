@@ -1,0 +1,40 @@
+version: eu-2026.07
+jurisdiction: eu
+defaults:
+  alpha: 0.20
+  delta: 0.10
+  retention_days: 30
+  consent_required: true
+  human_review_required_for: [financial, irreversible_write]
+routes:
+  support-assistant:
+    hourly_budget_inr: 450
+    text_latency_slo_ms: 150
+    effect_latency_slo_ms: 1500
+    consequence_inr:
+      hallucination: 5000
+      pii_leak: 18000
+      bias: 9000
+      unsafe_content: 7000
+      injection_or_exfil: 15000
+  internal-kb:
+    hourly_budget_inr: 180
+    text_latency_slo_ms: 350
+    effect_latency_slo_ms: 2500
+    consequence_inr:
+      hallucination: 1200
+      pii_leak: 6500
+      bias: 2500
+      unsafe_content: 1800
+      injection_or_exfil: 7000
+  finops-agent:
+    hourly_budget_inr: 900
+    text_latency_slo_ms: 250
+    effect_latency_slo_ms: 3500
+    consequence_inr:
+      hallucination: 28000
+      pii_leak: 45000
+      bias: 8000
+      unsafe_content: 6000
+      injection_or_exfil: 60000
+

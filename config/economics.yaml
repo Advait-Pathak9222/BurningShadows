@@ -1,0 +1,35 @@
+tiers:
+  0:
+    verification_cost_inr: 0.02
+    latency_ms: 4
+    catch_rate:
+      hallucination: 0.15
+      pii_leak: 0.82
+      bias: 0.08
+      unsafe_content: 0.25
+      injection_or_exfil: 0.70
+  1:
+    verification_cost_inr: 0.18
+    latency_ms: 70
+    catch_rate:
+      hallucination: 0.68
+      pii_leak: 0.90
+      bias: 0.65
+      unsafe_content: 0.78
+      injection_or_exfil: 0.84
+  2:
+    verification_cost_inr: 3.20
+    latency_ms: 900
+    catch_rate:
+      hallucination: 0.88
+      pii_leak: 0.94
+      bias: 0.83
+      unsafe_content: 0.91
+      injection_or_exfil: 0.91
+delay_cost_per_ms_inr:
+  read: 0.0000
+  reversible_write: 0.0002
+  irreversible_write: 0.0006
+  financial: 0.0010
+  external_facing: 0.0004
+
