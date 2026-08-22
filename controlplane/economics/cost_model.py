@@ -18,6 +18,10 @@ class CostModel:
             raise ValueError("Economics config must be a mapping")
         self.config: dict[str, Any] = loaded
 
+    @property
+    def controller_learning_rate(self) -> float:
+        return float(self.config["controller"]["learning_rate"])
+
     def tiers(self, policy: RoutePolicy, tool_calls: list[ToolCall]) -> list[TierEconomics]:
         effect_class = self._highest_effect_class(tool_calls)
         delay_rate = float(self.config["delay_cost_per_ms_inr"][effect_class.value])
