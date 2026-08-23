@@ -20,6 +20,22 @@ so the two policies are compared at matched budget, not at matched spend.
 
 Allocator averts more loss at 6 of 6 budgets and achieves better assurance ROI at 3 of 6.
 
+## Total cost of assurance: compute against attention
+
+A review costs INR 120 against INR 3.20 for the dearest automated check. Reviewer
+capacity is budgeted separately and the queue reports what it could not absorb.
+
+| Budget | Compute | Attention | Total | Attention share | Cases raised | Shed |
+|---:|---:|---:|---:|---:|---:|---:|
+| 10% | 623.48 | 19,920.00 | 20,543.48 | 97.0% | 247 | 32.8% |
+| 25% | 1,038.12 | 19,920.00 | 20,958.12 | 95.0% | 280 | 40.7% |
+| 40% | 1,848.24 | 19,920.00 | 21,768.24 | 91.5% | 307 | 45.9% |
+| 60% | 2,922.02 | 19,920.00 | 22,842.02 | 87.2% | 396 | 58.1% |
+| 80% | 3,731.38 | 19,920.00 | 23,651.38 | 84.2% | 396 | 58.1% |
+| 100% | 3,800.84 | 19,920.00 | 23,720.84 | 84.0% | 396 | 58.1% |
+
+Raising the compute budget raises the number of cases needing a person, so buying more automated checking increases the human bill rather than reducing it.
+
 ## Shadow price at the end of each run
 
 - budget 10%: lambda 404.268

@@ -121,6 +121,7 @@ class PreflightDecision(BaseModel):
 class RoutePolicy(BaseModel):
     route: str
     jurisdiction: str
+    review_sla_minutes: int = Field(gt=0)
     alpha: float = Field(gt=0.0, lt=1.0)
     delta: float = Field(gt=0.0, lt=1.0)
     hourly_budget_inr: float = Field(gt=0.0)
@@ -132,6 +133,48 @@ class RoutePolicy(BaseModel):
     consequence_inr: dict[str, float]
     policy_version: str
     policy_hash: str
+
+
+class ReviewReason(StrEnum):
+    UNVERIFIABLE = "unverifiable"
+    EFFECT_HELD = "effect_held"
+    BLOCKED = "blocked"
+
+
+class ReviewCase(BaseModel):
+    """One decision waiting on a person, priced in reviewer minutes."""
+
+    model_config = ConfigDict(frozen=True)
+
+    interaction_id: str
+    route: str
+    reason: ReviewReason
+    expected_loss_inr: float = Field(ge=0.0)
+    review_minutes: float = Field(gt=0.0)
+    review_cost_inr: float = Field(ge=0.0)
+    sla_minutes: int = Field(gt=0)
+
+    @property
+    def value_density(self) -> float:
+        """Expected loss per reviewer minute; the queue's ordering key."""
+        return self.expected_loss_inr / self.review_minutes
+
+
+class ReviewOutcome(StrEnum):
+    REVIEWED = "reviewed"
+    SHED = "shed"
+    BREACHED_SLA = "breached_sla"
+
+
+class ReviewDecision(BaseModel):
+    """What the queue did with a case, and what it cost."""
+
+    model_config = ConfigDict(frozen=True)
+
+    case: ReviewCase
+    outcome: ReviewOutcome
+    wait_minutes: float = Field(ge=0.0)
+    spend_inr: float = Field(ge=0.0)
 
 
 class TierEconomics(BaseModel):

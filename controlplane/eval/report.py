@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -14,16 +14,20 @@ from controlplane.eval.metrics import (
     EvaluationRow,
     escaped_harm_by_route,
     outcome,
+    percentile,
     summarize,
 )
 from controlplane.eval.tracking import log_evaluation
 from controlplane.guarantees.conformal import binomial_upper_bound
 from controlplane.ledger import LedgerStore
-from controlplane.models import DecisionTrace, DetectionBundle, Interaction
+from controlplane.models import DecisionTrace, DetectionBundle, Interaction, ReviewOutcome
+from controlplane.review import ReviewQueue, case_from_trace
 from controlplane.risk import expected_calibration_error
 from controlplane.service import AssessmentEngine
 
 BUDGET_FRACTIONS = (0.10, 0.25, 0.40, 0.60, 0.80, 1.00)
+# Traffic rate the reviewer capacity in config/economics.yaml is stated against.
+INTERACTIONS_PER_HOUR = 180
 BASELINE_TIERS = (1, 2)
 
 
@@ -34,6 +38,7 @@ class AllocatorRun:
     spend_inr: float
     final_shadow_price: float
     ledger: LedgerStore | None = None
+    review: dict[str, float] = field(default_factory=dict)
 
 
 def build_report(
@@ -98,16 +103,21 @@ def _evaluate_budgets(
             if run.ledger is not None:
                 run.ledger.close()
         tuned = _best_fixed_rate(engine, test, by_tier, latency, run.spend_inr)
-        for rows, reference in (
-            (run.rows, budget),
-            (unchecked, budget),
-            (everything, full_spend),
-            (tuned, budget),
+        for name, rows, reference in (
+            ("allocator", run.rows, budget),
+            ("check_none", unchecked, budget),
+            ("check_all", everything, full_spend),
+            ("fixed_rate", tuned, budget),
         ):
             summary = summarize(rows, reference)
             summary["budget_fraction"] = fraction
+            attention = run.review["attention_spend_inr"] if name == "allocator" else 0.0
+            summary["attention_spend_inr"] = attention
+            summary["total_assurance_inr"] = float(summary["assurance_spend_inr"]) + attention
             curve.append(summary)
         detail.setdefault("shadow_price", {})[f"{fraction:.2f}"] = run.final_shadow_price
+        detail.setdefault("review", {})[f"{fraction:.2f}"] = run.review
+        detail.setdefault("compute_spend", {})[f"{fraction:.2f}"] = run.spend_inr
         detail.setdefault("escaped_by_route", {})[f"{fraction:.2f}"] = escaped_harm_by_route(
             run.rows
         )
@@ -212,7 +222,43 @@ def _run_allocator(
         controller.update(running / position)
         traces.append(trace)
         rows.append(_allocator_row(engine, interaction, trace))
-    return AllocatorRun(rows, traces, running, controller.shadow_price, ledger)
+    review = _run_review(engine, test, traces)
+    return AllocatorRun(rows, traces, running, controller.shadow_price, ledger, review)
+
+
+def _run_review(
+    engine: AssessmentEngine, test: list[Interaction], traces: list[DecisionTrace]
+) -> dict[str, float]:
+    """Price the reviewer minutes the allocator's verdicts would consume.
+
+    Capacity is stated per hour of traffic, so the window is scaled by the interaction
+    count rather than assuming a reviewer is idle whenever the queue is short.
+    """
+    economics = engine.cost_model.review
+    queue = ReviewQueue(economics)
+    for interaction, trace in zip(test, traces, strict=True):
+        policy = engine.policy_store.resolve(interaction.route, interaction.jurisdiction)
+        case = case_from_trace(trace, policy, economics)
+        if case is not None:
+            queue.submit(case)
+    raised = len(queue.pending)
+    hours = len(test) / INTERACTIONS_PER_HOUR
+    decisions = queue.drain(economics.capacity_minutes_per_hour * hours)
+    reviewed = [d for d in decisions if d.outcome is ReviewOutcome.REVIEWED]
+    breached = [d for d in decisions if d.outcome is ReviewOutcome.BREACHED_SLA]
+    shed = [d for d in decisions if d.outcome is ReviewOutcome.SHED]
+    return {
+        "cases_raised": float(raised),
+        "case_rate": raised / len(test) if test else 0.0,
+        "reviewed": float(len(reviewed)),
+        "sla_breached": float(len(breached)),
+        "shed": float(len(shed)),
+        "shed_rate": len(shed) / raised if raised else 0.0,
+        "attention_spend_inr": sum(d.spend_inr for d in decisions),
+        "reviewer_minutes": sum(d.case.review_minutes for d in reviewed + breached),
+        "capacity_minutes": economics.capacity_minutes_per_hour * hours,
+        "p99_wait_minutes": percentile([d.wait_minutes for d in reviewed + breached], 0.99),
+    }
 
 
 def _allocator_row(
@@ -407,6 +453,8 @@ def _write_results(root: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
         "reliability": detail["reliability"],
         "audit": detail["audit"],
         "shadow_price": detail["shadow_price"],
+        "review": detail["review"],
+        "compute_spend": detail["compute_spend"],
         "full_check_spend_inr": detail["full_check_spend_inr"],
         "metrics": detail["metrics"],
     }
@@ -445,6 +493,7 @@ def _write_summary(path: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
             f"{left['assurance_roi']:,.0f} | {right['assurance_roi']:,.0f} |"
         )
     lines.extend(_verdict_lines(allocator, baseline))
+    lines.extend(_attention_lines(detail))
     lines.extend(["", "## Shadow price at the end of each run", ""])
     for fraction, value in detail["shadow_price"].items():
         lines.append(f"- budget {float(fraction):.0%}: lambda {float(value):.3f}")
@@ -470,6 +519,35 @@ def _write_summary(path: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _attention_lines(detail: dict[str, Any]) -> list[str]:
+    """Compute is not the binding constraint; reviewer minutes are."""
+    lines = [
+        "",
+        "## Total cost of assurance: compute against attention",
+        "",
+        "A review costs INR 120 against INR 3.20 for the dearest automated check. Reviewer",
+        "capacity is budgeted separately and the queue reports what it could not absorb.",
+        "",
+        "| Budget | Compute | Attention | Total | Attention share | Cases raised | Shed |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for fraction, review in sorted(detail["review"].items()):
+        compute = detail["compute_spend"][fraction]
+        attention = review["attention_spend_inr"]
+        total = compute + attention
+        lines.append(
+            f"| {float(fraction):.0%} | {compute:,.2f} | {attention:,.2f} | {total:,.2f} | "
+            f"{attention / total if total else 0:.1%} | {review['cases_raised']:.0f} | "
+            f"{review['shed_rate']:.1%} |"
+        )
+    lines.append("")
+    lines.append(
+        "Raising the compute budget raises the number of cases needing a person, so buying "
+        "more automated checking increases the human bill rather than reducing it."
+    )
+    return lines
 
 
 def _verdict_lines(allocator: pd.DataFrame, baseline: pd.DataFrame) -> list[str]:

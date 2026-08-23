@@ -8,6 +8,7 @@ defaults:
   human_review_required_for: [financial, irreversible_write, external_facing]
 routes:
   support-assistant:
+    review_sla_minutes: 30
     hourly_budget_inr: 420
     text_latency_slo_ms: 150
     effect_latency_slo_ms: 1500
@@ -18,6 +19,7 @@ routes:
       unsafe_content: 6500
       injection_or_exfil: 14000
   internal-kb:
+    review_sla_minutes: 240
     hourly_budget_inr: 160
     text_latency_slo_ms: 350
     effect_latency_slo_ms: 2500
@@ -28,6 +30,7 @@ routes:
       unsafe_content: 1600
       injection_or_exfil: 6500
   finops-agent:
+    review_sla_minutes: 15
     hourly_budget_inr: 850
     text_latency_slo_ms: 250
     effect_latency_slo_ms: 3500

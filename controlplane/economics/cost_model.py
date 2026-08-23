@@ -7,6 +7,7 @@ import yaml
 
 from controlplane.effects.classification import classify_effect
 from controlplane.models import EffectClass, HarmVector, RoutePolicy, TierEconomics, ToolCall
+from controlplane.review import ReviewEconomics
 
 
 class CostModel:
@@ -25,6 +26,15 @@ class CostModel:
     @property
     def gateway_budget_rate_inr(self) -> float:
         return float(self.config["controller"]["gateway_budget_rate_inr"])
+
+    @property
+    def review(self) -> ReviewEconomics:
+        values = self.config["review"]
+        return ReviewEconomics(
+            reviewer_cost_per_hour_inr=float(values["reviewer_cost_per_hour_inr"]),
+            minutes_per_case=float(values["minutes_per_case"]),
+            capacity_minutes_per_hour=float(values["capacity_minutes_per_hour"]),
+        )
 
     def tiers(self, policy: RoutePolicy, tool_calls: list[ToolCall]) -> list[TierEconomics]:
         effect_class = self._highest_effect_class(tool_calls)

@@ -17,6 +17,7 @@ def _policy(consequence: float) -> RoutePolicy:
     return RoutePolicy(
         route="test",
         jurisdiction="test",
+        review_sla_minutes=30,
         alpha=0.2,
         delta=0.1,
         hourly_budget_inr=1.0,

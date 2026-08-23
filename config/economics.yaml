@@ -1,3 +1,11 @@
+review:
+  # Loaded reviewer rate and handling time from docs/03-assumptions.md. A review costs
+  # 38x the most expensive automated check, which is why attention is budgeted separately.
+  reviewer_cost_per_hour_inr: 1200
+  minutes_per_case: 6
+  # Reviewer minutes available per hour of traffic. Two reviewers on shift.
+  capacity_minutes_per_hour: 120
+
 controller:
   learning_rate: 0.35
   # Assurance rupees per served interaction the gateway aims to hold.

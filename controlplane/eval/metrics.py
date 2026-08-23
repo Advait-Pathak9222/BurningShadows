@@ -124,10 +124,10 @@ def summarize(rows: list[EvaluationRow], budget_inr: float) -> dict[str, float |
         # Rounded because these are wall-clock stub timings: sub-0.1ms precision is
         # run-to-run noise, and it would churn the committed results on every run.
         "p99_text_latency_ms": round(
-            _percentile([row.text_latency_ms for row in rows], 0.99), 1
+            percentile([row.text_latency_ms for row in rows], 0.99), 1
         ),
         "p99_effect_latency_ms": round(
-            _percentile([row.effect_latency_ms for row in rows if row.effect_count], 0.99), 1
+            percentile([row.effect_latency_ms for row in rows if row.effect_count], 0.99), 1
         ),
         "budget_variance": (spend - budget_inr) / budget_inr if budget_inr else 0.0,
         "cost_per_1k_inr": spend * 1000 / len(rows) if rows else 0.0,
@@ -159,7 +159,7 @@ def _stable_uniform(interaction_id: str, axis: str) -> float:
     return int.from_bytes(digest[:8], "big") / 2**64
 
 
-def _percentile(values: list[float], quantile: float) -> float:
+def percentile(values: list[float], quantile: float) -> float:
     if not values:
         return 0.0
     ordered = sorted(values)
