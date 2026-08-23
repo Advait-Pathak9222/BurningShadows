@@ -6,7 +6,8 @@ Internal working file. **Delete this, `CODEX_BRIEF_RUNTIME.md` and `audits/` bef
 submission.** Nothing in `README.md`,
 `docs/` or the code links to either, so both can be removed without leaving dead references.
 
-Last updated: 2026-08-23 (paged verification: Stage 0, M2, and the judge probe).
+Last updated: 2026-08-23. **Detection/allocation lane is paused. The runtime lane (Codex) is
+active — see `CODEX_BRIEF_RUNTIME.md`.**
 
 ## Where things stand
 
@@ -89,7 +90,17 @@ Do not soften this in the pitch without new evidence. `docs/LIMITATIONS.md` carr
 
 ## In flight
 
-**A local-judge probe is running. Its result decides whether paged verification is viable.**
+**Nothing is being actively edited. The detection/allocation lane stopped at `9ddc8f3`, which is
+pushed. The runtime lane is now the active one.**
+
+One unfinished experiment, on the first machine only: a 60-row local-judge probe
+(`make judge-probe`) was left running against a local Ollama. If it completes it writes
+`docs/results/judge_probe.json` and `judge_probe.md`, **uncommitted** — whoever sees them should
+read the localisation rate, commit them, and append a row to `progress.csv`. If the process was
+killed, rerun `make judge-probe` on a machine with Ollama and `phi3:mini` pulled. It takes roughly
+an hour and needs nothing from the runtime lane.
+
+**Its result decides whether paged verification is viable.**
 
 M2 landed the multi-claim corpus (`8041b63`): responses are now 4-7 clause paragraphs, median 5,
 3000 distinct responses of 3000 rows, only 3.45% of characters carry harm, and every harmful
