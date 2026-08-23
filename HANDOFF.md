@@ -5,7 +5,7 @@ Shared state between Claude Code and Codex. Read this first. Update it at the en
 Internal working file. **Delete this and `audits/` before submission.** Nothing in `README.md`,
 `docs/` or the code links to either, so both can be removed without leaving dead references.
 
-Last updated: 2026-08-23 by claude-code (Stage 0 of paged verification).
+Last updated: 2026-08-23 (paged verification: Stage 0, M2, and the judge probe).
 
 ## Where things stand
 
@@ -88,7 +88,22 @@ Do not soften this in the pitch without new evidence. `docs/LIMITATIONS.md` carr
 
 ## In flight
 
-**Stage 0 of paged verification is done and committed (`e5ae957`). Stage M2 is next.**
+**A local-judge probe is running. Its result decides whether paged verification is viable.**
+
+M2 landed the multi-claim corpus (`8041b63`): responses are now 4-7 clause paragraphs, median 5,
+3000 distinct responses of 3000 rows, only 3.45% of characters carry harm, and every harmful
+clause has an exact span label. alpha moved 0.10 -> 0.15 because realistic paragraphs are harder:
+whole-response detector AUC fell 0.81-0.90 -> 0.67-0.76 and at 0.10 no threshold passed on any
+route.
+
+**The paging premise failed on the stub detectors.** Scoring sentences separately was no better
+than scoring the whole response (hallucination -0.17 AUC, pattern axes unchanged) and the
+top-scoring page was the harmful clause only 39% of the time. Those detectors are regex matchers,
+so that measures the stub, not the idea. `make judge-probe` (`a86db4a`) re-runs the same question
+against a real local judge. If a real judge also fails to localise, paging is dead and
+`docs/PREREGISTRATION.md` says what to write.
+
+**Stage 0 of paged verification is done and committed (`e5ae957`).**
 
 Stage 0 repaired six defects found while planning. Three of them would have made the paging work
 meaningless:
@@ -145,6 +160,10 @@ paging result is a fixture artifact.
 - The harm vector collapses to one axis on overlapping rows; ungrounded hallucination is not
   separable by the current detectors.
 - `mlflow ui` needs the full `mlflow` package. `mlflow-skinny` logs fine but cannot serve.
+- The local judge is slow: roughly 87s per row for two calls (whole response plus a page batch)
+  on phi3:mini. Ollama concurrency 4 buys about 2.5x and flattens after that.
+- `llama3.2:3b` is not usable as a judge. On a fixture with a known answer it scored 0 of 5 with a
+  strict prompt and over-flagged every supported claim with a loose one. `phi3:mini` scored 5 of 5.
 
 ## Pre-registered success criterion
 
@@ -171,6 +190,10 @@ new-corpus-paged against old-corpus-flat measures nothing.
   table or the endpoint after results exist.
 - `controlplane/ledger/store.py`. The single pooled connection plus `BEGIN IMMEDIATE` is what
   keeps the chain intact under concurrency; `tests/test_ledger_concurrency.py` fails without it.
+- `controlplane/sim/claims.py` and `controlplane/sim/traffic.py`. The corpus is the comparator for
+  the pre-registered result; regenerating it with different weights invalidates every number.
+- `progress.csv`. Append-only log of what each commit changed and what it measured, with the
+  parent SHA to revert to.
 
 ## Conventions
 
