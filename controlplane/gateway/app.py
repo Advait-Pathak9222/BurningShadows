@@ -13,7 +13,8 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from controlplane.economics import BudgetController
 from controlplane.gateway.schemas import ChatCompletionRequest
-from controlplane.models import HarmVector, Interaction, PreflightDecision, ToolCall
+from controlplane.models import DecisionTrace, HarmVector, Interaction, PreflightDecision, ToolCall
+from controlplane.runtime import AdmissionController, AdmissionLease, AdmissionRejected
 from controlplane.service import AssessmentEngine
 from controlplane.sim.provider import SeededModelProvider
 from controlplane.sim.traffic import load_interactions
@@ -40,6 +41,7 @@ controller = BudgetController(
     learning_rate=engine.cost_model.controller_learning_rate,
 )
 _spend = _SpendWindow()
+admission = AdmissionController.from_path(ROOT / "config" / "runtime.yaml")
 
 
 @asynccontextmanager
@@ -56,12 +58,13 @@ app = FastAPI(title="ControlPlane.ai", version="0.2.0", lifespan=lifespan)
 
 
 @app.get("/health")
-def health() -> dict[str, str | float | bool]:
+def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "provider": "seeded-simulator",
         "calibrated": bool(engine.conformal_thresholds),
         "shadow_price": controller.shadow_price,
+        "admission": admission.snapshot(),
     }
 
 
@@ -73,18 +76,42 @@ async def chat_completions(
     if not request.messages:
         raise HTTPException(status_code=400, detail="messages must not be empty")
     prompt = request.messages[-1].content
-    preflight = await _run_preflight(x_controlplane_route, request.jurisdiction, prompt)
-    if not preflight.allowed:
-        return _blocked_response(preflight)
-    response_text, generated_calls = provider.generate(prompt)
-    interaction = _build_interaction(request, x_controlplane_route, response_text, generated_calls)
-    if request.stream:
-        return StreamingResponse(
-            _stream_with_decision(request.model, interaction),
-            media_type="text/event-stream",
-            headers={"x-controlplane-decision": "pending"},
+    lease = await _admit(x_controlplane_route)
+    try:
+        preflight = await _run_preflight(x_controlplane_route, request.jurisdiction, prompt)
+        if not preflight.allowed:
+            lease.release()
+            return _blocked_response(preflight)
+        response_text, generated_calls = provider.generate(prompt)
+        interaction = _build_interaction(
+            request, x_controlplane_route, response_text, generated_calls
         )
-    return await _completion_response(request.model, response_text, interaction)
+        if request.stream:
+            return StreamingResponse(
+                _stream_with_decision(request.model, interaction, lease),
+                media_type="text/event-stream",
+                headers={
+                    "x-controlplane-decision": "pending",
+                    "x-controlplane-admission": lease.mode.value,
+                },
+            )
+        return await _completion_response(request.model, response_text, interaction, lease)
+    except BaseException:
+        lease.release()
+        raise
+
+
+async def _admit(route: str) -> AdmissionLease:
+    try:
+        return await admission.admit(route)
+    except KeyError as error:
+        raise HTTPException(status_code=400, detail=error.args[0]) from error
+    except AdmissionRejected:
+        raise HTTPException(
+            status_code=503,
+            detail="verification capacity exhausted; response was not generated",
+            headers={"Retry-After": "1", "x-controlplane-admission": "saturated"},
+        ) from None
 
 
 async def _run_preflight(route: str, jurisdiction: str, prompt: str) -> PreflightDecision:
@@ -123,9 +150,15 @@ def _build_interaction(
 
 
 async def _completion_response(
-    model: str, response_text: str, interaction: Interaction
+    model: str,
+    response_text: str,
+    interaction: Interaction,
+    lease: AdmissionLease,
 ) -> JSONResponse:
-    trace = await asyncio.to_thread(engine.assess, interaction, controller.shadow_price)
+    try:
+        trace = await _assess(interaction, lease)
+    finally:
+        lease.release()
     _spend.record(trace.assurance_spend_inr, controller)
     payload: dict[str, Any] = {
         "id": interaction.interaction_id,
@@ -134,13 +167,22 @@ async def _completion_response(
         "choices": [{"index": 0, "message": {"role": "assistant", "content": response_text}}],
         "controlplane": trace.model_dump(mode="json"),
     }
-    return JSONResponse(payload, headers={"x-controlplane-decision": trace.verdict})
-
-
-async def _stream_with_decision(model: str, interaction: Interaction) -> AsyncIterator[str]:
-    assessment = asyncio.create_task(
-        asyncio.to_thread(engine.assess, interaction, controller.shadow_price)
+    return JSONResponse(
+        payload,
+        headers={
+            "x-controlplane-decision": trace.verdict,
+            "x-controlplane-admission": lease.mode.value,
+        },
     )
+
+
+async def _stream_with_decision(
+    model: str,
+    interaction: Interaction,
+    lease: AdmissionLease,
+) -> AsyncIterator[str]:
+    assessment = asyncio.create_task(_assess(interaction, lease))
+    assessment.add_done_callback(lambda completed: _release_after_assessment(completed, lease))
     async for token in provider.stream(interaction.prompt):
         chunk = {
             "id": interaction.interaction_id,
@@ -149,8 +191,27 @@ async def _stream_with_decision(model: str, interaction: Interaction) -> AsyncIt
             "choices": [{"index": 0, "delta": {"content": token}}],
         }
         yield f"data: {json.dumps(chunk)}\n\n"
-    trace = await assessment
+    trace = await asyncio.shield(assessment)
     _spend.record(trace.assurance_spend_inr, controller)
     final = {"controlplane": trace.model_dump(mode="json")}
     yield f"event: controlplane.decision\ndata: {json.dumps(final)}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def _assess(interaction: Interaction, lease: AdmissionLease) -> DecisionTrace:
+    return await asyncio.to_thread(
+        engine.assess,
+        interaction,
+        controller.shadow_price,
+        mandatory_only=lease.degraded,
+        admission_mode=lease.mode.value,
+        queue_wait_ms=lease.queue_wait_ms,
+    )
+
+
+def _release_after_assessment(
+    completed: asyncio.Task[DecisionTrace], lease: AdmissionLease
+) -> None:
+    lease.release()
+    if not completed.cancelled():
+        completed.exception()

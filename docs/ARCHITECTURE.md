@@ -7,7 +7,10 @@ hidden states, or log probabilities.
 ```mermaid
 flowchart TD
     A[AI use case] --> B[OpenAI-shaped gateway]
-    B --> C[Blocking preflight]
+    B --> Q{Per-route admission}
+    Q -->|normal| C[Blocking preflight]
+    Q -->|mandatory only| C
+    Q -->|both lanes full| X[503 before generation]
     C --> D[Seeded or adapted model provider]
     D -. text streams .-> U[User]
     D --> E0[Tier 0 rules]
@@ -31,20 +34,24 @@ flowchart TD
 
 ## Runtime sequence
 
-1. The gateway resolves route and jurisdiction, loads the policy from YAML, and runs Tier 0 over the
+1. A per-route token bucket admits the request to a bounded discretionary lane. If that lane is
+   rate-limited, queued, or full, a separately bounded lane reserves capacity for mandatory checks.
+   Exhausting both lanes returns 503 before provider generation.
+2. The gateway resolves route and jurisdiction, loads the policy from YAML, and runs Tier 0 over the
    prompt. A high-confidence injection phrase stops the request before generation.
-2. The provider produces text. For a streaming request, token events are emitted while assessment
+3. The provider produces text. For a streaming request, token events are emitted while assessment
    runs in a worker thread.
-3. Tier 0 checks patterns and context numbers. Tier 1 supplies replaceable grounding, safety, and
+4. Tier 0 checks patterns and context numbers. Tier 1 supplies replaceable grounding, safety, and
    anomaly signals. The seeded build uses lexical adapters so it remains offline.
-4. Route-specific isotonic maps transform each harm axis. The evidence regime is grounded,
+5. Route-specific isotonic maps transform each harm axis. The evidence regime is grounded,
    ungrounded-but-estimable, or unverifiable.
-5. A per-route exact-binomial Learn-Then-Test threshold identifies mandatory checks. The economic
+6. A per-route exact-binomial Learn-Then-Test threshold identifies mandatory checks. The economic
    rule prices each tier with the current shadow price. If Tier 2 is selected, its signal is added and
-   the allocation is recomputed.
-6. Text receives allow, annotate, abstain, hold, or block. Financial, irreversible, and configured
+   the allocation is recomputed. Degraded admission derives a cut line from the same benefit and
+   cost terms so discretionary escalation is skipped while a conformal override still selects Tier 1.
+7. Text receives allow, annotate, abstain, hold, or block. Financial, irreversible, and configured
    external effects are held or denied independently of text delivery.
-7. The ledger appends the full decision terms with a previous-record hash, policy version, and policy
+8. The ledger appends the full decision terms with a previous-record hash, policy version, and policy
    content hash.
 
 ## Code contracts
@@ -52,6 +59,7 @@ flowchart TD
 | Component | Input | Output | Prototype file |
 | --- | --- | --- | --- |
 | Gateway | OpenAI-shaped request and route header | JSON or SSE text plus decision | `controlplane/gateway/app.py` |
+| Admission | Route and configured limits | Normal/degraded lease or explicit overload | `controlplane/runtime/admission.py` |
 | Policy | Route and jurisdiction | Validated route policy, version, content hash | `controlplane/policy/loader.py` |
 | Tier 0 | Prompt, response, context | Pattern, numeric, PII, and injection scores | `controlplane/detectors/tier0_rules.py` |
 | Tier 1 | Response, evidence, samples | Grounding, bias, safety, anomaly scores | `controlplane/detectors/tier1_models.py` |
@@ -66,7 +74,9 @@ flowchart TD
 ## State and failure boundaries
 
 Policy files are checked for modification on resolution and reloaded in-process. Calibration maps and
-the budget controller are process-local in this prototype. The SQLite ledger is local and its append
-is synchronous. A production multi-worker deployment would need shared calibration versions, a
-windowed controller, durable queues, identity, and an external append-only audit sink. Those are
-deployment changes, not new decision stages.
+the budget controller are process-local in this prototype. Token buckets, queue counters, and
+reserved lanes are also process-local, so limits multiply if several gateway workers are started.
+The SQLite ledger is local and its append is synchronous. A production multi-worker deployment
+would need shared calibration versions, distributed admission state, a windowed controller, durable
+queues, identity, and an external append-only audit sink. Those are deployment changes, not new
+decision stages.

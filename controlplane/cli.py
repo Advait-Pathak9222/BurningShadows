@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from controlplane.eval.judge_probe import run_probe, write_probe
+from controlplane.eval.loadtest import run_loadtest
 from controlplane.eval.report import build_report
 from controlplane.ledger import LedgerStore
 from controlplane.service import AssessmentEngine
@@ -17,7 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="controlplane")
-    parser.add_argument("command", choices=("data", "demo", "report", "judge-probe", "clean"))
+    parser.add_argument(
+        "command",
+        choices=("data", "demo", "report", "judge-probe", "loadtest", "clean"),
+    )
     args = parser.parse_args(argv)
     if args.command == "data":
         interactions = generate_corpus()
@@ -33,6 +37,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"page-max AUC {summary['auc_judge_page_max']:.4f}, "
             f"localisation {summary['localisation_rate']:.1%}"
         )
+        return 0
+    if args.command == "loadtest":
+        report_path = run_loadtest(ROOT)
+        print(f"Wrote {report_path.relative_to(ROOT)}.")
         return 0
     if args.command == "report":
         interactions = ensure_corpus(ROOT / "data")

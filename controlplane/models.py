@@ -239,4 +239,8 @@ class DecisionTrace(BaseModel):
     policy_version: str
     policy_hash: str
     detector_latency_ms: float
+    degraded: bool = False
+    admission_mode: Literal["unbounded", "normal", "degraded"] = "unbounded"
+    queue_wait_ms: float = Field(default=0.0, ge=0.0)
+    mandatory_assessment_completed: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

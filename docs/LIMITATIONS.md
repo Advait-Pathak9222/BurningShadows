@@ -17,6 +17,27 @@
 - `delay_cost_inr` is always zero: every tier's latency sits below every route's effect latency SLO,
   so the `d` term in the decision rule never contributes. The rule is effectively `r*c*k > (1 + lambda) * v`.
 
+## Runtime benchmark limits
+
+The committed saturation run uses the seeded provider, lexical detectors, and an explicit 75 ms
+blocking hold per assessment. The hold makes the work queue observable; it is not a measured model
+or detector latency. The reported 400 RPS point therefore describes the scheduler harness on one
+Windows laptop, with other host workloads left uncontrolled. It does not establish deployment
+capacity.
+
+The bounded path keeps tail latency low by doing less work and rejecting overload. At 400 offered
+RPS it achieved 61.5 served RPS and rejected 503 of 600 requests, while the unbounded path achieved
+149.0 RPS without rejection. Its served-request effect p99 was 101.26 ms rather than 2521.26 ms,
+but that comparison excludes rejected requests and is not a detector speedup. At 80 offered RPS,
+admission was already a regression: 10 of 120 requests were rejected, text p99 rose from 16.30 to
+39.20 ms, and effect p99 rose from 97.28 to 116.50 ms. The current limits favor a short tail over
+throughput and need tuning against a real service objective.
+
+Token buckets and queues are in-process. Running several gateway workers multiplies the configured
+rate and concurrency. Queue state is not durable, and a restart refills every burst. The mandatory
+lane preserves the fitted Tier 0/Tier 1 floor for served degraded requests, but if it saturates the
+gateway returns 503; there is no cross-process spillover or retry queue.
+
 ## What the corpus is and is not
 
 The corpus is synthetic and generated compositionally from entity and phrasing pools. It is built to
@@ -115,7 +136,7 @@ not yet addressed.
 
 ## Operational gaps
 
-There is no tenant authentication, authorization, rate limiting, consent capture, reviewer identity,
+There is no tenant authentication, authorization, tenant-level quota, consent capture, reviewer identity,
 case-management integration, key service, or signed policy release. SQLite hash chaining makes edits
 detectable after the first changed row; it does not stop deletion, rollback, or replacement of the
 whole database. Ledger appends are synchronous.
