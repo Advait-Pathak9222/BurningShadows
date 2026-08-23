@@ -1,7 +1,7 @@
 version: india-dpdp-2025.11
 jurisdiction: india
 defaults:
-  alpha: 0.10
+  alpha: 0.15
   delta: 0.10
   retention_days: 45
   consent_required: true

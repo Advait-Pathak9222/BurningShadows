@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import statistics
 from pathlib import Path
 
 from controlplane.models import Interaction
@@ -73,3 +75,31 @@ def test_generation_is_byte_reproducible(project_root: Path) -> None:
     committed = (project_root / "data" / "interactions.jsonl").read_text(encoding="utf-8")
     regenerated = "\n".join(item.model_dump_json() for item in generate_corpus()) + "\n"
     assert regenerated == committed
+
+
+SENTENCE = re.compile(r"(?<=[.!?])\s+")
+
+
+def test_responses_are_divisible_into_pages(corpus: list[Interaction]) -> None:
+    """Paging is unevaluable on single-sentence answers; the first corpus had a median of one."""
+    counts = [
+        len([part for part in SENTENCE.split(row.response) if part.strip()]) for row in corpus
+    ]
+    assert statistics.median(counts) >= 4
+
+
+def test_harm_spans_land_on_real_text(corpus: list[Interaction]) -> None:
+    """Span labels come from the generator's own construction, so they must be exact."""
+    labelled = [row for row in corpus if row.spans]
+    assert labelled, "no row carries a span label"
+    for row in labelled:
+        for span in row.spans:
+            assert row.response[span.start : span.end].strip()
+            assert span.harm.has_harm()
+
+
+def test_harm_occupies_a_small_share_of_text(corpus: list[Interaction]) -> None:
+    """The whole point of paging is that most of a response is not worth checking."""
+    harmful_chars = sum(span.end - span.start for row in corpus for span in row.spans)
+    total_chars = sum(len(row.response) for row in corpus)
+    assert 0.005 < harmful_chars / total_chars < 0.20

@@ -47,6 +47,16 @@ class HarmVector(BaseModel):
         return any(float(getattr(self, axis)) >= threshold for axis in HARM_AXES)
 
 
+class LabelledSpan(BaseModel):
+    """Ground truth for one clause of a response, by character offset."""
+
+    model_config = ConfigDict(frozen=True)
+
+    start: int = Field(ge=0)
+    end: int = Field(ge=0)
+    harm: HarmVector
+
+
 class EvidenceRegime(StrEnum):
     GROUNDED = "grounded"
     ESTIMABLE = "ungrounded_but_estimable"
@@ -78,6 +88,9 @@ class Interaction(BaseModel):
     comparison_samples: list[str] = Field(default_factory=list)
     tool_calls: list[ToolCall] = Field(default_factory=list)
     truth: HarmVector = Field(default_factory=HarmVector.zeros)
+    # Where the harm actually sits. Emitted by the generator from its own construction,
+    # never inferred from detector agreement.
+    spans: list[LabelledSpan] = Field(default_factory=list)
     shifted: bool = False
 
 

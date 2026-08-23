@@ -11,33 +11,33 @@ so the two policies are compared at matched budget, not at matched spend.
 
 | Budget | Allocator spend | Baseline spend | Allocator averted | Baseline averted | Averted delta | Allocator ROI | Baseline ROI |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | 677.66 | 270.00 | 5,660,800 | 5,594,700 | +1.2% | 8,353 | 20,721 |
-| 25% | 1,169.92 | 270.00 | 5,913,800 | 5,594,700 | +5.7% | 5,055 | 20,721 |
-| 40% | 1,979.28 | 1,977.60 | 5,999,700 | 5,965,400 | +0.6% | 3,031 | 3,016 |
-| 60% | 2,305.44 | 2,304.00 | 6,004,600 | 5,988,600 | +0.3% | 2,605 | 2,599 |
-| 80% | 2,305.44 | 2,304.00 | 6,004,600 | 5,988,600 | +0.3% | 2,605 | 2,599 |
-| 100% | 2,305.44 | 2,304.00 | 6,004,600 | 5,988,600 | +0.3% | 2,605 | 2,599 |
+| 10% | 623.48 | 270.00 | 5,184,700 | 5,072,700 | +2.2% | 8,316 | 18,788 |
+| 25% | 1,038.12 | 270.00 | 5,237,500 | 5,072,700 | +3.2% | 5,045 | 18,788 |
+| 40% | 1,848.24 | 270.00 | 5,347,800 | 5,072,700 | +5.4% | 2,893 | 18,788 |
+| 60% | 2,922.02 | 2,921.60 | 5,364,600 | 5,153,400 | +4.1% | 1,836 | 1,764 |
+| 80% | 3,731.38 | 3,731.20 | 5,390,600 | 5,337,900 | +1.0% | 1,445 | 1,431 |
+| 100% | 3,800.84 | 3,798.40 | 5,390,600 | 5,337,900 | +1.0% | 1,418 | 1,405 |
 
-Allocator averts more loss at 6 of 6 budgets and achieves better assurance ROI at 4 of 6.
+Allocator averts more loss at 6 of 6 budgets and achieves better assurance ROI at 3 of 6.
 
 ## Shadow price at the end of each run
 
-- budget 10%: lambda 394.955
-- budget 25%: lambda 53.677
-- budget 40%: lambda 0.973
-- budget 60%: lambda 0.000
+- budget 10%: lambda 404.268
+- budget 25%: lambda 71.868
+- budget 40%: lambda 31.697
+- budget 60%: lambda 13.888
 - budget 80%: lambda 0.000
 - budget 100%: lambda 0.000
 
 ## Conformal bound on held-out traffic
 
-- `finops-agent`: observed 0.0444 against alpha 0.10 on 293 released rows (holds)
-- `internal-kb`: observed 0.0215 against alpha 0.10 on 372 released rows (holds)
-- `support-assistant`: observed 0.0513 against alpha 0.10 on 312 released rows (holds)
+- `finops-agent`: observed 0.0591 against alpha 0.15 on 220 released rows (holds)
+- `internal-kb`: observed 0.0781 against alpha 0.15 on 461 released rows (holds)
+- `support-assistant`: observed 0.0000 against alpha 0.15 on 0 released rows (holds)
 
 ## Audit
 
 - hash chain valid: True
 - decisions recorded: 1500 of 1500
-- effects logged: 215 of 215 proposed (coverage 1.0000)
+- effects logged: 224 of 224 proposed (coverage 1.0000)
 

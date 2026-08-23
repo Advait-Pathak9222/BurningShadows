@@ -1,46 +1,61 @@
-manifest_version: 2
+manifest_version: 3
 generated_on: "2026-08-23"
-seed: 20260823
+seed: 20260824
 generator: controlplane.sim.traffic.generate_corpus
 licence: not-declared
 contains_real_personal_data: false
 files:
   interactions.jsonl:
-    rows: 1800
+    rows: 3000
     purpose: complete seeded corpus
   calibration.jsonl:
-    rows: 900
+    rows: 1500
     purpose: isotonic fitting and per-route conformal threshold selection, on disjoint folds
   test.jsonl:
-    rows: 900
+    rows: 1500
     purpose: held-out baseline and metric evaluation
 partitions:
   routes:
-    support-assistant: 600
-    internal-kb: 600
-    finops-agent: 600
+    support-assistant: 1000
+    internal-kb: 1000
+    finops-agent: 1000
   jurisdictions:
-    eu: 900
-    india: 900
+    eu: 1500
+    india: 1500
   evidence_regime:
-    grounded: 1116
-    ungrounded_but_estimable: 322
-    unverifiable: 362
+    grounded: 1868
+    ungrounded_but_estimable: 568
+    unverifiable: 564
+structure:
+  distinct_response_strings: 3000
+  sentences_per_response:
+    min: 4
+    median: 5
+    max: 7
+  response_chars:
+    min: 171
+    median: 304
+    max: 448
 labels:
-  rows_with_any_harm: 295
-  rows_with_two_or_more_axes: 81
-  hallucination: 133
-  pii_leak: 126
-  bias: 33
-  unsafe_content: 31
-  injection_or_exfil: 53
-  distinct_response_strings: 552
+  rows_with_any_harm: 467
+  labelled_harm_spans: 512
+  share_of_characters_carrying_harm: 0.0345
+  hallucination: 99
+  pii_leak: 194
+  bias: 74
+  unsafe_content: 95
+  injection_or_exfil: 134
 known_design_choices:
-  - harm prevalence is held near 0.16 so allocation is a search problem, not a coin flip
-  - evidence availability is drawn independently of the label, so an absent source
-    document carries no information about harm (harm rate 0.164 grounded, 0.174 unverifiable)
+  - responses are multi-claim paragraphs assembled from independently labelled clauses,
+    so verification can be allocated over spans rather than over whole responses
+  - every harmful clause carries an exact character span emitted by the generator from its
+    own construction, never inferred from detector agreement
+  - only 3.45% of characters carry harm, which is the opportunity paged verification targets
+  - harm prevalence is held near 0.16 at the response level so allocation is a search problem
+  - evidence availability is drawn independently of the label, so an absent source document
+    carries no information about harm
   - every harm family emits loud and quiet realisations, so detector recall stays below one
-  - clean decoy families (policy discussion, refusals, permitted PII, format drift) resemble
+  - clean decoy clauses (policy discussion, refusals, permitted PII, formatting drift) resemble
     the loud harmful forms, so detector precision stays below one
   - calibration and test are split i.i.d. within each route to preserve the exchangeability
     the conformal bound depends on

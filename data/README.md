@@ -1,10 +1,10 @@
 # Data provenance
 
-`make data` recreates three JSONL files with seed `20260823`:
+`make data` recreates three JSONL files with seed `20260824`:
 
-- `interactions.jsonl`: all 1800 interactions;
-- `calibration.jsonl`: 900 rows, 300 per route;
-- `test.jsonl`: 900 disjoint rows, 300 per route.
+- `interactions.jsonl`: all 3000 interactions;
+- `calibration.jsonl`: 1500 rows, 500 per route;
+- `test.jsonl`: 1500 disjoint rows, 500 per route.
 
 The corpus is synthetic. Counts in `dataset_manifest.yaml` are computed from the checked-in files
 and are not estimates of enterprise prevalence.
@@ -29,6 +29,12 @@ This version is generated compositionally and holds three properties, each check
    loud harmful forms, so precision stays below one.
 3. **Calibration and test are exchangeable.** The split is i.i.d. within each route. That is what
    the conformal bound assumes, so a split by template family would invalidate it.
+4. **Responses are divisible.** Each response is a paragraph of four to seven independently
+   labelled clauses, median five. An earlier version emitted single sentences (median 80
+   characters), which made span-level verification impossible to evaluate at all.
+
+Only **3.45% of characters carry harm**, and every harmful clause has an exact character span.
+That gap between what must be read and what must be checked is what paged verification targets.
 
 Detector trigger vocabulary was not consulted while writing the generator. Some overlap between
 fixture wording and detector keywords remains and is expected; what matters is that it no longer
