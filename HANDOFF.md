@@ -6,8 +6,8 @@ Internal working file. **Delete this, `CODEX_BRIEF_RUNTIME.md` and `audits/` bef
 submission.** Nothing in `README.md`,
 `docs/` or the code links to either, so both can be removed without leaving dead references.
 
-Last updated: 2026-08-23. **Detection/allocation lane is paused. The runtime lane (Codex) is
-active — see `CODEX_BRIEF_RUNTIME.md`.**
+Last updated: 2026-08-23. **Both lanes active.** Detection lane is on the review loop; runtime
+lane has delivered admission control and has a new queue in `CODEX_BRIEF_RUNTIME.md` section 0.
 
 ## Where things stand
 
@@ -87,6 +87,44 @@ Two structural causes, both open:
   it trivially. Stating the floor on effective escaped harm would make tier choice matter.
 
 Do not soften this in the pitch without new evidence. `docs/LIMITATIONS.md` carries the full version.
+
+## Review loop, stages R1 to R3 (detection lane)
+
+Attention is now a budgeted resource alongside compute. A verdict of abstain, hold or block raises
+a `ReviewCase` priced in reviewer minutes with a per-route SLA; the queue serves by deadline then
+expected loss per minute and sheds what capacity cannot absorb. Reviewer decisions become
+`ReviewRecord`s appended to the same hash chain as the decisions they review, so an override cannot
+be edited undetected.
+
+Measured, and these are the numbers the business case now rests on:
+
+- **Attention is 90-98% of total assurance cost.** At 30k interactions a week: compute INR 76,000,
+  attention INR 672,000.
+- Raising the compute budget takes cases raised from 247 to 396, so more automated checking
+  increases the human bill rather than reducing it.
+- The queue is 2.4x oversubscribed and sheds 58%. Intervention precision is 0.328.
+- Catch rate is measured rather than configured: Tier 2 at 0.905 against 0.880, Tier 1 at 0.605
+  against 0.680, pooled across budgets. Tier 0 is never selected because Tier 1 dominates it on
+  value density at these prices, and it is reported as such rather than given a number.
+- Rows the allocator declined to check carry harm 7.18% of the time, over 557 reviewed.
+- Auditing is stratified: 40% of unchecked rows against 4% of checked, because barely one in four
+  hundred unchecked rows carries harm and uniform sampling learns nothing. Audit reviews cost
+  reviewer minutes like any other, and are charged.
+
+Two metrics were built and then removed for being tautologies, in the same class as the
+`audit_coverage = x/x` the audit caught: a "baseline catch rate" over rows the allocator declined
+to escalate is structurally zero, because such a row was by construction not withheld.
+
+## Runtime lane status
+
+`runtime/admission-backpressure` is complete and unmerged. It merges onto `main` with one trivial
+conflict in `progress.csv` where both lanes appended rows. It measured a same-run before and after,
+labelled its numbers as harness rather than capacity, and reported honestly that bounded admission
+is a **regression at 80 RPS** (10 of 120 rejected, both p99s worse) and only pays at 400.
+
+Its next queue is in `CODEX_BRIEF_RUNTIME.md` section 0: tune admission against a stated SLO first,
+then the effect gate as a durable two-phase commit, which shares a clock with the review queue - a
+held effect is a review case, so the lease deadline should reuse `review_sla_minutes`.
 
 ## In flight
 
@@ -224,7 +262,9 @@ new-corpus-paged against old-corpus-flat measures nothing.
 - `controlplane/sim/claims.py` and `controlplane/sim/traffic.py`. The corpus is the comparator for
   the pre-registered result; regenerating it with different weights invalidates every number.
 - `progress.csv`. Append-only log of what each commit changed and what it measured, with the
-  parent SHA to revert to.
+  parent SHA to revert to. Both lanes append, so expect a conflict on merge and keep both sets.
+- `controlplane/review/`. The detection lane's queue, reviewer and recalibration. The runtime lane
+  should read it and reuse `review_sla_minutes`, not edit it.
 
 ## Two agents
 

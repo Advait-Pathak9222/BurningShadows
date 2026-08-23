@@ -9,6 +9,59 @@ what its tail latency is, and what happens when parts of it fail.
 
 ---
 
+## 0. Round two: what is done, and what is next
+
+Your admission-control work on `runtime/admission-backpressure` is good. It measured a same-run
+before and after, labelled the numbers as harness rather than capacity, reported that the bounded
+path is a **regression at 80 RPS**, and respected every file boundary. It merges onto `main` with a
+single trivial conflict in `progress.csv` where both lanes appended rows.
+
+Two things happened in the other lane that change your next item:
+
+- **Reviewer attention is now a second budget.** A verdict of abstain, hold or block raises a case
+  priced in reviewer minutes with a per-route SLA, served by a queue that sheds what capacity
+  cannot absorb. Measured: attention is 90-98% of the total cost of assurance, the queue is 2.4x
+  oversubscribed, and intervention precision is 0.328.
+- **Catch rate is measured, not configured.** Reviewer labels plus a stratified audit slice give
+  Tier 2 at 0.905 against a configured 0.880 and Tier 1 at 0.605 against 0.680.
+
+### Next, in priority order
+
+**0.1 Tune admission against a stated objective.** Your own LIMITATIONS entry names this: at 80
+offered RPS the bounded path rejects 10 of 120 and raises both p99s, so admission currently hurts at
+moderate load and only pays at 400. That is a defect, not a tradeoff, until a service objective says
+otherwise. State the SLO first (for example: effect p99 under 150 ms, rejection under 1% up to the
+declared capacity), then tune limits to it and show the sweep. Rejecting 503 of 600 to protect a
+tail is only defensible if the objective says so.
+
+**0.2 Effect gate as a durable two-phase commit.** The highest-value remaining item, and it now has
+a clean seam with the other lane. `gate_effects` returns strings like
+`"transfer_funds:financial:hold"`. Make it real: a proposed effect takes a **lease with a deadline**,
+the verdict commits or aborts, commit is idempotent, and a lease timeout has a defined per-route
+policy. The lease deadline and the review SLA are the same clock - a held effect is exactly a review
+case - so read `controlplane/review/queue.py` before designing the interface and reuse
+`review_sla_minutes` rather than inventing a second deadline. Fail-safe on expiry is mandatory: a
+lease that runs out must never silently permit.
+
+**0.3 Circuit breakers, timeouts, bulkheads.** A hung detector still yields a 500. Add per-detector
+timeouts, a breaker, and a named per-route failure policy - `fail_closed` for `finops-agent`,
+`fail_open_with_annotation` for `internal-kb` - recorded in the trace as `degraded`. Bulkhead the
+tiers so a slow Tier 2 cannot starve Tier 0.
+
+**0.4 Budget controller dynamics.** More urgent than when this brief was written, because there are
+now **two** controllers: compute shadow price and, shortly, attention. `BudgetController.update` is
+a naive proportional step and per-request spend is heavy-tailed. Replace it with something carrying
+a stability argument - AIMD as in TCP congestion control, or PI with anti-windup - and measure the
+lambda trajectory: convergence, overshoot, settling time. Then check for **starvation**: under
+sustained high lambda, does low-consequence traffic ever get checked? The OS answer is aging.
+Measure before fixing.
+
+**0.5 Group commit on the ledger.** Correct but serial and on the request path. A single-writer task
+fed by a queue, batching N records per fsync as journalling filesystems do.
+`tests/test_ledger_concurrency.py` is the regression guard and must keep passing.
+
+Leave decision replay until after 0.2, since leases give it something worth replaying.
+
 ## 1. What the system is, in one page
 
 Every guardrail product competes on detection quality and latency. We compete on **allocation**.
@@ -100,6 +153,8 @@ them being stable:**
   distinct. Do not collapse them.
 - `controlplane/detectors/ollama_judge.py`, `controlplane/eval/judge_probe.py`.
 - `controlplane/economics/allocator.py` — coordinate before changing the decision rule itself.
+- `controlplane/review/` and `controlplane/eval/report.py::_run_review` — the other lane's
+  reviewer queue and feedback loop. Read them, reuse `review_sla_minutes`, do not edit them.
 - `docs/PREREGISTRATION.md` — the point of it is that it was written first.
 
 If you need a change inside someone else's lane, write it in `HANDOFF.md` and leave it.
