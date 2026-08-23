@@ -34,6 +34,7 @@ from controlplane.review import (
     catch_rates,
     intervention_precision,
     review_case,
+    unchecked_escape_rate,
 )
 from controlplane.risk import expected_calibration_error
 from controlplane.service import AssessmentEngine
@@ -108,6 +109,7 @@ def _evaluate_budgets(
 
     curve: list[dict[str, float | str]] = []
     audit: dict[str, Any] = {}
+    pooled_records: list[ReviewRecord] = []
     for fraction in BUDGET_FRACTIONS:
         budget = full_spend * fraction
         record = fraction == BUDGET_FRACTIONS[-1]
@@ -132,24 +134,34 @@ def _evaluate_budgets(
         detail.setdefault("shadow_price", {})[f"{fraction:.2f}"] = run.final_shadow_price
         detail.setdefault("review", {})[f"{fraction:.2f}"] = run.review
         detail.setdefault("compute_spend", {})[f"{fraction:.2f}"] = run.spend_inr
-        detail.setdefault("feedback", {})[f"{fraction:.2f}"] = _feedback(engine, run.records)
+        pooled_records.extend(run.records)
         detail.setdefault("escaped_by_route", {})[f"{fraction:.2f}"] = escaped_harm_by_route(
             run.rows
         )
     detail["audit"] = audit
+    detail["feedback"] = _feedback(engine, pooled_records)
     detail["full_check_spend_inr"] = full_spend
     return curve
 
 
 def _feedback(engine: AssessmentEngine, records: list[ReviewRecord]) -> dict[str, Any]:
-    """Turn reviewer labels into a measured catch rate, rather than a config constant."""
+    """Turn reviewer labels into measured catch rates, rather than config constants.
+
+    Labels are pooled across every budget. A tier's catch rate is a property of the
+    detector, not of the budget that happened to select it, and the cheap tiers are only
+    ever selected under budget pressure, so a single operating point leaves them with no
+    observations at all.
+    """
     configured = {
         int(tier): float(values["catch_rate"]["hallucination"])
         for tier, values in engine.cost_model.config["tiers"].items()
     }
     estimates = catch_rates(records, configured)
+    unchecked = unchecked_escape_rate(records)
     return {
         "precision": intervention_precision(records),
+        "records": float(len(records)),
+        "unchecked": unchecked,
         "catch_rate": {
             str(tier): {
                 "catches": estimate.catches,
@@ -158,6 +170,7 @@ def _feedback(engine: AssessmentEngine, records: list[ReviewRecord]) -> dict[str
                 "measured": estimate.reportable,
                 "configured": estimate.configured,
                 "has_evidence": estimate.has_evidence,
+                "selected": estimate.observations > 0,
             }
             for tier, estimate in estimates.items()
         },
@@ -307,7 +320,10 @@ def _run_review(
         "sla_breached": float(len(breached)),
         "shed": float(len(shed)),
         "shed_rate": len(shed) / raised if raised else 0.0,
-        "attention_spend_inr": sum(d.spend_inr for d in decisions),
+        "attention_spend_inr": sum(d.spend_inr for d in decisions)
+        + (len(records) - len(served)) * economics.cost_per_case_inr,
+        "queue_spend_inr": sum(d.spend_inr for d in decisions),
+        "audit_spend_inr": (len(records) - len(served)) * economics.cost_per_case_inr,
         "reviewer_minutes": sum(d.case.review_minutes for d in served),
         "capacity_minutes": economics.capacity_minutes_per_hour * hours,
         "p99_wait_minutes": percentile([d.wait_minutes for d in served], 0.99),
@@ -319,14 +335,24 @@ def _run_review(
 def _audit_released(
     engine: AssessmentEngine, test: list[Interaction], traces: list[DecisionTrace]
 ) -> list[ReviewRecord]:
-    """Review a random slice of what was released, which is where misses live."""
+    """Review a slice of what was released, sampled harder where we have no opinion.
+
+    Rows the allocator declined to check are the only place a miss is visible, and barely
+    one in four hundred of them carries harm. Sampling them at the same rate as rows a
+    detector already scored spends the audit budget where it learns nothing.
+    """
     released = [
         (item, trace)
         for item, trace in zip(test, traces, strict=True)
         if trace.verdict not in {"abstain", "hold", "block"}
     ]
-    identifiers = [item.interaction_id for item, _ in released]
-    sampled = audit_sample(identifiers, engine.cost_model.audit_rate)
+    unchecked = [pair for pair in released if pair[1].selected_tier is None]
+    checked = [pair for pair in released if pair[1].selected_tier is not None]
+    sampled = audit_sample(
+        [item.interaction_id for item, _ in unchecked], engine.cost_model.audit_rate_unchecked
+    ) | audit_sample(
+        [item.interaction_id for item, _ in checked], engine.cost_model.audit_rate_checked
+    )
     return [
         review_case(item, trace) for item, trace in released if item.interaction_id in sampled
     ]

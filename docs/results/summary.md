@@ -27,12 +27,12 @@ capacity is budgeted separately and the queue reports what it could not absorb.
 
 | Budget | Compute | Attention | Total | Attention share | Cases raised | Shed |
 |---:|---:|---:|---:|---:|---:|---:|
-| 10% | 623.48 | 19,920.00 | 20,543.48 | 97.0% | 247 | 32.8% |
-| 25% | 1,038.12 | 19,920.00 | 20,958.12 | 95.0% | 280 | 40.7% |
-| 40% | 1,848.24 | 19,920.00 | 21,768.24 | 91.5% | 307 | 45.9% |
-| 60% | 2,922.02 | 19,920.00 | 22,842.02 | 87.2% | 396 | 58.1% |
-| 80% | 3,731.38 | 19,920.00 | 23,651.38 | 84.2% | 396 | 58.1% |
-| 100% | 3,800.84 | 19,920.00 | 23,720.84 | 84.0% | 396 | 58.1% |
+| 10% | 623.48 | 40,320.00 | 40,943.48 | 98.5% | 247 | 32.8% |
+| 25% | 1,038.12 | 36,960.00 | 37,998.12 | 97.3% | 280 | 40.7% |
+| 40% | 1,848.24 | 33,960.00 | 35,808.24 | 94.8% | 307 | 45.9% |
+| 60% | 2,922.02 | 33,600.00 | 36,522.02 | 92.0% | 396 | 58.1% |
+| 80% | 3,731.38 | 33,600.00 | 37,331.38 | 90.0% | 396 | 58.1% |
+| 100% | 3,800.84 | 33,600.00 | 37,400.84 | 89.8% | 396 | 58.1% |
 
 Raising the compute budget raises the number of cases needing a person, so buying more automated checking increases the human bill rather than reducing it.
 
@@ -54,6 +54,6 @@ Raising the compute budget raises the number of cases needing a person, so buyin
 ## Audit
 
 - hash chain valid: True
-- decisions recorded: 1753 of 1500
+- decisions recorded: 1780 of 1500
 - effects logged: 182 of 224 proposed (coverage 0.8125)
 

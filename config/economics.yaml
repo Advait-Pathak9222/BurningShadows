@@ -5,9 +5,12 @@ review:
   minutes_per_case: 6
   # Reviewer minutes available per hour of traffic. Two reviewers on shift.
   capacity_minutes_per_hour: 120
-  # Share of RELEASED traffic reviewed anyway. Reviewing only what we flagged measures
-  # precision and nothing else, so catch rate needs a slice the allocator let through.
-  audit_rate: 0.08
+  # Audit is stratified because uniform sampling wastes reviewer time. Rows the allocator
+  # declined to check are the only place a miss is visible, and only about one in four
+  # hundred of them carries harm, so they are sampled far harder than rows a detector
+  # already scored.
+  audit_rate_unchecked: 0.40
+  audit_rate_checked: 0.04
 
 controller:
   learning_rate: 0.35

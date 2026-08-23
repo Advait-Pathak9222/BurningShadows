@@ -6,7 +6,7 @@
       "decisions": 1500.0,
       "effects_logged": 182.0,
       "effects_proposed": 224.0,
-      "records": 1753.0
+      "records": 1780.0
     }
   },
   "compute_spend": {
@@ -183,221 +183,48 @@
     }
   },
   "feedback": {
-    "0.10": {
-      "catch_rate": {
-        "0": {
-          "catches": 0,
-          "configured": 0.15,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "1": {
-          "catches": 18,
-          "configured": 0.68,
-          "has_evidence": true,
-          "measured": 0.6666666666666666,
-          "misses": 8,
-          "observations": 26
-        },
-        "2": {
-          "catches": 34,
-          "configured": 0.88,
-          "has_evidence": true,
-          "measured": 0.8780487804878049,
-          "misses": 3,
-          "observations": 37
-        }
+    "catch_rate": {
+      "0": {
+        "catches": 0,
+        "configured": 0.15,
+        "has_evidence": false,
+        "measured": null,
+        "misses": 0,
+        "observations": 0,
+        "selected": false
       },
-      "precision": {
-        "escape_rate_in_audit": 0.11702127659574468,
-        "escaped_found": 11.0,
-        "precision": 0.3132530120481928,
-        "released_reviewed": 94.0,
-        "reviewed": 260.0,
-        "withheld": 166.0
+      "1": {
+        "catches": 24,
+        "configured": 0.68,
+        "has_evidence": true,
+        "measured": 0.6046511627906976,
+        "misses": 15,
+        "observations": 39,
+        "selected": true
+      },
+      "2": {
+        "catches": 303,
+        "configured": 0.88,
+        "has_evidence": true,
+        "measured": 0.9050445103857567,
+        "misses": 30,
+        "observations": 333,
+        "selected": true
       }
     },
-    "0.25": {
-      "catch_rate": {
-        "0": {
-          "catches": 0,
-          "configured": 0.15,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "1": {
-          "catches": 6,
-          "configured": 0.68,
-          "has_evidence": true,
-          "measured": 0.47058823529411764,
-          "misses": 7,
-          "observations": 13
-        },
-        "2": {
-          "catches": 48,
-          "configured": 0.88,
-          "has_evidence": true,
-          "measured": 0.9090909090909091,
-          "misses": 3,
-          "observations": 51
-        }
-      },
-      "precision": {
-        "escape_rate_in_audit": 0.10989010989010989,
-        "escaped_found": 10.0,
-        "precision": 0.3253012048192771,
-        "released_reviewed": 91.0,
-        "reviewed": 257.0,
-        "withheld": 166.0
-      }
+    "precision": {
+      "escape_rate_in_audit": 0.11024643320363164,
+      "escaped_found": 85.0,
+      "precision": 0.32831325301204817,
+      "released_reviewed": 771.0,
+      "reviewed": 1767.0,
+      "withheld": 996.0
     },
-    "0.40": {
-      "catch_rate": {
-        "0": {
-          "catches": 0,
-          "configured": 0.15,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "1": {
-          "catches": 0,
-          "configured": 0.68,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 5,
-          "observations": 5
-        },
-        "2": {
-          "catches": 56,
-          "configured": 0.88,
-          "has_evidence": true,
-          "measured": 0.90625,
-          "misses": 4,
-          "observations": 60
-        }
-      },
-      "precision": {
-        "escape_rate_in_audit": 0.1,
-        "escaped_found": 9.0,
-        "precision": 0.3373493975903614,
-        "released_reviewed": 90.0,
-        "reviewed": 256.0,
-        "withheld": 166.0
-      }
-    },
-    "0.60": {
-      "catch_rate": {
-        "0": {
-          "catches": 0,
-          "configured": 0.15,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "1": {
-          "catches": 0,
-          "configured": 0.68,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 2,
-          "observations": 2
-        },
-        "2": {
-          "catches": 55,
-          "configured": 0.88,
-          "has_evidence": true,
-          "measured": 0.8769230769230769,
-          "misses": 6,
-          "observations": 61
-        }
-      },
-      "precision": {
-        "escape_rate_in_audit": 0.09195402298850575,
-        "escaped_found": 8.0,
-        "precision": 0.3313253012048193,
-        "released_reviewed": 87.0,
-        "reviewed": 253.0,
-        "withheld": 166.0
-      }
-    },
-    "0.80": {
-      "catch_rate": {
-        "0": {
-          "catches": 0,
-          "configured": 0.15,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "1": {
-          "catches": 0,
-          "configured": 0.68,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "2": {
-          "catches": 55,
-          "configured": 0.88,
-          "has_evidence": true,
-          "measured": 0.8507462686567164,
-          "misses": 8,
-          "observations": 63
-        }
-      },
-      "precision": {
-        "escape_rate_in_audit": 0.09195402298850575,
-        "escaped_found": 8.0,
-        "precision": 0.3313253012048193,
-        "released_reviewed": 87.0,
-        "reviewed": 253.0,
-        "withheld": 166.0
-      }
-    },
-    "1.00": {
-      "catch_rate": {
-        "0": {
-          "catches": 0,
-          "configured": 0.15,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "1": {
-          "catches": 0,
-          "configured": 0.68,
-          "has_evidence": false,
-          "measured": null,
-          "misses": 0,
-          "observations": 0
-        },
-        "2": {
-          "catches": 55,
-          "configured": 0.88,
-          "has_evidence": true,
-          "measured": 0.8507462686567164,
-          "misses": 8,
-          "observations": 63
-        }
-      },
-      "precision": {
-        "escape_rate_in_audit": 0.09195402298850575,
-        "escaped_found": 8.0,
-        "precision": 0.3313253012048193,
-        "released_reviewed": 87.0,
-        "reviewed": 253.0,
-        "withheld": 166.0
-      }
+    "records": 1767.0,
+    "unchecked": {
+      "carried_harm": 40.0,
+      "escape_rate": 0.0718132854578097,
+      "reviewed": 557.0
     }
   },
   "full_check_spend_inr": 4799.9999999998645,
@@ -406,7 +233,7 @@
       "abstention_rate": 0.004,
       "assurance_roi": 8315.743889138384,
       "assurance_spend_inr": 623.48,
-      "attention_spend_inr": 19920.0,
+      "attention_spend_inr": 40320.0,
       "budget_fraction": 0.1,
       "budget_variance": 0.2989166666667033,
       "cost_per_1k_inr": 415.6533333333333,
@@ -417,12 +244,12 @@
       "interactions": 1500.0,
       "intervention_precision": 0.1742489270386266,
       "loss_averted_inr": 5184700.0,
-      "p99_effect_latency_ms": 0.2,
-      "p99_text_latency_ms": 0.2,
+      "p99_effect_latency_ms": 0.3,
+      "p99_text_latency_ms": 0.3,
       "policy": "allocator",
       "release_rate": 0.962,
       "residual_loss_inr": 469600.0,
-      "total_assurance_inr": 20543.48
+      "total_assurance_inr": 40943.48
     },
     {
       "abstention_rate": 0.0,
@@ -494,7 +321,7 @@
       "abstention_rate": 0.008666666666666666,
       "assurance_roi": 5045.17782144646,
       "assurance_spend_inr": 1038.1200000000001,
-      "attention_spend_inr": 19920.0,
+      "attention_spend_inr": 36960.0,
       "budget_fraction": 0.25,
       "budget_variance": -0.13489999999997548,
       "cost_per_1k_inr": 692.08,
@@ -510,7 +337,7 @@
       "policy": "allocator",
       "release_rate": 0.9293333333333333,
       "residual_loss_inr": 416800.0,
-      "total_assurance_inr": 20958.12
+      "total_assurance_inr": 37998.12
     },
     {
       "abstention_rate": 0.0,
@@ -582,7 +409,7 @@
       "abstention_rate": 0.011333333333333334,
       "assurance_roi": 2893.4553954031944,
       "assurance_spend_inr": 1848.24,
-      "attention_spend_inr": 19920.0,
+      "attention_spend_inr": 33960.0,
       "budget_fraction": 0.4,
       "budget_variance": -0.03737499999997286,
       "cost_per_1k_inr": 1232.16,
@@ -598,7 +425,7 @@
       "policy": "allocator",
       "release_rate": 0.9046666666666666,
       "residual_loss_inr": 306500.0,
-      "total_assurance_inr": 21768.24
+      "total_assurance_inr": 35808.24
     },
     {
       "abstention_rate": 0.0,
@@ -670,7 +497,7 @@
       "abstention_rate": 0.026,
       "assurance_roi": 1835.9217253817565,
       "assurance_spend_inr": 2922.02,
-      "attention_spend_inr": 19920.0,
+      "attention_spend_inr": 33600.0,
       "budget_fraction": 0.6,
       "budget_variance": 0.014590277777806448,
       "cost_per_1k_inr": 1948.0133333333333,
@@ -686,7 +513,7 @@
       "policy": "allocator",
       "release_rate": 0.844,
       "residual_loss_inr": 289700.0,
-      "total_assurance_inr": 22842.02
+      "total_assurance_inr": 36522.02
     },
     {
       "abstention_rate": 0.0,
@@ -758,7 +585,7 @@
       "abstention_rate": 0.026,
       "assurance_roi": 1444.6665844808088,
       "assurance_spend_inr": 3731.38,
-      "attention_spend_inr": 19920.0,
+      "attention_spend_inr": 33600.0,
       "budget_fraction": 0.8,
       "budget_variance": -0.028286458333305918,
       "cost_per_1k_inr": 2487.5866666666666,
@@ -769,12 +596,12 @@
       "interactions": 1500.0,
       "intervention_precision": 0.165402124430956,
       "loss_averted_inr": 5390600.0,
-      "p99_effect_latency_ms": 0.2,
-      "p99_text_latency_ms": 0.2,
+      "p99_effect_latency_ms": 0.3,
+      "p99_text_latency_ms": 0.3,
       "policy": "allocator",
       "release_rate": 0.844,
       "residual_loss_inr": 263700.0,
-      "total_assurance_inr": 23651.38
+      "total_assurance_inr": 37331.38
     },
     {
       "abstention_rate": 0.0,
@@ -846,7 +673,7 @@
       "abstention_rate": 0.026,
       "assurance_roi": 1418.2654360615022,
       "assurance_spend_inr": 3800.84,
-      "attention_spend_inr": 19920.0,
+      "attention_spend_inr": 33600.0,
       "budget_fraction": 1.0,
       "budget_variance": -0.20815833333331094,
       "cost_per_1k_inr": 2533.8933333333334,
@@ -858,11 +685,11 @@
       "intervention_precision": 0.165402124430956,
       "loss_averted_inr": 5390600.0,
       "p99_effect_latency_ms": 0.2,
-      "p99_text_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.3,
       "policy": "allocator",
       "release_rate": 0.844,
       "residual_loss_inr": 263700.0,
-      "total_assurance_inr": 23720.84
+      "total_assurance_inr": 37400.84
     },
     {
       "abstention_rate": 0.0,
@@ -950,12 +777,14 @@
   },
   "review": {
     "0.10": {
-      "attention_spend_inr": 19920.0,
-      "audit_reviews": 94.0,
+      "attention_spend_inr": 40320.0,
+      "audit_reviews": 170.0,
+      "audit_spend_inr": 20400.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.16466666666666666,
       "cases_raised": 247.0,
       "p99_wait_minutes": 495.0,
+      "queue_spend_inr": 19920.0,
       "reviewed": 5.0,
       "reviewer_minutes": 996.0,
       "shed": 81.0,
@@ -963,12 +792,14 @@
       "sla_breached": 161.0
     },
     "0.25": {
-      "attention_spend_inr": 19920.0,
-      "audit_reviews": 91.0,
+      "attention_spend_inr": 36960.0,
+      "audit_reviews": 142.0,
+      "audit_spend_inr": 17040.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.18666666666666668,
       "cases_raised": 280.0,
       "p99_wait_minutes": 495.0,
+      "queue_spend_inr": 19920.0,
       "reviewed": 5.0,
       "reviewer_minutes": 996.0,
       "shed": 114.0,
@@ -976,12 +807,14 @@
       "sla_breached": 161.0
     },
     "0.40": {
-      "attention_spend_inr": 19920.0,
-      "audit_reviews": 90.0,
+      "attention_spend_inr": 33960.0,
+      "audit_reviews": 117.0,
+      "audit_spend_inr": 14040.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.20466666666666666,
       "cases_raised": 307.0,
       "p99_wait_minutes": 495.0,
+      "queue_spend_inr": 19920.0,
       "reviewed": 5.0,
       "reviewer_minutes": 996.0,
       "shed": 141.0,
@@ -989,12 +822,14 @@
       "sla_breached": 161.0
     },
     "0.60": {
-      "attention_spend_inr": 19920.0,
-      "audit_reviews": 87.0,
+      "attention_spend_inr": 33600.0,
+      "audit_reviews": 114.0,
+      "audit_spend_inr": 13680.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.264,
       "cases_raised": 396.0,
       "p99_wait_minutes": 495.0,
+      "queue_spend_inr": 19920.0,
       "reviewed": 5.0,
       "reviewer_minutes": 996.0,
       "shed": 230.0,
@@ -1002,12 +837,14 @@
       "sla_breached": 161.0
     },
     "0.80": {
-      "attention_spend_inr": 19920.0,
-      "audit_reviews": 87.0,
+      "attention_spend_inr": 33600.0,
+      "audit_reviews": 114.0,
+      "audit_spend_inr": 13680.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.264,
       "cases_raised": 396.0,
       "p99_wait_minutes": 495.0,
+      "queue_spend_inr": 19920.0,
       "reviewed": 5.0,
       "reviewer_minutes": 996.0,
       "shed": 230.0,
@@ -1015,12 +852,14 @@
       "sla_breached": 161.0
     },
     "1.00": {
-      "attention_spend_inr": 19920.0,
-      "audit_reviews": 87.0,
+      "attention_spend_inr": 33600.0,
+      "audit_reviews": 114.0,
+      "audit_spend_inr": 13680.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.264,
       "cases_raised": 396.0,
       "p99_wait_minutes": 495.0,
+      "queue_spend_inr": 19920.0,
       "reviewed": 5.0,
       "reviewer_minutes": 996.0,
       "shed": 230.0,

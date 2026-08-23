@@ -77,6 +77,22 @@ def catch_rates(
     return estimates
 
 
+def unchecked_escape_rate(records: list[ReviewRecord]) -> dict[str, float]:
+    """What declining to check actually costs, measured on the rows we declined.
+
+    A catch rate cannot be computed here: a row the allocator chose not to escalate was
+    by construction not withheld, so catches are structurally zero and the ratio would be
+    a tautology. The answerable question is what share of that traffic carried harm.
+    """
+    unchecked = [record for record in records if record.selected_tier is None]
+    harmful = sum(record.observed_harm for record in unchecked)
+    return {
+        "reviewed": float(len(unchecked)),
+        "carried_harm": float(harmful),
+        "escape_rate": harmful / len(unchecked) if unchecked else 0.0,
+    }
+
+
 def intervention_precision(records: list[ReviewRecord]) -> dict[str, float]:
     """What share of what we withheld a reviewer agreed was harmful."""
     withheld = [record for record in records if record.system_withheld]

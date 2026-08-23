@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from controlplane.models import ReviewRecord, ReviewVerdict
-from controlplane.review import audit_sample, catch_rates, intervention_precision
+from controlplane.review import (
+    audit_sample,
+    catch_rates,
+    intervention_precision,
+    unchecked_escape_rate,
+)
 from controlplane.review.recalibration import MIN_OBSERVATIONS
 
 
@@ -76,3 +81,17 @@ def test_the_audit_slice_comes_from_released_rows_and_is_deterministic() -> None
 def test_a_larger_audit_rate_samples_more() -> None:
     identifiers = [f"row-{index:04d}" for index in range(2000)]
     assert len(audit_sample(identifiers, 0.20)) > len(audit_sample(identifiers, 0.05))
+
+
+def test_unchecked_rows_report_an_escape_rate_not_a_catch_rate() -> None:
+    """A row nobody escalated was not withheld, so a catch rate there is a tautology."""
+    records = [_record(i, harm=True, withheld=False, tier=None) for i in range(3)]
+    records += [_record(10 + i, harm=False, withheld=False, tier=None) for i in range(7)]
+    summary = unchecked_escape_rate(records)
+    assert summary["reviewed"] == 10.0
+    assert summary["escape_rate"] == 0.3
+
+
+def test_escalated_rows_are_excluded_from_the_unchecked_view() -> None:
+    records = [_record(i, harm=True, withheld=True, tier=2) for i in range(5)]
+    assert unchecked_escape_rate(records)["reviewed"] == 0.0

@@ -4,6 +4,7 @@ from controlplane.review.recalibration import (
     audit_sample,
     catch_rates,
     intervention_precision,
+    unchecked_escape_rate,
 )
 from controlplane.review.reviewer import review_case
 
@@ -16,4 +17,5 @@ __all__ = [
     "catch_rates",
     "intervention_precision",
     "review_case",
+    "unchecked_escape_rate",
 ]
