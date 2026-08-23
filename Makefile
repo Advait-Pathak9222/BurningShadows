@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report api console mlflow-ui test lint typecheck check clean
+.PHONY: install data demo report judge-probe api console mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -13,6 +13,9 @@ demo: data
 
 report: data
 	$(PYTHON) -m controlplane.cli report
+
+judge-probe:
+	$(PYTHON) -m controlplane.cli judge-probe
 
 api:
 	$(PYTHON) -m uvicorn controlplane.gateway.app:app --host 127.0.0.1 --port 8000

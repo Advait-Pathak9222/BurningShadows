@@ -1,0 +1,10 @@
+# Local judge used only by `make judge-probe`. The offline demo never calls it.
+model: phi3:mini
+host: http://localhost:11434
+timeout_seconds: 300
+num_predict: 256
+seed: 20260824
+# Ollama batches discretely rather than continuously, so gains flatten past a few workers.
+# Measured on this machine: 4 calls took 13.3s at concurrency 1 and 5.3s at concurrency 4.
+concurrency: 3
+sample_rows: 60

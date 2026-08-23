@@ -5,6 +5,7 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
+from controlplane.eval.judge_probe import run_probe, write_probe
 from controlplane.eval.report import build_report
 from controlplane.ledger import LedgerStore
 from controlplane.service import AssessmentEngine
@@ -16,12 +17,22 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="controlplane")
-    parser.add_argument("command", choices=("data", "demo", "report", "clean"))
+    parser.add_argument("command", choices=("data", "demo", "report", "judge-probe", "clean"))
     args = parser.parse_args(argv)
     if args.command == "data":
         interactions = generate_corpus()
         write_corpus(interactions, ROOT / "data")
         print(f"Wrote {len(interactions)} labelled interactions to data/.")
+        return 0
+    if args.command == "judge-probe":
+        summary = run_probe(ROOT)
+        write_probe(ROOT, summary)
+        print(
+            f"{summary['model']}: stub AUC {summary['auc_stub_whole_response']:.4f}, "
+            f"judge AUC {summary['auc_judge_whole_response']:.4f}, "
+            f"page-max AUC {summary['auc_judge_page_max']:.4f}, "
+            f"localisation {summary['localisation_rate']:.1%}"
+        )
         return 0
     if args.command == "report":
         interactions = ensure_corpus(ROOT / "data")
