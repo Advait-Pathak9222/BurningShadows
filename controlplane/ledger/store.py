@@ -5,8 +5,8 @@ import threading
 from pathlib import Path
 
 from controlplane.ledger.hash_chain import GENESIS_HASH, record_hash
-from controlplane.ledger.records import canonical_record
-from controlplane.models import DecisionTrace
+from controlplane.ledger.records import canonical_record, canonical_review
+from controlplane.models import DecisionTrace, ReviewRecord
 
 
 class LedgerStore:
@@ -24,7 +24,13 @@ class LedgerStore:
         self._create_schema()
 
     def append(self, trace: DecisionTrace) -> str:
-        record = canonical_record(trace)
+        return self._append(trace.interaction_id, canonical_record(trace))
+
+    def append_review(self, record: ReviewRecord) -> str:
+        """Reviews join the same chain, so an override cannot be edited undetected."""
+        return self._append(record.interaction_id, canonical_review(record))
+
+    def _append(self, event_id: str, record: str) -> str:
         with self._lock:
             # The previous hash is read and the new row written inside one write
             # transaction. Without IMMEDIATE the SELECT takes only a shared lock, so two
@@ -41,7 +47,7 @@ class LedgerStore:
                     INSERT INTO decisions(event_id, record_json, previous_hash, record_hash)
                     VALUES (?, ?, ?, ?)
                     """,
-                    (trace.interaction_id, record, previous, digest),
+                    (event_id, record, previous, digest),
                 )
             except BaseException:
                 self._connection.rollback()

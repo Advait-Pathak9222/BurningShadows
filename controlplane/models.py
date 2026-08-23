@@ -177,6 +177,29 @@ class ReviewDecision(BaseModel):
     spend_inr: float = Field(ge=0.0)
 
 
+class ReviewVerdict(StrEnum):
+    UPHELD = "upheld"
+    OVERTURNED = "overturned"
+    ESCALATED = "escalated"
+
+
+class ReviewRecord(BaseModel):
+    """A reviewer's decision on one case, and the label it produced."""
+
+    model_config = ConfigDict(frozen=True)
+
+    interaction_id: str
+    route: str
+    reviewer: str
+    verdict: ReviewVerdict
+    reason_code: str
+    # What the reviewer determined was actually true, which is the label the system learns from.
+    observed_harm: bool
+    system_withheld: bool
+    selected_tier: int | None
+    decided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class TierEconomics(BaseModel):
     tier: int = Field(ge=0, le=2)
     catch_rate: HarmVector

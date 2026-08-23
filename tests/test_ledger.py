@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from controlplane.models import HarmVector, Interaction
+from controlplane.models import HarmVector, Interaction, ReviewRecord, ReviewVerdict
 from controlplane.service import AssessmentEngine
 
 
@@ -32,5 +32,35 @@ def test_hash_chain_detects_tampering(project_root: Path, tmp_path: Path) -> Non
     assert engine.ledger.verify() == (True, 2)
     with sqlite3.connect(ledger_path) as connection:
         connection.execute("UPDATE decisions SET record_json = '{}' WHERE sequence = 1")
+        connection.commit()
+    assert engine.ledger.verify() == (False, 1)
+
+
+def test_tampering_with_a_review_breaks_the_chain(project_root: Path, tmp_path: Path) -> None:
+    """Overrides share the decision chain, so an edited override is detectable too."""
+    ledger_path = tmp_path / "review.db"
+    engine = AssessmentEngine(
+        project_root,
+        ledger_path=ledger_path,
+        conformal_thresholds={"support-assistant": 0.1},
+    )
+    assert engine.ledger is not None
+    engine.ledger.append_review(
+        ReviewRecord(
+            interaction_id="reviewed-0001",
+            route="support-assistant",
+            reviewer="tester",
+            verdict=ReviewVerdict.OVERTURNED,
+            reason_code="no harm found, over-flagged",
+            observed_harm=False,
+            system_withheld=True,
+            selected_tier=2,
+        )
+    )
+    assert engine.ledger.verify() == (True, 1)
+    with sqlite3.connect(ledger_path) as connection:
+        connection.execute(
+            "UPDATE decisions SET record_json = replace(record_json, 'overturned', 'upheld')"
+        )
         connection.commit()
     assert engine.ledger.verify() == (False, 1)

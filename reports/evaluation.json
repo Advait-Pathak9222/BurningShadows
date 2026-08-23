@@ -2,11 +2,11 @@
   "audit": {
     "1.00": {
       "chain_valid": true,
-      "coverage": 1.0,
+      "coverage": 0.8125,
       "decisions": 1500.0,
-      "effects_logged": 224.0,
+      "effects_logged": 182.0,
       "effects_proposed": 224.0,
-      "records": 1500.0
+      "records": 1753.0
     }
   },
   "compute_spend": {
@@ -182,6 +182,224 @@
       }
     }
   },
+  "feedback": {
+    "0.10": {
+      "catch_rate": {
+        "0": {
+          "catches": 0,
+          "configured": 0.15,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "1": {
+          "catches": 18,
+          "configured": 0.68,
+          "has_evidence": true,
+          "measured": 0.6666666666666666,
+          "misses": 8,
+          "observations": 26
+        },
+        "2": {
+          "catches": 34,
+          "configured": 0.88,
+          "has_evidence": true,
+          "measured": 0.8780487804878049,
+          "misses": 3,
+          "observations": 37
+        }
+      },
+      "precision": {
+        "escape_rate_in_audit": 0.11702127659574468,
+        "escaped_found": 11.0,
+        "precision": 0.3132530120481928,
+        "released_reviewed": 94.0,
+        "reviewed": 260.0,
+        "withheld": 166.0
+      }
+    },
+    "0.25": {
+      "catch_rate": {
+        "0": {
+          "catches": 0,
+          "configured": 0.15,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "1": {
+          "catches": 6,
+          "configured": 0.68,
+          "has_evidence": true,
+          "measured": 0.47058823529411764,
+          "misses": 7,
+          "observations": 13
+        },
+        "2": {
+          "catches": 48,
+          "configured": 0.88,
+          "has_evidence": true,
+          "measured": 0.9090909090909091,
+          "misses": 3,
+          "observations": 51
+        }
+      },
+      "precision": {
+        "escape_rate_in_audit": 0.10989010989010989,
+        "escaped_found": 10.0,
+        "precision": 0.3253012048192771,
+        "released_reviewed": 91.0,
+        "reviewed": 257.0,
+        "withheld": 166.0
+      }
+    },
+    "0.40": {
+      "catch_rate": {
+        "0": {
+          "catches": 0,
+          "configured": 0.15,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "1": {
+          "catches": 0,
+          "configured": 0.68,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 5,
+          "observations": 5
+        },
+        "2": {
+          "catches": 56,
+          "configured": 0.88,
+          "has_evidence": true,
+          "measured": 0.90625,
+          "misses": 4,
+          "observations": 60
+        }
+      },
+      "precision": {
+        "escape_rate_in_audit": 0.1,
+        "escaped_found": 9.0,
+        "precision": 0.3373493975903614,
+        "released_reviewed": 90.0,
+        "reviewed": 256.0,
+        "withheld": 166.0
+      }
+    },
+    "0.60": {
+      "catch_rate": {
+        "0": {
+          "catches": 0,
+          "configured": 0.15,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "1": {
+          "catches": 0,
+          "configured": 0.68,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 2,
+          "observations": 2
+        },
+        "2": {
+          "catches": 55,
+          "configured": 0.88,
+          "has_evidence": true,
+          "measured": 0.8769230769230769,
+          "misses": 6,
+          "observations": 61
+        }
+      },
+      "precision": {
+        "escape_rate_in_audit": 0.09195402298850575,
+        "escaped_found": 8.0,
+        "precision": 0.3313253012048193,
+        "released_reviewed": 87.0,
+        "reviewed": 253.0,
+        "withheld": 166.0
+      }
+    },
+    "0.80": {
+      "catch_rate": {
+        "0": {
+          "catches": 0,
+          "configured": 0.15,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "1": {
+          "catches": 0,
+          "configured": 0.68,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "2": {
+          "catches": 55,
+          "configured": 0.88,
+          "has_evidence": true,
+          "measured": 0.8507462686567164,
+          "misses": 8,
+          "observations": 63
+        }
+      },
+      "precision": {
+        "escape_rate_in_audit": 0.09195402298850575,
+        "escaped_found": 8.0,
+        "precision": 0.3313253012048193,
+        "released_reviewed": 87.0,
+        "reviewed": 253.0,
+        "withheld": 166.0
+      }
+    },
+    "1.00": {
+      "catch_rate": {
+        "0": {
+          "catches": 0,
+          "configured": 0.15,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "1": {
+          "catches": 0,
+          "configured": 0.68,
+          "has_evidence": false,
+          "measured": null,
+          "misses": 0,
+          "observations": 0
+        },
+        "2": {
+          "catches": 55,
+          "configured": 0.88,
+          "has_evidence": true,
+          "measured": 0.8507462686567164,
+          "misses": 8,
+          "observations": 63
+        }
+      },
+      "precision": {
+        "escape_rate_in_audit": 0.09195402298850575,
+        "escaped_found": 8.0,
+        "precision": 0.3313253012048193,
+        "released_reviewed": 87.0,
+        "reviewed": 253.0,
+        "withheld": 166.0
+      }
+    }
+  },
   "full_check_spend_inr": 4799.9999999998645,
   "metrics": [
     {
@@ -221,8 +439,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.0,
       "loss_averted_inr": 0.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_none",
       "release_rate": 1.0,
       "residual_loss_inr": 5654300.0,
@@ -243,8 +461,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5405400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_all",
       "release_rate": 1.0,
       "residual_loss_inr": 248900.0,
@@ -265,8 +483,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5072700.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "fixed_rate",
       "release_rate": 1.0,
       "residual_loss_inr": 581600.0,
@@ -309,8 +527,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.0,
       "loss_averted_inr": 0.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_none",
       "release_rate": 1.0,
       "residual_loss_inr": 5654300.0,
@@ -331,8 +549,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5405400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_all",
       "release_rate": 1.0,
       "residual_loss_inr": 248900.0,
@@ -353,8 +571,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5072700.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "fixed_rate",
       "release_rate": 1.0,
       "residual_loss_inr": 581600.0,
@@ -397,8 +615,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.0,
       "loss_averted_inr": 0.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_none",
       "release_rate": 1.0,
       "residual_loss_inr": 5654300.0,
@@ -419,8 +637,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5405400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_all",
       "release_rate": 1.0,
       "residual_loss_inr": 248900.0,
@@ -441,8 +659,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5072700.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "fixed_rate",
       "release_rate": 1.0,
       "residual_loss_inr": 581600.0,
@@ -485,8 +703,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.0,
       "loss_averted_inr": 0.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_none",
       "release_rate": 1.0,
       "residual_loss_inr": 5654300.0,
@@ -507,8 +725,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5405400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_all",
       "release_rate": 1.0,
       "residual_loss_inr": 248900.0,
@@ -529,8 +747,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.20920043811610076,
       "loss_averted_inr": 5153400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "fixed_rate",
       "release_rate": 1.0,
       "residual_loss_inr": 500900.0,
@@ -573,8 +791,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.0,
       "loss_averted_inr": 0.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_none",
       "release_rate": 1.0,
       "residual_loss_inr": 5654300.0,
@@ -595,8 +813,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5405400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_all",
       "release_rate": 1.0,
       "residual_loss_inr": 248900.0,
@@ -617,8 +835,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.1758147512864494,
       "loss_averted_inr": 5337900.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "fixed_rate",
       "release_rate": 1.0,
       "residual_loss_inr": 316400.0,
@@ -661,8 +879,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.0,
       "loss_averted_inr": 0.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_none",
       "release_rate": 1.0,
       "residual_loss_inr": 5654300.0,
@@ -683,8 +901,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.148,
       "loss_averted_inr": 5405400.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "check_all",
       "release_rate": 1.0,
       "residual_loss_inr": 248900.0,
@@ -705,8 +923,8 @@
       "interactions": 1500.0,
       "intervention_precision": 0.17270429654591407,
       "loss_averted_inr": 5337900.0,
-      "p99_effect_latency_ms": 0.3,
-      "p99_text_latency_ms": 0.3,
+      "p99_effect_latency_ms": 0.2,
+      "p99_text_latency_ms": 0.2,
       "policy": "fixed_rate",
       "release_rate": 1.0,
       "residual_loss_inr": 316400.0,
@@ -733,6 +951,7 @@
   "review": {
     "0.10": {
       "attention_spend_inr": 19920.0,
+      "audit_reviews": 94.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.16466666666666666,
       "cases_raised": 247.0,
@@ -745,6 +964,7 @@
     },
     "0.25": {
       "attention_spend_inr": 19920.0,
+      "audit_reviews": 91.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.18666666666666668,
       "cases_raised": 280.0,
@@ -757,6 +977,7 @@
     },
     "0.40": {
       "attention_spend_inr": 19920.0,
+      "audit_reviews": 90.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.20466666666666666,
       "cases_raised": 307.0,
@@ -769,6 +990,7 @@
     },
     "0.60": {
       "attention_spend_inr": 19920.0,
+      "audit_reviews": 87.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.264,
       "cases_raised": 396.0,
@@ -781,6 +1003,7 @@
     },
     "0.80": {
       "attention_spend_inr": 19920.0,
+      "audit_reviews": 87.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.264,
       "cases_raised": 396.0,
@@ -793,6 +1016,7 @@
     },
     "1.00": {
       "attention_spend_inr": 19920.0,
+      "audit_reviews": 87.0,
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.264,
       "cases_raised": 396.0,

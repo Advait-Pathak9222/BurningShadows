@@ -20,8 +20,21 @@ from controlplane.eval.metrics import (
 from controlplane.eval.tracking import log_evaluation
 from controlplane.guarantees.conformal import binomial_upper_bound
 from controlplane.ledger import LedgerStore
-from controlplane.models import DecisionTrace, DetectionBundle, Interaction, ReviewOutcome
-from controlplane.review import ReviewQueue, case_from_trace
+from controlplane.models import (
+    DecisionTrace,
+    DetectionBundle,
+    Interaction,
+    ReviewOutcome,
+    ReviewRecord,
+)
+from controlplane.review import (
+    ReviewQueue,
+    audit_sample,
+    case_from_trace,
+    catch_rates,
+    intervention_precision,
+    review_case,
+)
 from controlplane.risk import expected_calibration_error
 from controlplane.service import AssessmentEngine
 
@@ -39,6 +52,7 @@ class AllocatorRun:
     final_shadow_price: float
     ledger: LedgerStore | None = None
     review: dict[str, float] = field(default_factory=dict)
+    records: list[ReviewRecord] = field(default_factory=list)
 
 
 def build_report(
@@ -118,12 +132,36 @@ def _evaluate_budgets(
         detail.setdefault("shadow_price", {})[f"{fraction:.2f}"] = run.final_shadow_price
         detail.setdefault("review", {})[f"{fraction:.2f}"] = run.review
         detail.setdefault("compute_spend", {})[f"{fraction:.2f}"] = run.spend_inr
+        detail.setdefault("feedback", {})[f"{fraction:.2f}"] = _feedback(engine, run.records)
         detail.setdefault("escaped_by_route", {})[f"{fraction:.2f}"] = escaped_harm_by_route(
             run.rows
         )
     detail["audit"] = audit
     detail["full_check_spend_inr"] = full_spend
     return curve
+
+
+def _feedback(engine: AssessmentEngine, records: list[ReviewRecord]) -> dict[str, Any]:
+    """Turn reviewer labels into a measured catch rate, rather than a config constant."""
+    configured = {
+        int(tier): float(values["catch_rate"]["hallucination"])
+        for tier, values in engine.cost_model.config["tiers"].items()
+    }
+    estimates = catch_rates(records, configured)
+    return {
+        "precision": intervention_precision(records),
+        "catch_rate": {
+            str(tier): {
+                "catches": estimate.catches,
+                "misses": estimate.misses,
+                "observations": estimate.observations,
+                "measured": estimate.reportable,
+                "configured": estimate.configured,
+                "has_evidence": estimate.has_evidence,
+            }
+            for tier, estimate in estimates.items()
+        },
+    }
 
 
 def _best_fixed_rate(
@@ -222,20 +260,24 @@ def _run_allocator(
         controller.update(running / position)
         traces.append(trace)
         rows.append(_allocator_row(engine, interaction, trace))
-    review = _run_review(engine, test, traces)
-    return AllocatorRun(rows, traces, running, controller.shadow_price, ledger, review)
+    review, records = _run_review(engine, test, traces, ledger)
+    return AllocatorRun(rows, traces, running, controller.shadow_price, ledger, review, records)
 
 
 def _run_review(
-    engine: AssessmentEngine, test: list[Interaction], traces: list[DecisionTrace]
-) -> dict[str, float]:
-    """Price the reviewer minutes the allocator's verdicts would consume.
+    engine: AssessmentEngine,
+    test: list[Interaction],
+    traces: list[DecisionTrace],
+    ledger: LedgerStore | None,
+) -> tuple[dict[str, float], list[ReviewRecord]]:
+    """Price the reviewer minutes the allocator's verdicts consume, and collect labels.
 
-    Capacity is stated per hour of traffic, so the window is scaled by the interaction
-    count rather than assuming a reviewer is idle whenever the queue is short.
+    Capacity is stated per hour of traffic, so the window scales with the interaction
+    count rather than assuming a reviewer idles whenever the queue is short.
     """
     economics = engine.cost_model.review
     queue = ReviewQueue(economics)
+    by_id = {item.interaction_id: item for item in test}
     for interaction, trace in zip(test, traces, strict=True):
         policy = engine.policy_store.resolve(interaction.route, interaction.jurisdiction)
         case = case_from_trace(trace, policy, economics)
@@ -244,21 +286,50 @@ def _run_review(
     raised = len(queue.pending)
     hours = len(test) / INTERACTIONS_PER_HOUR
     decisions = queue.drain(economics.capacity_minutes_per_hour * hours)
-    reviewed = [d for d in decisions if d.outcome is ReviewOutcome.REVIEWED]
-    breached = [d for d in decisions if d.outcome is ReviewOutcome.BREACHED_SLA]
+    served = [d for d in decisions if d.outcome is not ReviewOutcome.SHED]
     shed = [d for d in decisions if d.outcome is ReviewOutcome.SHED]
-    return {
+    breached = [d for d in decisions if d.outcome is ReviewOutcome.BREACHED_SLA]
+
+    trace_by_id = {trace.interaction_id: trace for trace in traces}
+    records = [
+        review_case(by_id[d.case.interaction_id], trace_by_id[d.case.interaction_id])
+        for d in served
+    ]
+    records.extend(_audit_released(engine, test, traces))
+    if ledger is not None:
+        for record in records:
+            ledger.append_review(record)
+
+    summary = {
         "cases_raised": float(raised),
         "case_rate": raised / len(test) if test else 0.0,
-        "reviewed": float(len(reviewed)),
+        "reviewed": float(len(served) - len(breached)),
         "sla_breached": float(len(breached)),
         "shed": float(len(shed)),
         "shed_rate": len(shed) / raised if raised else 0.0,
         "attention_spend_inr": sum(d.spend_inr for d in decisions),
-        "reviewer_minutes": sum(d.case.review_minutes for d in reviewed + breached),
+        "reviewer_minutes": sum(d.case.review_minutes for d in served),
         "capacity_minutes": economics.capacity_minutes_per_hour * hours,
-        "p99_wait_minutes": percentile([d.wait_minutes for d in reviewed + breached], 0.99),
+        "p99_wait_minutes": percentile([d.wait_minutes for d in served], 0.99),
+        "audit_reviews": float(len(records) - len(served)),
     }
+    return summary, records
+
+
+def _audit_released(
+    engine: AssessmentEngine, test: list[Interaction], traces: list[DecisionTrace]
+) -> list[ReviewRecord]:
+    """Review a random slice of what was released, which is where misses live."""
+    released = [
+        (item, trace)
+        for item, trace in zip(test, traces, strict=True)
+        if trace.verdict not in {"abstain", "hold", "block"}
+    ]
+    identifiers = [item.interaction_id for item, _ in released]
+    sampled = audit_sample(identifiers, engine.cost_model.audit_rate)
+    return [
+        review_case(item, trace) for item, trace in released if item.interaction_id in sampled
+    ]
 
 
 def _allocator_row(
@@ -455,6 +526,7 @@ def _write_results(root: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
         "shadow_price": detail["shadow_price"],
         "review": detail["review"],
         "compute_spend": detail["compute_spend"],
+        "feedback": detail["feedback"],
         "full_check_spend_inr": detail["full_check_spend_inr"],
         "metrics": detail["metrics"],
     }

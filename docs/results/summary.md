@@ -54,6 +54,6 @@ Raising the compute budget raises the number of cases needing a person, so buyin
 ## Audit
 
 - hash chain valid: True
-- decisions recorded: 1500 of 1500
-- effects logged: 224 of 224 proposed (coverage 1.0000)
+- decisions recorded: 1753 of 1500
+- effects logged: 182 of 224 proposed (coverage 0.8125)
 

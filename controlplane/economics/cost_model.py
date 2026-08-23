@@ -28,6 +28,10 @@ class CostModel:
         return float(self.config["controller"]["gateway_budget_rate_inr"])
 
     @property
+    def audit_rate(self) -> float:
+        return float(self.config["review"]["audit_rate"])
+
+    @property
     def review(self) -> ReviewEconomics:
         values = self.config["review"]
         return ReviewEconomics(

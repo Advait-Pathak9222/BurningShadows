@@ -5,6 +5,9 @@ review:
   minutes_per_case: 6
   # Reviewer minutes available per hour of traffic. Two reviewers on shift.
   capacity_minutes_per_hour: 120
+  # Share of RELEASED traffic reviewed anyway. Reviewing only what we flagged measures
+  # precision and nothing else, so catch rate needs a slice the allocator let through.
+  audit_rate: 0.08
 
 controller:
   learning_rate: 0.35
