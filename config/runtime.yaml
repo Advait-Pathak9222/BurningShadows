@@ -1,0 +1,41 @@
+version: runtime-2026.08
+routes:
+  support-assistant:
+    discretionary:
+      concurrency: 8
+      queue_capacity: 16
+      rate_per_second: 40
+      burst: 16
+      queue_timeout_ms: 25
+    mandatory:
+      concurrency: 2
+      queue_capacity: 8
+      rate_per_second: 20
+      burst: 8
+      queue_timeout_ms: 50
+  internal-kb:
+    discretionary:
+      concurrency: 6
+      queue_capacity: 12
+      rate_per_second: 30
+      burst: 12
+      queue_timeout_ms: 25
+    mandatory:
+      concurrency: 2
+      queue_capacity: 8
+      rate_per_second: 15
+      burst: 6
+      queue_timeout_ms: 50
+  finops-agent:
+    discretionary:
+      concurrency: 4
+      queue_capacity: 8
+      rate_per_second: 20
+      burst: 8
+      queue_timeout_ms: 25
+    mandatory:
+      concurrency: 3
+      queue_capacity: 12
+      rate_per_second: 20
+      burst: 8
+      queue_timeout_ms: 75

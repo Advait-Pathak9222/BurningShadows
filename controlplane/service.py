@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import math
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from controlplane.detectors import Tier0Rules, Tier1SmallModels, Tier2Judge
 from controlplane.economics import CostModel, allocate_verification
+from controlplane.economics.allocator import expected_loss_averted_inr
 from controlplane.effects import gate_effects
 from controlplane.guarantees import ConformalCalibration, learn_then_test
 from controlplane.ledger import LedgerStore
@@ -16,6 +19,8 @@ from controlplane.models import (
     HarmVector,
     Interaction,
     PreflightDecision,
+    RoutePolicy,
+    TierEconomics,
 )
 from controlplane.policy import PolicyStore
 from controlplane.risk import IsotonicCalibrator, combine_signals, infer_evidence_regime
@@ -105,17 +110,29 @@ class AssessmentEngine:
         signals = self._signals(interaction, include_tier2)
         return combine_signals(signals, infer_evidence_regime(interaction))
 
-    def assess(self, interaction: Interaction, shadow_price: float = 0.0) -> DecisionTrace:
+    def assess(
+        self,
+        interaction: Interaction,
+        shadow_price: float = 0.0,
+        *,
+        mandatory_only: bool = False,
+        admission_mode: Literal["unbounded", "normal", "degraded"] = "unbounded",
+        queue_wait_ms: float = 0.0,
+    ) -> DecisionTrace:
         policy = self.policy_store.resolve(interaction.route, interaction.jurisdiction)
         threshold = self._threshold(interaction.route)
         signals = self._signals(interaction)
         bundle = self._bundle(interaction, signals)
+        tiers = self.cost_model.tiers(policy, interaction.tool_calls)
+        effective_price = shadow_price
+        if mandatory_only:
+            effective_price = _mandatory_only_price(bundle, policy, tiers, shadow_price)
         trace = allocate_verification(
             interaction_id=interaction.interaction_id,
             bundle=bundle,
             policy=policy,
-            tiers=self.cost_model.tiers(policy, interaction.tool_calls),
-            shadow_price=shadow_price,
+            tiers=tiers,
+            shadow_price=effective_price,
             conformal_threshold=threshold,
             tool_calls=interaction.tool_calls,
         )
@@ -128,8 +145,8 @@ class AssessmentEngine:
                 interaction_id=interaction.interaction_id,
                 bundle=bundle,
                 policy=policy,
-                tiers=self.cost_model.tiers(policy, interaction.tool_calls),
-                shadow_price=shadow_price,
+                tiers=tiers,
+                shadow_price=effective_price,
                 conformal_threshold=threshold,
                 tool_calls=interaction.tool_calls,
             )
@@ -144,7 +161,15 @@ class AssessmentEngine:
             )
 
         actions = gate_effects(interaction.tool_calls, trace.verdict, policy)
-        trace = trace.model_copy(update={"effect_actions": actions})
+        trace = trace.model_copy(
+            update={
+                "effect_actions": actions,
+                "degraded": mandatory_only,
+                "admission_mode": admission_mode,
+                "queue_wait_ms": queue_wait_ms,
+                "mandatory_assessment_completed": True,
+            }
+        )
         if self.ledger is not None:
             self.ledger.append(trace)
         return trace
@@ -212,3 +237,21 @@ def _split_folds(
         # so the selection fold gets the larger share.
         (fitting if digest[0] < 90 else selection).append(item)
     return fitting, selection
+
+
+def _mandatory_only_price(
+    bundle: DetectionBundle,
+    policy: RoutePolicy,
+    tiers: list[TierEconomics],
+    current_price: float,
+) -> float:
+    """Price out economic choices while leaving the allocator's conformal override intact."""
+    cut_lines = []
+    for tier in tiers:
+        direct_cost = tier.verification_cost_inr + tier.delay_cost_inr
+        if direct_cost <= 0.0:
+            raise ValueError("Mandatory-only admission requires positive tier costs")
+        benefit = expected_loss_averted_inr(bundle, policy, tier)
+        cut_lines.append(max(0.0, benefit / direct_cost - 1.0))
+    cut_line = max(cut_lines, default=0.0)
+    return max(current_price, math.nextafter(cut_line, math.inf))
