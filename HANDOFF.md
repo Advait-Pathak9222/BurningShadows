@@ -5,15 +5,18 @@ Shared state between Claude Code and Codex. Read this first. Update it at the en
 Internal working file. **Delete this and `audits/` before submission.** Nothing in `README.md`,
 `docs/` or the code links to either, so both can be removed without leaving dead references.
 
-Last updated: 2026-08-23 by claude-code.
+Last updated: 2026-08-23 by claude-code (Stage 0 of paged verification).
 
 ## Where things stand
 
-Branch `verify/mlflow-harness`, based on `main` at `e88f1c9`. Not merged. Not pushed yet.
-`main` has not moved since the first implementation.
+`main` is at `0362b27` (Phase A + Phase B, pushed). Current work is on branch
+`feat/paged-verification`, one commit ahead: `e5ae957`, not pushed.
 
-Phase A produced `audits/A-implementation-audit.md`, an audit of `e88f1c9`. Phase B acted on it.
-Read the audit before touching the evaluation — it explains why most of it was rewritten.
+Phase A produced `audits/A-implementation-audit.md`. Phase B fixed what it found. We are now
+building **ControlPlane v2: paged verification** — applying PagedAttention's mechanisms (paging,
+prefix caching, continuous batching, preemption) to the assurance budget rather than to a KV
+cache. Read `docs/PREREGISTRATION.md` before looking at any new number: it locks the success
+criterion and was written before the work started.
 
 ## What changed in Phase B, and why
 
@@ -85,21 +88,73 @@ Do not soften this in the pitch without new evidence. `docs/LIMITATIONS.md` carr
 
 ## In flight
 
-Nothing. Phase B is complete and committed. Waiting on approval of the corrected curve before
-Phase C (the improvement backlog).
+**Stage 0 of paged verification is done and committed (`e5ae957`). Stage M2 is next.**
+
+Stage 0 repaired six defects found while planning. Three of them would have made the paging work
+meaningless:
+
+- **The gateway never calibrated.** It served raw uncalibrated scores against hardcoded
+  thresholds 0.55/0.58/0.48 that no calibration produced (fitted: 0.05/0.15/0.05). A FastAPI
+  lifespan now fits before serving; `assess()` raises for an unfitted route instead of inventing
+  a threshold.
+- **The hash chain raced.** A new test showed 64 concurrent appends collapsing to 2 surviving
+  rows — writes were silently lost. Fixed with one pooled connection, WAL, busy_timeout and
+  `BEGIN IMMEDIATE`.
+- **`_score_jitter` keyed on `interaction_id`** while the gateway minted a fresh uuid4 per
+  request, so identical content scored differently every call. Now content-keyed. Without this no
+  verification cache is possible.
+
+Also: tier-2 escalation reuses Tier 0/1 signals; `HarmVector` accessors no longer call
+`model_dump` ~25x per allocation; the report makes one detection pass instead of three; policy
+hashes are newline-normalised so audit stamps reproduce across platforms; **`make check` passes
+clean on a fresh clone for the first time** (mypy --strict green on 44 files).
+
+Demo 31s -> 18s. Report 22s -> 15s. 27 tests green. Corpus still byte-reproducible, now enforced
+by a test.
+
+### The gating problem for M2
+
+Measured on the committed corpus: responses are 37-140 characters, median 80. Naive sentence
+segmentation gives a **median of 1 page per response, max 2**. There is nothing to page. M2 is
+therefore not "add span labels" — it is generating multi-claim responses of realistic enterprise
+length, with harm localised to specific clauses. Until median pages/response is at least 4, any
+paging result is a fixture artifact.
+
+### Two design findings that constrain the build
+
+1. **Paging can only save Tier 2 work.** The conformal floor's statistic comes from Tier 0 + Tier
+   1 combined and calibrated, so those must run on every page or the committed bound stops
+   meaning anything. Tier 2 at 3.20 INR is ~94% of variable cost, so this is fine — but do not
+   claim Tier 0/1 savings.
+2. **`_caught_loss` draws catch once per interaction.** A paged run that reads 20% of the text
+   would still claim a full catch. Coverage-weighted catch
+   (`k_eff * checked_units / total_units`) must land **before** `segmenter: sentence_v1` is
+   enabled, never after. If the paged curve is generated once with the old catch model, that
+   number will be quoted later.
 
 ## Known broken or missing
 
-- `make check` fails on a fresh clone: mypy is pinned to `python_version = "3.11"` while unpinned
-  numpy ships stubs needing 3.12. Not yet fixed.
-- Policy hashes are taken over raw file bytes, so a CRLF checkout stamps different audit hashes than
-  an LF one. Not yet fixed. Add `*.yaml text eol=lf` or normalise before hashing.
 - `ConversationRiskAccumulator` and `ReviewOverride` still have zero callers.
+- Running the test suite regenerates `docs/results/` as a side effect, because
+  `tests/test_scenarios.py` calls `build_report` against the repo root. Harmless but it dirties
+  the working tree.
+- The streaming path still emits `x-controlplane-decision: pending` and cannot retract text
+  already sent. Only effects are gated after the fact.
 - `presidio-analyzer` and `transformers` are declared in the `models` extra and imported nowhere.
 - `delay_cost_inr` is identically zero on every route and tier, so `d` never affects a decision.
 - The harm vector collapses to one axis on overlapping rows; ungrounded hallucination is not
   separable by the current detectors.
 - `mlflow ui` needs the full `mlflow` package. `mlflow-skinny` logs fine but cannot serve.
+
+## Pre-registered success criterion
+
+`docs/PREREGISTRATION.md` locks it. Summary: **assurance ROI at the 10% and 25% budget rows**,
+which are the two rows where the tuned baseline currently beats us by 2.48x and 4.10x. Success
+requires allocator ROI >= baseline ROI at both, with loss averted not regressing. Partial success
+is the ratio falling to 1.5x or below. Anything else is failure and gets written into the README.
+
+The comparator must be re-derived on the **new** corpus with the unpaged allocator. Comparing
+new-corpus-paged against old-corpus-flat measures nothing.
 
 ## What the other tool must not touch without coordinating
 
@@ -110,7 +165,12 @@ Phase C (the improvement backlog).
   valid; merging the folds re-breaks it silently.
 - `controlplane/eval/metrics.py::summarize`. The two escape-rate definitions are deliberate and
   distinct. Do not collapse them back into one.
-- `tests/test_corpus_integrity.py`. It is the regression guard for the circularity finding.
+- `tests/test_corpus_integrity.py`. It is the regression guard for the circularity finding and
+  now also enforces byte-reproducible generation.
+- `docs/PREREGISTRATION.md`. The point of it is that it was written first. Do not edit the locked
+  table or the endpoint after results exist.
+- `controlplane/ledger/store.py`. The single pooled connection plus `BEGIN IMMEDIATE` is what
+  keeps the chain intact under concurrency; `tests/test_ledger_concurrency.py` fails without it.
 
 ## Conventions
 
