@@ -13,7 +13,8 @@ self-contained, so removing `audits/` (and `HANDOFF.md`) leaves no dead referenc
 grep -rn "audits/" --include=*.md . | grep -v '^./audits/'
 ```
 
-That should return only `HANDOFF.md`, which is also removed before submission.
+That should return only `HANDOFF.md` and `CODEX_BRIEF_RUNTIME.md`, both of which are also
+removed before submission.
 
 | File | What it covers |
 |---|---|

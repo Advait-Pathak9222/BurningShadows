@@ -2,7 +2,8 @@
 
 Shared state between Claude Code and Codex. Read this first. Update it at the end of every session.
 
-Internal working file. **Delete this and `audits/` before submission.** Nothing in `README.md`,
+Internal working file. **Delete this, `CODEX_BRIEF_RUNTIME.md` and `audits/` before
+submission.** Nothing in `README.md`,
 `docs/` or the code links to either, so both can be removed without leaving dead references.
 
 Last updated: 2026-08-23 (paged verification: Stage 0, M2, and the judge probe).
@@ -194,6 +195,19 @@ new-corpus-paged against old-corpus-flat measures nothing.
   the pre-registered result; regenerating it with different weights invalidates every number.
 - `progress.csv`. Append-only log of what each commit changed and what it measured, with the
   parent SHA to revert to.
+
+## Two agents
+
+`CODEX_BRIEF_RUNTIME.md` is the brief for the second agent, working the runtime lane on another
+machine: admission control, backpressure, two-phase verification, circuit breakers, effect-gate
+durability, budget-controller dynamics, ledger write path, decision replay. It owns
+`controlplane/gateway/`, `controlplane/effects/`, `controlplane/ledger/`,
+`controlplane/economics/budget_controller.py` and a new `controlplane/runtime/`.
+
+It has been told to leave alone: `sim/traffic.py`, `sim/claims.py`, `data/*.jsonl`,
+`service.py::calibrate` and `_split_folds`, `eval/metrics.py::summarize`,
+`detectors/ollama_judge.py`, `eval/judge_probe.py`, `economics/allocator.py`, and
+`docs/PREREGISTRATION.md`.
 
 ## Conventions
 
