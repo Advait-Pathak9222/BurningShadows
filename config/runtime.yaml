@@ -3,15 +3,15 @@ routes:
   support-assistant:
     discretionary:
       concurrency: 8
-      queue_capacity: 16
+      queue_capacity: 8
       rate_per_second: 40
-      burst: 16
+      burst: 32
       queue_timeout_ms: 25
     mandatory:
       concurrency: 2
-      queue_capacity: 8
+      queue_capacity: 6
       rate_per_second: 20
-      burst: 8
+      burst: 16
       queue_timeout_ms: 50
   internal-kb:
     discretionary:
