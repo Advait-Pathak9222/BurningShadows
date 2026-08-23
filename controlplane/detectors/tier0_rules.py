@@ -25,6 +25,7 @@ BIAS_PHRASES = ("women are less", "men are better", "because of their race", "to
 
 class Tier0Rules(Detector):
     name = "tier0_rules"
+    version = "1"
     tier = 0
 
     def run(self, interaction: Interaction) -> DetectorSignal:

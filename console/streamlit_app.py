@@ -63,7 +63,7 @@ with st.container(
 
 st.caption(
     "The guarantee sets what may not be skipped. The allocator spends the remaining budget "
-    "where expected harm is highest. All displayed numbers come from the seeded 600-row corpus."
+    "where expected harm is highest. All displayed numbers come from the seeded 3000-row corpus."
 )
 
 view = st.segmented_control(
@@ -87,7 +87,7 @@ with st.sidebar:
         ["allocator", "fixed_rate", "check_none", "check_all"],
         default=["allocator", "fixed_rate"],
     )
-    st.caption("Prototype v0.1 · seeded run 20260822")
+    st.caption("Prototype v0.2 · seeded run 20260823")
 
 frame, detail, scenarios = load_artifacts()
 

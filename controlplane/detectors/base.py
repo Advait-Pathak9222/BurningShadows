@@ -10,6 +10,7 @@ class Detector(ABC):
 
     name: str
     tier: int
+    version: str
 
     @abstractmethod
     def run(self, interaction: Interaction) -> DetectorSignal:

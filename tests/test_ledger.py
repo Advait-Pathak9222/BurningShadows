@@ -9,7 +9,12 @@ from controlplane.service import AssessmentEngine
 
 def test_hash_chain_detects_tampering(project_root: Path, tmp_path: Path) -> None:
     ledger_path = tmp_path / "ledger.db"
-    engine = AssessmentEngine(project_root, ledger_path=ledger_path)
+    # Thresholds are supplied directly: this test is about chain integrity, not fitting.
+    engine = AssessmentEngine(
+        project_root,
+        ledger_path=ledger_path,
+        conformal_thresholds={"support-assistant": 0.1},
+    )
     for index in range(2):
         engine.assess(
             Interaction(

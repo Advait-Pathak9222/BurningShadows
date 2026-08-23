@@ -1,5 +1,7 @@
 controller:
   learning_rate: 0.35
+  # Assurance rupees per served interaction the gateway aims to hold.
+  gateway_budget_rate_inr: 0.75
 
 tiers:
   0:

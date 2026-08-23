@@ -16,6 +16,7 @@ class Tier1SmallModels(Detector):
     """Mimic replaceable NLI, safety, and anomaly adapters without model downloads."""
 
     name = "tier1_small_models_stub"
+    version = "1"
     tier = 1
 
     def run(self, interaction: Interaction) -> DetectorSignal:
@@ -47,7 +48,7 @@ class Tier1SmallModels(Detector):
 def _hallucination_score(
     interaction: Interaction, response_tokens: set[str], evidence: list[str]
 ) -> float:
-    jitter = _score_jitter(interaction.interaction_id)
+    jitter = _score_jitter(interaction.response)
     if interaction.context_documents:
         context_tokens = _tokens(" ".join(interaction.context_documents))
         grounding = len(response_tokens & context_tokens) / max(1, len(response_tokens))

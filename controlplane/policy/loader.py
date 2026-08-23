@@ -47,5 +47,7 @@ class PolicyStore:
         loaded = yaml.safe_load(raw)
         if not isinstance(loaded, dict):
             raise ValueError(f"Policy pack {path} must be a mapping")
-        digest = hashlib.sha256(raw).hexdigest()[:16]
+        # Hashing raw bytes made the stamp depend on the checkout's line endings, so the
+        # same policy produced different audit records on Windows and Linux.
+        digest = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()[:16]
         return modified_ns, loaded, digest

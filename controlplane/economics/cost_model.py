@@ -22,6 +22,10 @@ class CostModel:
     def controller_learning_rate(self) -> float:
         return float(self.config["controller"]["learning_rate"])
 
+    @property
+    def gateway_budget_rate_inr(self) -> float:
+        return float(self.config["controller"]["gateway_budget_rate_inr"])
+
     def tiers(self, policy: RoutePolicy, tool_calls: list[ToolCall]) -> list[TierEconomics]:
         effect_class = self._highest_effect_class(tool_calls)
         delay_rate = float(self.config["delay_cost_per_ms_inr"][effect_class.value])

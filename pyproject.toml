@@ -58,11 +58,14 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.mypy]
-python_version = "3.11"
+# Stub-parsing level only. numpy's shipped stubs use `type` statements that mypy refuses
+# to parse below 3.12, which broke `make check` on a fresh clone. Runtime support stays at
+# 3.11 (requires-python), and ruff's target-version enforces that for our own syntax.
+python_version = "3.12"
 strict = true
 packages = ["controlplane"]
 exclude = ["console"]
 
 [[tool.mypy.overrides]]
-module = ["pandas", "yaml"]
+module = ["pandas", "yaml", "mlflow", "mlflow.*"]
 ignore_missing_imports = true

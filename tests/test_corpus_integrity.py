@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from controlplane.models import Interaction
 from controlplane.service import AssessmentEngine
+from controlplane.sim.traffic import generate_corpus
 
 
 def _harm_rate(rows: list[Interaction]) -> float:
@@ -63,3 +66,10 @@ def test_detection_is_imperfect_in_both_directions(
     false_positives = [row for row in flagged if not row.truth.has_harm()]
     assert missed, "no harm is ever missed, so the corpus is separable by construction"
     assert false_positives, "nothing clean is ever flagged, so precision is unmeasurable"
+
+
+def test_generation_is_byte_reproducible(project_root: Path) -> None:
+    """Committed results are only meaningful if the corpus they describe regenerates."""
+    committed = (project_root / "data" / "interactions.jsonl").read_text(encoding="utf-8")
+    regenerated = "\n".join(item.model_dump_json() for item in generate_corpus()) + "\n"
+    assert regenerated == committed

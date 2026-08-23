@@ -10,6 +10,7 @@ class Tier2Judge(Detector):
     """Provide a deterministic stand-in for an optional black-box LLM judge."""
 
     name = "tier2_llm_judge_stub"
+    version = "1"
     tier = 2
 
     def run(self, interaction: Interaction) -> DetectorSignal:

@@ -13,61 +13,61 @@
     "finops-agent": {
       "alpha": 0.1,
       "delta": 0.1,
-      "empirical_risk": 0.012903225806451613,
-      "escaped_harms": 2,
-      "released": 155,
+      "empirical_risk": 0.021505376344086023,
+      "escaped_harms": 4,
+      "released": 186,
       "route": "finops-agent",
-      "threshold": 0.05,
-      "upper_bound": 0.05881401466617737
+      "threshold": 0.15,
+      "upper_bound": 0.06650995534704557
     },
     "internal-kb": {
       "alpha": 0.1,
       "delta": 0.1,
-      "empirical_risk": 0.043478260869565216,
-      "escaped_harms": 11,
-      "released": 253,
+      "empirical_risk": 0.029787234042553193,
+      "escaped_harms": 7,
+      "released": 235,
       "route": "internal-kb",
       "threshold": 0.15,
-      "upper_bound": 0.08827830383040076
+      "upper_bound": 0.07166225904014596
     },
     "support-assistant": {
       "alpha": 0.1,
       "delta": 0.1,
-      "empirical_risk": 0.02912621359223301,
+      "empirical_risk": 0.028708133971291867,
       "escaped_harms": 6,
-      "released": 206,
+      "released": 209,
       "route": "support-assistant",
-      "threshold": 0.05,
-      "upper_bound": 0.0745942318912219
+      "threshold": 0.1,
+      "upper_bound": 0.07354858693029936
     }
   },
   "conformal_validation": {
     "finops-agent": {
       "alpha": 0.1,
-      "escaped": 0.0,
+      "escaped": 13.0,
       "holds": true,
-      "observed_rate": 0.0,
-      "observed_upper_bound": 0.00970927415653461,
-      "released": 236.0,
-      "threshold": 0.05
+      "observed_rate": 0.04436860068259386,
+      "observed_upper_bound": 0.06404298572150408,
+      "released": 293.0,
+      "threshold": 0.15
     },
     "internal-kb": {
       "alpha": 0.1,
-      "escaped": 11.0,
+      "escaped": 8.0,
       "holds": true,
-      "observed_rate": 0.028205128205128206,
-      "observed_upper_bound": 0.04225338497821646,
-      "released": 390.0,
+      "observed_rate": 0.021505376344086023,
+      "observed_upper_bound": 0.03469746108870304,
+      "released": 372.0,
       "threshold": 0.15
     },
     "support-assistant": {
       "alpha": 0.1,
-      "escaped": 15.0,
+      "escaped": 16.0,
       "holds": true,
-      "observed_rate": 0.04854368932038835,
-      "observed_upper_bound": 0.0682027859061501,
-      "released": 309.0,
-      "threshold": 0.05
+      "observed_rate": 0.05128205128205128,
+      "observed_upper_bound": 0.07121262310792414,
+      "released": 312.0,
+      "threshold": 0.1
     }
   },
   "escaped_by_route": {
@@ -75,126 +75,126 @@
       "finops-agent": {
         "escaped": 0.0,
         "rate": 0.0,
-        "released_unchecked": 154.0
+        "released_unchecked": 153.0
       },
       "internal-kb": {
-        "escaped": 8.0,
-        "rate": 0.023880597014925373,
-        "released_unchecked": 335.0
+        "escaped": 5.0,
+        "rate": 0.015772870662460567,
+        "released_unchecked": 317.0
       },
       "support-assistant": {
-        "escaped": 15.0,
-        "rate": 0.049342105263157895,
-        "released_unchecked": 304.0
+        "escaped": 16.0,
+        "rate": 0.05211726384364821,
+        "released_unchecked": 307.0
       }
     },
     "0.25": {
       "finops-agent": {
         "escaped": 0.0,
         "rate": 0.0,
-        "released_unchecked": 154.0
+        "released_unchecked": 153.0
       },
       "internal-kb": {
-        "escaped": 8.0,
-        "rate": 0.024242424242424242,
-        "released_unchecked": 330.0
+        "escaped": 5.0,
+        "rate": 0.016025641025641024,
+        "released_unchecked": 312.0
       },
       "support-assistant": {
-        "escaped": 15.0,
-        "rate": 0.049342105263157895,
-        "released_unchecked": 304.0
+        "escaped": 16.0,
+        "rate": 0.05211726384364821,
+        "released_unchecked": 307.0
       }
     },
     "0.40": {
       "finops-agent": {
         "escaped": 0.0,
         "rate": 0.0,
-        "released_unchecked": 154.0
+        "released_unchecked": 153.0
       },
       "internal-kb": {
-        "escaped": 8.0,
-        "rate": 0.024242424242424242,
-        "released_unchecked": 330.0
+        "escaped": 5.0,
+        "rate": 0.016025641025641024,
+        "released_unchecked": 312.0
       },
       "support-assistant": {
-        "escaped": 15.0,
-        "rate": 0.049342105263157895,
-        "released_unchecked": 304.0
+        "escaped": 16.0,
+        "rate": 0.05211726384364821,
+        "released_unchecked": 307.0
       }
     },
     "0.60": {
       "finops-agent": {
         "escaped": 0.0,
         "rate": 0.0,
-        "released_unchecked": 154.0
+        "released_unchecked": 153.0
       },
       "internal-kb": {
-        "escaped": 8.0,
-        "rate": 0.024242424242424242,
-        "released_unchecked": 330.0
+        "escaped": 5.0,
+        "rate": 0.016025641025641024,
+        "released_unchecked": 312.0
       },
       "support-assistant": {
-        "escaped": 15.0,
-        "rate": 0.049342105263157895,
-        "released_unchecked": 304.0
+        "escaped": 16.0,
+        "rate": 0.05211726384364821,
+        "released_unchecked": 307.0
       }
     },
     "0.80": {
       "finops-agent": {
         "escaped": 0.0,
         "rate": 0.0,
-        "released_unchecked": 154.0
+        "released_unchecked": 153.0
       },
       "internal-kb": {
-        "escaped": 8.0,
-        "rate": 0.024242424242424242,
-        "released_unchecked": 330.0
+        "escaped": 5.0,
+        "rate": 0.016025641025641024,
+        "released_unchecked": 312.0
       },
       "support-assistant": {
-        "escaped": 15.0,
-        "rate": 0.049342105263157895,
-        "released_unchecked": 304.0
+        "escaped": 16.0,
+        "rate": 0.05211726384364821,
+        "released_unchecked": 307.0
       }
     },
     "1.00": {
       "finops-agent": {
         "escaped": 0.0,
         "rate": 0.0,
-        "released_unchecked": 154.0
+        "released_unchecked": 153.0
       },
       "internal-kb": {
-        "escaped": 8.0,
-        "rate": 0.024242424242424242,
-        "released_unchecked": 330.0
+        "escaped": 5.0,
+        "rate": 0.016025641025641024,
+        "released_unchecked": 312.0
       },
       "support-assistant": {
-        "escaped": 15.0,
-        "rate": 0.049342105263157895,
-        "released_unchecked": 304.0
+        "escaped": 16.0,
+        "rate": 0.05211726384364821,
+        "released_unchecked": 307.0
       }
     }
   },
   "full_check_spend_inr": 4799.9999999998645,
   "metrics": [
     {
-      "abstention_rate": 0.004,
-      "assurance_roi": 9274.885724621,
-      "assurance_spend_inr": 608.1800000000001,
+      "abstention_rate": 0.004666666666666667,
+      "assurance_roi": 8353.4515833899,
+      "assurance_spend_inr": 677.6600000000001,
       "budget_fraction": 0.1,
-      "budget_variance": 0.26704166666670254,
-      "cost_per_1k_inr": 405.45333333333343,
-      "cost_per_1k_usd": 4.607424242424243,
-      "coverage": 0.4713333333333333,
-      "escaped_harm_rate_effective": 0.04084411164057182,
-      "escaped_harm_rate_unchecked": 0.029003783102143757,
+      "budget_variance": 0.41179166666670663,
+      "cost_per_1k_inr": 451.7733333333334,
+      "cost_per_1k_usd": 5.13378787878788,
+      "coverage": 0.482,
+      "escaped_harm_rate_effective": 0.04103967168262654,
+      "escaped_harm_rate_unchecked": 0.02702702702702703,
       "interactions": 1500.0,
-      "intervention_precision": 0.3323903818953324,
-      "loss_averted_inr": 5640800.0,
+      "intervention_precision": 0.3278008298755187,
+      "loss_averted_inr": 5660800.0,
       "p99_effect_latency_ms": 0.1,
-      "p99_text_latency_ms": 0.1,
+      "p99_text_latency_ms": 0.2,
       "policy": "allocator",
-      "release_rate": 0.9793333333333333,
-      "residual_loss_inr": 961200.0
+      "release_rate": 0.9746666666666667,
+      "residual_loss_inr": 941200.0
     },
     {
       "abstention_rate": 0.0,
@@ -257,24 +257,24 @@
       "residual_loss_inr": 1007300.0
     },
     {
-      "abstention_rate": 0.01,
-      "assurance_roi": 5048.078562416885,
-      "assurance_spend_inr": 1173.0800000000002,
+      "abstention_rate": 0.009333333333333334,
+      "assurance_roi": 5054.875547045952,
+      "assurance_spend_inr": 1169.92,
       "budget_fraction": 0.25,
-      "budget_variance": -0.022433333333305605,
-      "cost_per_1k_inr": 782.0533333333335,
-      "cost_per_1k_usd": 8.886969696969699,
-      "coverage": 0.4746666666666667,
-      "escaped_harm_rate_effective": 0.0363382250174703,
-      "escaped_harm_rate_unchecked": 0.02918781725888325,
+      "budget_variance": -0.025066666666639082,
+      "cost_per_1k_inr": 779.9466666666667,
+      "cost_per_1k_usd": 8.863030303030303,
+      "coverage": 0.48533333333333334,
+      "escaped_harm_rate_effective": 0.03628750872295883,
+      "escaped_harm_rate_unchecked": 0.027202072538860103,
       "interactions": 1500.0,
-      "intervention_precision": 0.3300561797752809,
-      "loss_averted_inr": 5921800.0,
+      "intervention_precision": 0.32554945054945056,
+      "loss_averted_inr": 5913800.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "allocator",
-      "release_rate": 0.954,
-      "residual_loss_inr": 680200.0
+      "release_rate": 0.9553333333333334,
+      "residual_loss_inr": 688200.0
     },
     {
       "abstention_rate": 0.0,
@@ -337,24 +337,24 @@
       "residual_loss_inr": 1007300.0
     },
     {
-      "abstention_rate": 0.018666666666666668,
-      "assurance_roi": 3078.7198295291564,
-      "assurance_spend_inr": 1952.24,
+      "abstention_rate": 0.019333333333333334,
+      "assurance_roi": 3031.2537892566993,
+      "assurance_spend_inr": 1979.2800000000002,
       "budget_fraction": 0.4,
-      "budget_variance": 0.01679166666669533,
-      "cost_per_1k_inr": 1301.4933333333333,
-      "cost_per_1k_usd": 14.78969696969697,
-      "coverage": 0.4746666666666667,
-      "escaped_harm_rate_effective": 0.027516292541636494,
-      "escaped_harm_rate_unchecked": 0.02918781725888325,
+      "budget_variance": 0.03087500000002916,
+      "cost_per_1k_inr": 1319.5200000000002,
+      "cost_per_1k_usd": 14.994545454545458,
+      "coverage": 0.48533333333333334,
+      "escaped_harm_rate_effective": 0.028384279475982533,
+      "escaped_harm_rate_unchecked": 0.027202072538860103,
       "interactions": 1500.0,
-      "intervention_precision": 0.3300561797752809,
-      "loss_averted_inr": 6010400.0,
+      "intervention_precision": 0.32554945054945056,
+      "loss_averted_inr": 5999700.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "allocator",
-      "release_rate": 0.9206666666666666,
-      "residual_loss_inr": 591600.0
+      "release_rate": 0.916,
+      "residual_loss_inr": 602300.0
     },
     {
       "abstention_rate": 0.0,
@@ -398,43 +398,43 @@
     },
     {
       "abstention_rate": 0.0,
-      "assurance_roi": 3059.6311475409834,
-      "assurance_spend_inr": 1952.0,
+      "assurance_roi": 3016.484627831715,
+      "assurance_spend_inr": 1977.6000000000001,
       "budget_fraction": 0.4,
-      "budget_variance": 0.01666666666669532,
-      "cost_per_1k_inr": 1301.3333333333333,
-      "cost_per_1k_usd": 14.787878787878787,
-      "coverage": 0.4066666666666667,
-      "escaped_harm_rate_effective": 0.028666666666666667,
-      "escaped_harm_rate_unchecked": 0.029213483146067417,
+      "budget_variance": 0.0300000000000291,
+      "cost_per_1k_inr": 1318.4,
+      "cost_per_1k_usd": 14.981818181818182,
+      "coverage": 0.412,
+      "escaped_harm_rate_effective": 0.028,
+      "escaped_harm_rate_unchecked": 0.027210884353741496,
       "interactions": 1500.0,
-      "intervention_precision": 0.380327868852459,
-      "loss_averted_inr": 5972400.0,
+      "intervention_precision": 0.3786407766990291,
+      "loss_averted_inr": 5965400.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "fixed_rate",
       "release_rate": 1.0,
-      "residual_loss_inr": 629600.0
+      "residual_loss_inr": 636600.0
     },
     {
       "abstention_rate": 0.026,
-      "assurance_roi": 2666.796791823408,
-      "assurance_spend_inr": 2254.2400000000002,
+      "assurance_roi": 2604.5353598445417,
+      "assurance_spend_inr": 2305.44,
       "budget_fraction": 0.6,
-      "budget_variance": -0.21727777777775556,
-      "cost_per_1k_inr": 1502.826666666667,
-      "cost_per_1k_usd": 17.07757575757576,
-      "coverage": 0.4746666666666667,
-      "escaped_harm_rate_effective": 0.028549962434259956,
-      "escaped_harm_rate_unchecked": 0.02918781725888325,
+      "budget_variance": -0.19949999999997736,
+      "cost_per_1k_inr": 1536.96,
+      "cost_per_1k_usd": 17.465454545454545,
+      "coverage": 0.48533333333333334,
+      "escaped_harm_rate_effective": 0.02779864763335838,
+      "escaped_harm_rate_unchecked": 0.027202072538860103,
       "interactions": 1500.0,
-      "intervention_precision": 0.3300561797752809,
-      "loss_averted_inr": 6011600.0,
+      "intervention_precision": 0.32554945054945056,
+      "loss_averted_inr": 6004600.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "allocator",
       "release_rate": 0.8873333333333333,
-      "residual_loss_inr": 590400.0
+      "residual_loss_inr": 597400.0
     },
     {
       "abstention_rate": 0.0,
@@ -478,43 +478,43 @@
     },
     {
       "abstention_rate": 0.0,
-      "assurance_roi": 2661.3991477272725,
-      "assurance_spend_inr": 2252.8,
+      "assurance_roi": 2599.21875,
+      "assurance_spend_inr": 2304.0,
       "budget_fraction": 0.6,
-      "budget_variance": -0.21777777777775562,
-      "cost_per_1k_inr": 1501.8666666666666,
-      "cost_per_1k_usd": 17.066666666666666,
-      "coverage": 0.4693333333333333,
-      "escaped_harm_rate_effective": 0.02666666666666667,
-      "escaped_harm_rate_unchecked": 0.028894472361809045,
+      "budget_variance": -0.1999999999999774,
+      "cost_per_1k_inr": 1536.0,
+      "cost_per_1k_usd": 17.454545454545453,
+      "coverage": 0.48,
+      "escaped_harm_rate_effective": 0.026,
+      "escaped_harm_rate_unchecked": 0.026923076923076925,
       "interactions": 1500.0,
-      "intervention_precision": 0.3338068181818182,
-      "loss_averted_inr": 5995600.0,
+      "intervention_precision": 0.32916666666666666,
+      "loss_averted_inr": 5988600.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "fixed_rate",
       "release_rate": 1.0,
-      "residual_loss_inr": 606400.0
+      "residual_loss_inr": 613400.0
     },
     {
       "abstention_rate": 0.026,
-      "assurance_roi": 2666.796791823408,
-      "assurance_spend_inr": 2254.2400000000002,
+      "assurance_roi": 2604.5353598445417,
+      "assurance_spend_inr": 2305.44,
       "budget_fraction": 0.8,
-      "budget_variance": -0.4129583333333167,
-      "cost_per_1k_inr": 1502.826666666667,
-      "cost_per_1k_usd": 17.07757575757576,
-      "coverage": 0.4746666666666667,
-      "escaped_harm_rate_effective": 0.028549962434259956,
-      "escaped_harm_rate_unchecked": 0.02918781725888325,
+      "budget_variance": -0.3996249999999831,
+      "cost_per_1k_inr": 1536.96,
+      "cost_per_1k_usd": 17.465454545454545,
+      "coverage": 0.48533333333333334,
+      "escaped_harm_rate_effective": 0.02779864763335838,
+      "escaped_harm_rate_unchecked": 0.027202072538860103,
       "interactions": 1500.0,
-      "intervention_precision": 0.3300561797752809,
-      "loss_averted_inr": 6011600.0,
+      "intervention_precision": 0.32554945054945056,
+      "loss_averted_inr": 6004600.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "allocator",
       "release_rate": 0.8873333333333333,
-      "residual_loss_inr": 590400.0
+      "residual_loss_inr": 597400.0
     },
     {
       "abstention_rate": 0.0,
@@ -558,43 +558,43 @@
     },
     {
       "abstention_rate": 0.0,
-      "assurance_roi": 2661.3991477272725,
-      "assurance_spend_inr": 2252.8,
+      "assurance_roi": 2599.21875,
+      "assurance_spend_inr": 2304.0,
       "budget_fraction": 0.8,
-      "budget_variance": -0.41333333333331673,
-      "cost_per_1k_inr": 1501.8666666666666,
-      "cost_per_1k_usd": 17.066666666666666,
-      "coverage": 0.4693333333333333,
-      "escaped_harm_rate_effective": 0.02666666666666667,
-      "escaped_harm_rate_unchecked": 0.028894472361809045,
+      "budget_variance": -0.3999999999999831,
+      "cost_per_1k_inr": 1536.0,
+      "cost_per_1k_usd": 17.454545454545453,
+      "coverage": 0.48,
+      "escaped_harm_rate_effective": 0.026,
+      "escaped_harm_rate_unchecked": 0.026923076923076925,
       "interactions": 1500.0,
-      "intervention_precision": 0.3338068181818182,
-      "loss_averted_inr": 5995600.0,
+      "intervention_precision": 0.32916666666666666,
+      "loss_averted_inr": 5988600.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "fixed_rate",
       "release_rate": 1.0,
-      "residual_loss_inr": 606400.0
+      "residual_loss_inr": 613400.0
     },
     {
       "abstention_rate": 0.026,
-      "assurance_roi": 2666.796791823408,
-      "assurance_spend_inr": 2254.2400000000002,
+      "assurance_roi": 2604.5353598445417,
+      "assurance_spend_inr": 2305.44,
       "budget_fraction": 1.0,
-      "budget_variance": -0.5303666666666533,
-      "cost_per_1k_inr": 1502.826666666667,
-      "cost_per_1k_usd": 17.07757575757576,
-      "coverage": 0.4746666666666667,
-      "escaped_harm_rate_effective": 0.028549962434259956,
-      "escaped_harm_rate_unchecked": 0.02918781725888325,
+      "budget_variance": -0.5196999999999864,
+      "cost_per_1k_inr": 1536.96,
+      "cost_per_1k_usd": 17.465454545454545,
+      "coverage": 0.48533333333333334,
+      "escaped_harm_rate_effective": 0.02779864763335838,
+      "escaped_harm_rate_unchecked": 0.027202072538860103,
       "interactions": 1500.0,
-      "intervention_precision": 0.3300561797752809,
-      "loss_averted_inr": 6011600.0,
-      "p99_effect_latency_ms": 0.1,
+      "intervention_precision": 0.32554945054945056,
+      "loss_averted_inr": 6004600.0,
+      "p99_effect_latency_ms": 0.2,
       "p99_text_latency_ms": 0.1,
       "policy": "allocator",
       "release_rate": 0.8873333333333333,
-      "residual_loss_inr": 590400.0
+      "residual_loss_inr": 597400.0
     },
     {
       "abstention_rate": 0.0,
@@ -638,46 +638,46 @@
     },
     {
       "abstention_rate": 0.0,
-      "assurance_roi": 2661.3991477272725,
-      "assurance_spend_inr": 2252.8,
+      "assurance_roi": 2599.21875,
+      "assurance_spend_inr": 2304.0,
       "budget_fraction": 1.0,
-      "budget_variance": -0.5306666666666534,
-      "cost_per_1k_inr": 1501.8666666666666,
-      "cost_per_1k_usd": 17.066666666666666,
-      "coverage": 0.4693333333333333,
-      "escaped_harm_rate_effective": 0.02666666666666667,
-      "escaped_harm_rate_unchecked": 0.028894472361809045,
+      "budget_variance": -0.5199999999999865,
+      "cost_per_1k_inr": 1536.0,
+      "cost_per_1k_usd": 17.454545454545453,
+      "coverage": 0.48,
+      "escaped_harm_rate_effective": 0.026,
+      "escaped_harm_rate_unchecked": 0.026923076923076925,
       "interactions": 1500.0,
-      "intervention_precision": 0.3338068181818182,
-      "loss_averted_inr": 5995600.0,
+      "intervention_precision": 0.32916666666666666,
+      "loss_averted_inr": 5988600.0,
       "p99_effect_latency_ms": 0.1,
       "p99_text_latency_ms": 0.1,
       "policy": "fixed_rate",
       "release_rate": 1.0,
-      "residual_loss_inr": 606400.0
+      "residual_loss_inr": 613400.0
     }
   ],
   "reliability": {
     "finops-agent": {
       "base_rate": 0.214,
-      "ece": 0.10366517689638569,
+      "ece": 0.09647250496194026,
       "samples": 500.0
     },
     "internal-kb": {
       "base_rate": 0.128,
-      "ece": 0.07668774193548387,
+      "ece": 0.07395529411764706,
       "samples": 500.0
     },
     "support-assistant": {
       "base_rate": 0.174,
-      "ece": 0.11569186686423347,
+      "ece": 0.11401372440868239,
       "samples": 500.0
     }
   },
   "shadow_price": {
-    "0.10": 354.7075932264528,
-    "0.25": 46.15335900750677,
-    "0.40": 4.70458572740463,
+    "0.10": 394.95474206580457,
+    "0.25": 53.67669605865387,
+    "0.40": 0.9734599914588618,
     "0.60": 0.0,
     "0.80": 0.0,
     "1.00": 0.0

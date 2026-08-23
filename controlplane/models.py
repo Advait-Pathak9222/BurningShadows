@@ -2,9 +2,17 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+HARM_AXES: Final = (
+    "hallucination",
+    "pii_leak",
+    "bias",
+    "unsafe_content",
+    "injection_or_exfil",
+)
 
 
 class HarmVector(BaseModel):
@@ -29,13 +37,14 @@ class HarmVector(BaseModel):
         )
 
     def values_by_name(self) -> dict[str, float]:
-        return {name: float(value) for name, value in self.model_dump().items()}
+        # model_dump() here cost ~25 full serialisations per allocation decision.
+        return {axis: float(getattr(self, axis)) for axis in HARM_AXES}
 
     def maximum(self) -> float:
-        return max(self.values_by_name().values())
+        return max(float(getattr(self, axis)) for axis in HARM_AXES)
 
     def has_harm(self, threshold: float = 0.5) -> bool:
-        return any(value >= threshold for value in self.values_by_name().values())
+        return any(float(getattr(self, axis)) >= threshold for axis in HARM_AXES)
 
 
 class EvidenceRegime(StrEnum):

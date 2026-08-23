@@ -19,7 +19,7 @@ from controlplane.eval.metrics import (
 from controlplane.eval.tracking import log_evaluation
 from controlplane.guarantees.conformal import binomial_upper_bound
 from controlplane.ledger import LedgerStore
-from controlplane.models import DecisionTrace, Interaction
+from controlplane.models import DecisionTrace, DetectionBundle, Interaction
 from controlplane.risk import expected_calibration_error
 from controlplane.service import AssessmentEngine
 
@@ -33,6 +33,7 @@ class AllocatorRun:
     traces: list[DecisionTrace]
     spend_inr: float
     final_shadow_price: float
+    ledger: LedgerStore | None = None
 
 
 def build_report(
@@ -48,12 +49,18 @@ def build_report(
     engine = AssessmentEngine(root)
     conformal = engine.calibrate(calibration)
 
+    # One detection pass, shared. Three separate passes over the same 1500 rows made
+    # any future cache-hit-rate number a statement about the harness, not the traffic.
+    bundles = {item.interaction_id: engine.detect(item) for item in test}
+    scores = {key: bundle.harm.maximum() for key, bundle in bundles.items()}
     detail: dict[str, Any] = {
         "conformal": {route: dict(vars(value)) for route, value in conformal.items()},
-        "conformal_validation": _validate_conformal(engine, test, conformal),
-        "reliability": _plot_reliability(engine, test, figure_dir / "reliability_by_route.png"),
+        "conformal_validation": _validate_conformal(test, conformal, scores),
+        "reliability": _plot_reliability(
+            test, figure_dir / "reliability_by_route.png", scores
+        ),
     }
-    frame = pd.DataFrame(_evaluate_budgets(root, engine, test, detail))
+    frame = pd.DataFrame(_evaluate_budgets(root, engine, test, detail, bundles))
     frame.to_csv(report_dir / "evaluation.csv", index=False)
     detail["metrics"] = frame.to_dict(orient="records")
     (report_dir / "evaluation.json").write_text(
@@ -71,8 +78,8 @@ def _evaluate_budgets(
     engine: AssessmentEngine,
     test: list[Interaction],
     detail: dict[str, Any],
+    bundles: dict[str, DetectionBundle],
 ) -> list[dict[str, float | str]]:
-    bundles = {item.interaction_id: engine.detect(item) for item in test}
     scores = {key: bundle.harm.maximum() for key, bundle in bundles.items()}
     latency = {key: bundle.latency_ms for key, bundle in bundles.items()}
     full_spend = _full_check_spend(engine, test)
@@ -87,7 +94,9 @@ def _evaluate_budgets(
         record = fraction == BUDGET_FRACTIONS[-1]
         run = _run_allocator(root, engine, test, budget, fraction, record)
         if record:
-            audit[f"{fraction:.2f}"] = _audit_coverage(root, test, run, fraction)
+            audit[f"{fraction:.2f}"] = _audit_coverage(test, run)
+            if run.ledger is not None:
+                run.ledger.close()
         tuned = _best_fixed_rate(engine, test, by_tier, latency, run.spend_inr)
         for rows, reference in (
             (run.rows, budget),
@@ -191,7 +200,7 @@ def _run_allocator(
         budget_rate_inr=max(budget / len(test), 1e-9),
         learning_rate=engine.cost_model.controller_learning_rate,
     )
-    ledger = LedgerStore(_ledger_path(root, fraction)) if record else None
+    ledger = _fresh_ledger(root, fraction) if record else None
     rows: list[EvaluationRow] = []
     traces: list[DecisionTrace] = []
     running = 0.0
@@ -203,7 +212,7 @@ def _run_allocator(
         controller.update(running / position)
         traces.append(trace)
         rows.append(_allocator_row(engine, interaction, trace))
-    return AllocatorRun(rows, traces, running, controller.shadow_price)
+    return AllocatorRun(rows, traces, running, controller.shadow_price, ledger)
 
 
 def _allocator_row(
@@ -236,17 +245,17 @@ def _full_check_spend(engine: AssessmentEngine, test: list[Interaction]) -> floa
     return total
 
 
-def _ledger_path(root: Path, fraction: float) -> Path:
-    path = root / "reports" / f"audit-{int(fraction * 100):03d}.db"
-    path.unlink(missing_ok=True)
-    return path
+def _fresh_ledger(root: Path, fraction: float) -> LedgerStore:
+    """Clear in place rather than deleting the file, which a live connection holds open."""
+    ledger = LedgerStore(root / "reports" / f"audit-{int(fraction * 100):03d}.db")
+    ledger.reset()
+    return ledger
 
 
-def _audit_coverage(
-    root: Path, test: list[Interaction], run: AllocatorRun, fraction: float
-) -> dict[str, float | bool]:
+def _audit_coverage(test: list[Interaction], run: AllocatorRun) -> dict[str, float | bool]:
     """Count effects that survived into a verified ledger record, not effects proposed."""
-    ledger = LedgerStore(_ledger_path_existing(root, fraction))
+    ledger = run.ledger
+    assert ledger is not None
     chain_ok, record_count = ledger.verify()
     logged = 0
     for record in ledger.records(limit=len(test) + 1):
@@ -263,19 +272,15 @@ def _audit_coverage(
     }
 
 
-def _ledger_path_existing(root: Path, fraction: float) -> Path:
-    return root / "reports" / f"audit-{int(fraction * 100):03d}.db"
-
-
 def _validate_conformal(
-    engine: AssessmentEngine, test: list[Interaction], conformal: dict[str, Any]
+    test: list[Interaction], conformal: dict[str, Any], scores: dict[str, float]
 ) -> dict[str, dict[str, float | bool]]:
     """Check the declared bound against held-out traffic the thresholds never saw."""
     validation: dict[str, dict[str, float | bool]] = {}
     for route, calibration in conformal.items():
         items = [item for item in test if item.route == route]
         released = [
-            item for item in items if engine.detect(item).harm.maximum() < calibration.threshold
+            item for item in items if scores[item.interaction_id] < calibration.threshold
         ]
         escaped = sum(item.truth.has_harm() for item in released)
         rate = escaped / len(released) if released else 0.0
@@ -321,14 +326,14 @@ def _plot_curve(frame: pd.DataFrame, path: Path) -> None:
 
 
 def _plot_reliability(
-    engine: AssessmentEngine, interactions: list[Interaction], path: Path
+    interactions: list[Interaction], path: Path, scores: dict[str, float]
 ) -> dict[str, dict[str, float]]:
     routes = ("support-assistant", "internal-kb", "finops-agent")
     figure, axes = plt.subplots(1, len(routes), figsize=(12, 3.6), sharex=True, sharey=True)
     diagnostics: dict[str, dict[str, float]] = {}
     for axis, route in zip(axes, routes, strict=True):
         route_items = [item for item in interactions if item.route == route]
-        probabilities = [engine.detect(item).harm.maximum() for item in route_items]
+        probabilities = [scores[item.interaction_id] for item in route_items]
         labels = [item.truth.has_harm() for item in route_items]
         diagnostics[route] = {
             "ece": expected_calibration_error(probabilities, labels),

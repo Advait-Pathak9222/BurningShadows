@@ -33,9 +33,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         interactions = ensure_corpus(ROOT / "data")
         frame, _ = build_report(ROOT, interactions)
         engine = AssessmentEngine(ROOT, ledger_path=ROOT / "data" / "audit.db")
+        # Start each demo from an empty chain so the record count describes this run.
+        assert engine.ledger is not None
+        engine.ledger.reset()
         engine.calibrate([item for item in interactions if item.split == "calibration"])
         scenarios = run_scenarios(ROOT, engine, interactions, frame)
-        chain_ok, records = LedgerStore(ROOT / "data" / "audit.db").verify()
+        ledger = LedgerStore(ROOT / "data" / "audit.db")
+        chain_ok, records = ledger.verify()
+        ledger.close()
         print(json.dumps(scenarios, indent=2, default=str))
         print(f"Audit chain valid: {chain_ok} ({records} records checked)")
         return 0 if chain_ok else 1

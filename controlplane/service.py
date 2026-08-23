@@ -12,6 +12,7 @@ from controlplane.ledger import LedgerStore
 from controlplane.models import (
     DecisionTrace,
     DetectionBundle,
+    DetectorSignal,
     HarmVector,
     Interaction,
     PreflightDecision,
@@ -51,14 +52,25 @@ class AssessmentEngine:
         self.tier2 = Tier2Judge()
         self.ledger = LedgerStore(ledger_path) if ledger_path is not None else None
         self.calibrators: dict[str, dict[str, IsotonicCalibrator]] = {}
-        self.conformal_thresholds = conformal_thresholds or {
-            "support-assistant": 0.55,
-            "internal-kb": 0.58,
-            "finops-agent": 0.48,
-        }
+        # No invented defaults. Serving a route before calibrate() has fitted it would
+        # price traffic against a made-up threshold, which is what the gateway did.
+        self.conformal_thresholds: dict[str, float] = dict(conformal_thresholds or {})
 
     def detect(self, interaction: Interaction, include_tier2: bool = False) -> DetectionBundle:
-        bundle = self._raw_detect(interaction, include_tier2)
+        return self._bundle(interaction, self._signals(interaction, include_tier2))
+
+    def _signals(
+        self, interaction: Interaction, include_tier2: bool = False
+    ) -> list[DetectorSignal]:
+        signals = [self.tier0.run(interaction), self.tier1.run(interaction)]
+        if include_tier2:
+            signals.append(self.tier2.run(interaction))
+        return signals
+
+    def _bundle(
+        self, interaction: Interaction, signals: list[DetectorSignal]
+    ) -> DetectionBundle:
+        bundle = combine_signals(signals, infer_evidence_regime(interaction))
         route_calibrators = self.calibrators.get(interaction.route)
         if route_calibrators is None:
             return bundle
@@ -90,15 +102,14 @@ class AssessmentEngine:
         )
 
     def _raw_detect(self, interaction: Interaction, include_tier2: bool = False) -> DetectionBundle:
-        signals = [self.tier0.run(interaction), self.tier1.run(interaction)]
-        if include_tier2:
-            signals.append(self.tier2.run(interaction))
+        signals = self._signals(interaction, include_tier2)
         return combine_signals(signals, infer_evidence_regime(interaction))
 
     def assess(self, interaction: Interaction, shadow_price: float = 0.0) -> DecisionTrace:
         policy = self.policy_store.resolve(interaction.route, interaction.jurisdiction)
-        threshold = self.conformal_thresholds[interaction.route]
-        bundle = self.detect(interaction)
+        threshold = self._threshold(interaction.route)
+        signals = self._signals(interaction)
+        bundle = self._bundle(interaction, signals)
         trace = allocate_verification(
             interaction_id=interaction.interaction_id,
             bundle=bundle,
@@ -109,7 +120,10 @@ class AssessmentEngine:
             tool_calls=interaction.tool_calls,
         )
         if trace.selected_tier == 2:
-            bundle = self.detect(interaction, include_tier2=True)
+            # Tier 0 and Tier 1 already ran; escalation adds the judge to their signals
+            # instead of recomputing the whole cascade.
+            signals = [*signals, self.tier2.run(interaction)]
+            bundle = self._bundle(interaction, signals)
             reviewed = allocate_verification(
                 interaction_id=interaction.interaction_id,
                 bundle=bundle,
@@ -135,12 +149,19 @@ class AssessmentEngine:
             self.ledger.append(trace)
         return trace
 
+    def _threshold(self, route: str) -> float:
+        if route not in self.conformal_thresholds:
+            raise RuntimeError(
+                f"Route {route!r} has no fitted conformal threshold; call calibrate() first"
+            )
+        return self.conformal_thresholds[route]
+
     def calibrate(self, interactions: list[Interaction]) -> dict[str, ConformalCalibration]:
         """Fit the score map and select thresholds on disjoint folds of the calibration split."""
         fitting, selection = _split_folds(interactions)
         self.calibrators = self._fit_calibrators(fitting)
         calibrations: dict[str, ConformalCalibration] = {}
-        for route in self.conformal_thresholds:
+        for route in sorted({item.route for item in interactions}):
             route_items = [item for item in selection if item.route == route]
             if not route_items:
                 raise ValueError(f"No selection-fold rows for route {route!r}")
@@ -161,7 +182,7 @@ class AssessmentEngine:
         self, interactions: list[Interaction]
     ) -> dict[str, dict[str, IsotonicCalibrator]]:
         fitted: dict[str, dict[str, IsotonicCalibrator]] = {}
-        for route in self.conformal_thresholds:
+        for route in sorted({item.route for item in interactions}):
             route_items = [item for item in interactions if item.route == route]
             raw = [self._raw_detect(item).harm for item in route_items]
             fitted[route] = {

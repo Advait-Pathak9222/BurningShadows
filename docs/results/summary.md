@@ -11,29 +11,29 @@ so the two policies are compared at matched budget, not at matched spend.
 
 | Budget | Allocator spend | Baseline spend | Allocator averted | Baseline averted | Averted delta | Allocator ROI | Baseline ROI |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | 608.18 | 270.00 | 5,640,800 | 5,594,700 | +0.8% | 9,275 | 20,721 |
-| 25% | 1,173.08 | 270.00 | 5,921,800 | 5,594,700 | +5.8% | 5,048 | 20,721 |
-| 40% | 1,952.24 | 1,952.00 | 6,010,400 | 5,972,400 | +0.6% | 3,079 | 3,060 |
-| 60% | 2,254.24 | 2,252.80 | 6,011,600 | 5,995,600 | +0.3% | 2,667 | 2,661 |
-| 80% | 2,254.24 | 2,252.80 | 6,011,600 | 5,995,600 | +0.3% | 2,667 | 2,661 |
-| 100% | 2,254.24 | 2,252.80 | 6,011,600 | 5,995,600 | +0.3% | 2,667 | 2,661 |
+| 10% | 677.66 | 270.00 | 5,660,800 | 5,594,700 | +1.2% | 8,353 | 20,721 |
+| 25% | 1,169.92 | 270.00 | 5,913,800 | 5,594,700 | +5.7% | 5,055 | 20,721 |
+| 40% | 1,979.28 | 1,977.60 | 5,999,700 | 5,965,400 | +0.6% | 3,031 | 3,016 |
+| 60% | 2,305.44 | 2,304.00 | 6,004,600 | 5,988,600 | +0.3% | 2,605 | 2,599 |
+| 80% | 2,305.44 | 2,304.00 | 6,004,600 | 5,988,600 | +0.3% | 2,605 | 2,599 |
+| 100% | 2,305.44 | 2,304.00 | 6,004,600 | 5,988,600 | +0.3% | 2,605 | 2,599 |
 
 Allocator averts more loss at 6 of 6 budgets and achieves better assurance ROI at 4 of 6.
 
 ## Shadow price at the end of each run
 
-- budget 10%: lambda 354.708
-- budget 25%: lambda 46.153
-- budget 40%: lambda 4.705
+- budget 10%: lambda 394.955
+- budget 25%: lambda 53.677
+- budget 40%: lambda 0.973
 - budget 60%: lambda 0.000
 - budget 80%: lambda 0.000
 - budget 100%: lambda 0.000
 
 ## Conformal bound on held-out traffic
 
-- `support-assistant`: observed 0.0485 against alpha 0.10 on 309 released rows (holds)
-- `internal-kb`: observed 0.0282 against alpha 0.10 on 390 released rows (holds)
-- `finops-agent`: observed 0.0000 against alpha 0.10 on 236 released rows (holds)
+- `finops-agent`: observed 0.0444 against alpha 0.10 on 293 released rows (holds)
+- `internal-kb`: observed 0.0215 against alpha 0.10 on 372 released rows (holds)
+- `support-assistant`: observed 0.0513 against alpha 0.10 on 312 released rows (holds)
 
 ## Audit
 
