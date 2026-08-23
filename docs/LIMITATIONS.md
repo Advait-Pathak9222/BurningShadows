@@ -25,6 +25,10 @@ or detector latency. The reported 400 RPS point therefore describes the schedule
 Windows laptop, with other host workloads left uncontrolled. It does not establish deployment
 capacity.
 
+These numbers were regenerated on the merged tree on a 12-CPU machine; the branch measured them
+on an 8-CPU one. The conclusion held on both, including the regression at 80 RPS, so it is not a
+single-machine artifact.
+
 The bounded path keeps tail latency low by doing less work and rejecting overload. At 400 offered
 RPS it achieved 61.5 served RPS and rejected 503 of 600 requests, while the unbounded path achieved
 149.0 RPS without rejection. Its served-request effect p99 was 101.26 ms rather than 2521.26 ms,

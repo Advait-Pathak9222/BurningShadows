@@ -34,6 +34,14 @@ the bounded path also rejected 10 of 120 and effect p99 regressed from 97.28 to 
 **Do not present the tail improvement without those throughput and rejection costs.** Tuning the
 limits against a stated service objective is the runtime lane's next item.
 
+`docs/results/runtime.md` was regenerated on the merged tree, so the committed numbers are from a
+12-CPU machine rather than the 8-CPU one the branch measured on. **The conclusion replicates**: at
+400 offered RPS bounded admission cut effect p99 from 1426.73 ms to 136.59 ms while throughput fell
+from 203.2 to 60.1 RPS with 506 of 600 rejected, and at 80 RPS it was again a regression (9
+rejected, effect p99 85.05 to 119.52 ms, text p99 8.75 to 42.98 ms). Same degradation boundary on
+both machines: unbounded at 400, bounded at 80. That the finding survives a change of hardware is
+worth more than either run alone.
+
 ## Where things stand
 
 `main` is at `0362b27` (Phase A + Phase B, pushed). Current work is on branch
