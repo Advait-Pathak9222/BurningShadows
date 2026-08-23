@@ -1,13 +1,43 @@
 # Handoff
 
-Shared state between Claude Code and Codex. Read this first. Update it at the end of every session.
+Shared state between the detection and runtime work lanes. Read this first. Update it at the end of
+every session.
 
 Internal working file. **Delete this, `CODEX_BRIEF_RUNTIME.md` and `audits/` before
 submission.** Nothing in `README.md`,
 `docs/` or the code links to either, so both can be removed without leaving dead references.
 
-Last updated: 2026-08-23. **Detection/allocation lane is paused. The runtime lane (Codex) is
-active — see `CODEX_BRIEF_RUNTIME.md`.**
+Last updated: 2026-08-23. **Detection/allocation lane is paused. Runtime admission work is complete
+on `runtime/admission-backpressure`; the branch has not been merged into main.**
+
+## Runtime admission update
+
+The first runtime work item is complete on `runtime/admission-backpressure`, based on `3477a7b`.
+The implementation is split across three commits before this handoff update:
+
+- `0e73825` locks falsifiable admission acceptance criteria before implementation.
+- `e7e3a6a` adds per-route token buckets, bounded discretionary and mandatory lanes, explicit 503
+  overload before provider generation, and admission evidence in each decision trace.
+- `88e1244` adds `make loadtest`, its gateway regression test, and the committed same-run result in
+  `docs/results/runtime.md`.
+
+The mandatory-only path still runs the Tier 0 and Tier 1 signals that feed the fitted conformal
+threshold. It derives a finite shadow-price cut line from the current benefit and direct cost terms,
+so discretionary Tier 2 is priced out without modifying `economics/allocator.py`. If the reserved
+mandatory lane is unavailable, no response is generated.
+
+The load run uses stub detectors plus a declared 75 ms blocking hold. At 400 offered RPS, bounded
+admission served 97 of 600 requests: 30 degraded with 30/30 mandatory completion and floor coverage,
+and 503 rejected before generation. Both queues reached their configured caps (8 discretionary, 6
+mandatory), and no degraded request selected Tier 2. Served-request effect p99 was 101.26 ms against
+2521.26 ms unbounded, but achieved throughput regressed from 149.0 to 61.5 RPS. At 80 offered RPS,
+the bounded path also rejected 10 of 120 and effect p99 regressed from 97.28 to 116.50 ms. Do not
+present the tail improvement without those throughput and rejection costs.
+
+Verification on this machine: `make loadtest` 19.034s; `make check` 96.790s with 44 tests; offline
+`make demo` 40.285s with a valid 613-record audit chain. `make data` left no tracked JSONL byte diff.
+The only remaining untracked paths are the owner's pre-existing `Assests/` and `Markdown/` inputs;
+they were not staged or modified by the runtime work.
 
 ## Where things stand
 
