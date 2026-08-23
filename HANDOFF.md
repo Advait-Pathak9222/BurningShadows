@@ -93,14 +93,33 @@ Do not soften this in the pitch without new evidence. `docs/LIMITATIONS.md` carr
 **Nothing is being actively edited. The detection/allocation lane stopped at `9ddc8f3`, which is
 pushed. The runtime lane is now the active one.**
 
-One unfinished experiment, on the first machine only: a 60-row local-judge probe
-(`make judge-probe`) was left running against a local Ollama. If it completes it writes
-`docs/results/judge_probe.json` and `judge_probe.md`, **uncommitted** — whoever sees them should
-read the localisation rate, commit them, and append a row to `progress.csv`. If the process was
-killed, rerun `make judge-probe` on a machine with Ollama and `phi3:mini` pulled. It takes roughly
-an hour and needs nothing from the runtime lane.
+### The judge probe ran, and its result was invalid. It needs a rerun.
 
-**Its result decides whether paged verification is viable.**
+The 60-row probe completed in 57 minutes and reported: stub AUC 0.7906, judge AUC 0.5000,
+judge page-max AUC 0.6000, localisation 53.3%. **Do not quote those numbers.** An AUC of exactly
+0.5000 was the giveaway: the judge returned an all-zero vector on 60 of 60 whole-response calls,
+so every score tied.
+
+Root cause, found by dumping the raw reply: asking phi3:mini in prose for "exactly 1 entry" does
+not work. It pattern-matches the worked example and emits entries until it hits the token cap —
+a one-span call came back truncated at seven fabricated rows with `done_reason=length`, and the
+parser correctly read index 0 from that garbage. The whole-response arm of the experiment measured
+the harness, not the model.
+
+Fixed in `ollama_judge.py`: decoding is now constrained by a JSON schema with
+`minItems`/`maxItems` equal to the span count, and the token budget scales with the batch
+(`num_predict_per_span`, `num_predict_overhead` in `config/judge.yaml`). Verified: asking for 1
+returns 1 and asking for 7 returns 7, both with `done_reason=stop`. The invalid artifact was
+deleted rather than committed.
+
+**Still open, and worth knowing before the rerun:** even with the schema fix, phi3:mini scored an
+unambiguous PII disclosure at 0.0 when the SOURCE was the seven concatenated source sentences of a
+multi-claim row. The same model with the same prompt scored 5 of 5 correctly on a short fixture
+with a one-line source. The judge appears to degrade as the source grows. Whoever picks this up
+should try giving each span only its own source before concluding anything about the model.
+
+**Rerun with `make judge-probe`** on a machine with Ollama and `phi3:mini`. Roughly an hour, needs
+nothing from the runtime lane. Its localisation rate decides whether paged verification is viable.
 
 M2 landed the multi-claim corpus (`8041b63`): responses are now 4-7 clause paragraphs, median 5,
 3000 distinct responses of 3000 rows, only 3.45% of characters carry harm, and every harmful

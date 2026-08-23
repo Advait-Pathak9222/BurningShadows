@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from controlplane.detectors.ollama_judge import _parse, _prompt
+from controlplane.detectors.ollama_judge import _parse, _prompt, _schema
 
 
 def test_short_axis_keys_map_onto_the_harm_vector() -> None:
@@ -56,3 +56,12 @@ def test_prompt_numbers_every_span_and_states_the_count() -> None:
     assert "[1] second claim." in prompt
     assert "Exactly 2 entries" in prompt
     assert "the source" in prompt
+
+
+def test_schema_pins_the_entry_count() -> None:
+    """Prose asking for N entries did not hold: the model emitted rows until it hit the cap."""
+    schema = _schema(3)
+    spans = schema["properties"]["spans"]
+    assert spans["minItems"] == 3
+    assert spans["maxItems"] == 3
+    assert set(spans["items"]["required"]) == {"i", "hal", "pii", "bias", "unsafe", "inj"}

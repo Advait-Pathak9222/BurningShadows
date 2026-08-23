@@ -53,7 +53,8 @@ class JudgeConfig:
     model: str
     host: str
     timeout_seconds: float
-    num_predict: int
+    num_predict_per_span: int
+    num_predict_overhead: int
     seed: int
 
     @classmethod
@@ -63,7 +64,8 @@ class JudgeConfig:
             model=str(raw["model"]),
             host=str(raw["host"]),
             timeout_seconds=float(raw["timeout_seconds"]),
-            num_predict=int(raw["num_predict"]),
+            num_predict_per_span=int(raw["num_predict_per_span"]),
+            num_predict_overhead=int(raw["num_predict_overhead"]),
             seed=int(raw["seed"]),
         )
 
@@ -95,15 +97,21 @@ class OllamaJudge(Detector):
         """Score every span in one request; the batch is the throughput mechanism."""
         if not spans:
             return []
+        # Asking in prose for exactly N entries does not work: phi3:mini pattern-matches the
+        # example and emits entries until it hits the token cap, so a one-span call came back
+        # truncated at seven fabricated rows. A JSON schema with minItems/maxItems constrains
+        # decoding itself, and the token budget scales with the batch so a long batch is not
+        # cut off mid-object.
         payload = {
             "model": self.config.model,
             "prompt": _prompt(spans, source),
             "stream": False,
-            "format": "json",
+            "format": _schema(len(spans)),
             "options": {
                 "temperature": 0,
                 "seed": self.config.seed,
-                "num_predict": self.config.num_predict,
+                "num_predict": self.config.num_predict_per_span * len(spans)
+                + self.config.num_predict_overhead,
             },
         }
         try:
@@ -123,6 +131,22 @@ class OllamaJudge(Detector):
 def _source(interaction: Interaction) -> str:
     documents = interaction.context_documents or interaction.comparison_samples
     return " ".join(documents) if documents else "(no source material was supplied)"
+
+
+def _schema(count: int) -> dict[str, Any]:
+    """Constrain decoding to exactly one scored entry per span."""
+    entry = {
+        "type": "object",
+        "properties": {key: {"type": "number"} for key in ("i", *AXIS_KEYS)},
+        "required": ["i", *AXIS_KEYS],
+    }
+    return {
+        "type": "object",
+        "properties": {
+            "spans": {"type": "array", "items": entry, "minItems": count, "maxItems": count}
+        },
+        "required": ["spans"],
+    }
 
 
 def _prompt(spans: list[str], source: str) -> str:
