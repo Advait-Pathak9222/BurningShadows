@@ -244,6 +244,12 @@ class DecisionTrace(BaseModel):
     policy_version: str
     policy_hash: str
     detector_latency_ms: float
+    # `conformal_threshold` above is the threshold actually applied. When a session has
+    # accumulated risk it sits below the fitted one, which is recorded separately so the
+    # trace shows both the certified floor and the stricter bar this turn was held to.
+    session_id: str | None = None
+    session_risk: float = Field(default=0.0, ge=0.0, le=1.0)
+    fitted_conformal_threshold: float | None = None
     degraded: bool = False
     admission_mode: Literal["unbounded", "normal", "degraded"] = "unbounded"
     queue_wait_ms: float = Field(default=0.0, ge=0.0)

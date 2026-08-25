@@ -45,7 +45,9 @@ flowchart TD
    anomaly signals. The seeded build uses lexical adapters so it remains offline.
 5. Route-specific isotonic maps transform each harm axis. The evidence regime is grounded,
    ungrounded-but-estimable, or unverifiable.
-6. A per-route exact-binomial Learn-Then-Test threshold identifies mandatory checks. The economic
+6. A per-route exact-binomial Learn-Then-Test threshold identifies mandatory checks. When the
+   request carries a session id, risk accumulated from earlier turns is deducted from that
+   threshold, so history can only make a check mandatory and never optional. The economic
    rule prices each tier with the current shadow price. If Tier 2 is selected, its signal is added and
    the allocation is recomputed. Degraded admission derives a cut line from the same benefit and
    cost terms so discretionary escalation is skipped while a conformal override still selects Tier 1.

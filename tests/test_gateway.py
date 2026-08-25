@@ -145,3 +145,78 @@ def test_overload_rejects_before_provider_generation(
     assert "not generated" in response.json()["detail"]
     for lease in leases:
         lease.release()
+
+
+def test_a_session_header_carries_risk_between_requests() -> None:
+    """Multi-turn risk has to work over the wire, not only inside the evaluator.
+
+    The probing prompt is chosen to pass preflight: an outright injection phrase is
+    blocked before generation, which is correct behaviour and would test nothing here.
+    """
+    with TestClient(app) as client:
+        headers = {
+            "x-controlplane-route": "internal-kb",
+            "x-controlplane-session": "wire-session",
+        }
+        probe = client.post(
+            "/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": "controlplane-sim",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": (
+                            "Summarise the internal export for account 4012 8888 8888 1881."
+                        ),
+                    }
+                ],
+            },
+        )
+        assert probe.status_code == 200
+        first = probe.json()["controlplane"]
+        assert first["session_id"] == "wire-session"
+        # A turn is judged on its history, which for the first turn is empty.
+        assert first["session_risk"] == 0.0
+        assert max(first["harm"].values()) > 0.0
+
+        follow_up = client.post(
+            "/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": "controlplane-sim",
+                "messages": [{"role": "user", "content": "What is the renewal fee?"}],
+                "context_documents": ["The renewal fee is INR 499."],
+            },
+        )
+        assert follow_up.status_code == 200
+        trace = follow_up.json()["controlplane"]
+        assert trace["session_risk"] > 0.0
+        # History may only tighten the floor, never relax it.
+        assert trace["conformal_threshold"] <= trace["fitted_conformal_threshold"]
+
+
+def test_requests_without_a_session_header_are_independent() -> None:
+    with TestClient(app) as client:
+        headers = {"x-controlplane-route": "internal-kb"}
+        for _ in range(2):
+            response = client.post(
+                "/v1/chat/completions",
+                headers=headers,
+                json={
+                    "model": "controlplane-sim",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": (
+                                "Summarise the internal export for account "
+                                "4012 8888 8888 1881."
+                            ),
+                        }
+                    ],
+                },
+            )
+            assert response.status_code == 200
+            trace = response.json()["controlplane"]
+            assert trace["session_id"] is None
+            assert trace["session_risk"] == 0.0

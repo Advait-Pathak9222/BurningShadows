@@ -104,3 +104,25 @@ def test_alert_fatigue_reports_both_sides_at_matched_budget(scenarios: dict[str,
     assert fatigue["fixed_rate_spend_inr"] > 0
     assert 0.0 <= fatigue["allocator_precision"] <= 1.0
     assert 0.0 <= fatigue["fixed_rate_precision"] <= 1.0
+
+
+def test_conversation_history_tightens_the_floor_for_later_turns(
+    scenarios: dict[str, Any],
+) -> None:
+    """Multi-turn compounding risk, which the problem statement names and we scored zero on.
+
+    Both turns are real held-out rows. The same follow-up is run twice and history is the
+    only difference, so the effect cannot come from a hand-picked fixture.
+    """
+    session = scenarios["multi_turn_session"]
+    assert session["available"] is True
+    assert session["session_risk_carried"] > 0.0
+    # The property the conformal bound depends on: history may only tighten the floor.
+    assert session["threshold_only_tightens"] is True
+    assert session["threshold_applied"] < session["fitted_threshold"]
+    # At the operating price the check becomes non-negotiable rather than discretionary.
+    assert session["at_operating_price"]["became_mandatory"] is True
+    # Under enough budget pressure the economics abandons the turn and history is what
+    # keeps a check on it at all.
+    assert session["under_budget_pressure"]["tier_raised_by_history"] is True
+    assert session["under_budget_pressure"]["extra_spend_inr"] > 0.0

@@ -72,6 +72,7 @@ def health() -> dict[str, Any]:
 async def chat_completions(
     request: ChatCompletionRequest,
     x_controlplane_route: str = Header(default="support-assistant"),
+    x_controlplane_session: str | None = Header(default=None),
 ) -> Response:
     if not request.messages:
         raise HTTPException(status_code=400, detail="messages must not be empty")
@@ -88,14 +89,18 @@ async def chat_completions(
         )
         if request.stream:
             return StreamingResponse(
-                _stream_with_decision(request.model, interaction, lease),
+                _stream_with_decision(
+                    request.model, interaction, lease, x_controlplane_session
+                ),
                 media_type="text/event-stream",
                 headers={
                     "x-controlplane-decision": "pending",
                     "x-controlplane-admission": lease.mode.value,
                 },
             )
-        return await _completion_response(request.model, response_text, interaction, lease)
+        return await _completion_response(
+            request.model, response_text, interaction, lease, x_controlplane_session
+        )
     except BaseException:
         lease.release()
         raise
@@ -154,9 +159,10 @@ async def _completion_response(
     response_text: str,
     interaction: Interaction,
     lease: AdmissionLease,
+    session_id: str | None = None,
 ) -> JSONResponse:
     try:
-        trace = await _assess(interaction, lease)
+        trace = await _assess(interaction, lease, session_id)
     finally:
         lease.release()
     _spend.record(trace.assurance_spend_inr, controller)
@@ -180,8 +186,9 @@ async def _stream_with_decision(
     model: str,
     interaction: Interaction,
     lease: AdmissionLease,
+    session_id: str | None = None,
 ) -> AsyncIterator[str]:
-    assessment = asyncio.create_task(_assess(interaction, lease))
+    assessment = asyncio.create_task(_assess(interaction, lease, session_id))
     assessment.add_done_callback(lambda completed: _release_after_assessment(completed, lease))
     async for token in provider.stream(interaction.prompt):
         chunk = {
@@ -198,7 +205,9 @@ async def _stream_with_decision(
     yield "data: [DONE]\n\n"
 
 
-async def _assess(interaction: Interaction, lease: AdmissionLease) -> DecisionTrace:
+async def _assess(
+    interaction: Interaction, lease: AdmissionLease, session_id: str | None = None
+) -> DecisionTrace:
     return await asyncio.to_thread(
         engine.assess,
         interaction,
@@ -206,6 +215,7 @@ async def _assess(interaction: Interaction, lease: AdmissionLease) -> DecisionTr
         mandatory_only=lease.degraded,
         admission_mode=lease.mode.value,
         queue_wait_ms=lease.queue_wait_ms,
+        session_id=session_id,
     )
 
 

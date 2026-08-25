@@ -22,6 +22,11 @@ from controlplane.models import (
 from controlplane.service import AssessmentEngine
 from controlplane.sim.traffic import ROUTES, agentic_transfer_interaction
 
+# Far above the ~400 the budget controller actually reaches, and deliberately so: it is
+# where the economics stops paying for this turn, which is the only place a tier change
+# from conversation history alone is observable.
+SESSION_PRESSURE_LAMBDA = 5_000.0
+
 
 def run_scenarios(
     root: Path,
@@ -29,7 +34,7 @@ def run_scenarios(
     interactions: list[Interaction],
     evaluation: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
-    """Run the eight named competition scenarios with repeatable inputs."""
+    """Run the nine named competition scenarios with repeatable inputs."""
     if evaluation is None:
         evaluation, _ = build_report(root, interactions)
     results = {
@@ -41,6 +46,7 @@ def run_scenarios(
         "jurisdiction_switch": _jurisdiction_switch(engine),
         "budget_shock": _budget_shock(engine, interactions),
         "drift": _drift(engine, interactions),
+        "multi_turn_session": _multi_turn(engine, interactions),
     }
     output = root / "reports" / "scenarios.json"
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -356,6 +362,80 @@ def _selected_benefit(trace: Any) -> float:
         ),
         0.0,
     )
+
+
+def _multi_turn(
+    engine: AssessmentEngine, interactions: list[Interaction]
+) -> dict[str, Any]:
+    """A questionable turn raises the bar for the turns that follow it.
+
+    Multi-turn compounding risk is named in the problem statement, and scoring every turn
+    independently cannot see it: a sequence can walk somewhere no single turn would go.
+
+    Both turns are **real held-out rows**, not written for this scenario, so the effect
+    cannot be an artifact of a hand-tuned fixture. The same follow-up runs twice — once
+    opening a fresh session, once after a probing turn — so conversation history is the
+    only difference between them.
+
+    Session risk is deducted from the mandatory-check threshold and never added to it, so
+    history can only buy more checking. That direction is what keeps the certified
+    per-route bound valid: checking more than the threshold requires cannot raise escaped
+    harm above the bound, while checking less would invalidate it silently.
+    """
+    route = "internal-kb"
+    test = [item for item in interactions if item.split == "test" and item.route == route]
+    scored = [(engine.detect(item).harm.maximum(), item) for item in test]
+    fitted = engine.conformal_thresholds[route]
+    # A loud probing turn to accumulate risk, and a quiet follow-up that sits below the
+    # fitted floor on its own — the only place history can change anything.
+    probe = max(scored, key=lambda pair: pair[0])[1]
+    borderline = [pair for pair in scored if 0.0 < pair[0] < fitted]
+    if not borderline:
+        return {"available": False, "reason": "no row sits below the fitted floor"}
+    follow_up = max(borderline, key=lambda pair: pair[0])[1]
+
+    def _pair(shadow_price: float) -> dict[str, Any]:
+        engine.sessions.reset()
+        alone = engine.assess(follow_up, shadow_price, session_id="scenario-clean")
+        engine.sessions.reset()
+        engine.assess(probe, shadow_price, session_id="scenario-probing")
+        after = engine.assess(follow_up, shadow_price, session_id="scenario-probing")
+        engine.sessions.reset()
+        return {
+            "alone": _trace_summary(alone),
+            "after_probing": _trace_summary(after),
+            "tier_raised_by_history": (after.selected_tier or -1) > (alone.selected_tier or -1),
+            "became_mandatory": after.forced_by_conformal and not alone.forced_by_conformal,
+            "extra_spend_inr": after.assurance_spend_inr - alone.assurance_spend_inr,
+        }
+
+    # At the operating shadow price the follow-up is already worth checking on economics
+    # alone, so history changes whether the check may be skipped rather than which one
+    # runs. Under severe pressure the economics gives up on it and history is what keeps
+    # a check on the turn at all.
+    operating = _pair(0.0)
+    pressured = _pair(SESSION_PRESSURE_LAMBDA)
+    engine.sessions.reset()
+    engine.assess(probe, session_id="scenario-probing")
+    carried = engine.assess(follow_up, session_id="scenario-probing")
+    engine.sessions.reset()
+
+    return {
+        "available": True,
+        "probe_row": probe.interaction_id,
+        "follow_up_row": follow_up.interaction_id,
+        "session_risk_carried": carried.session_risk,
+        "fitted_threshold": carried.fitted_conformal_threshold,
+        "threshold_applied": carried.conformal_threshold,
+        "threshold_only_tightens": (
+            carried.conformal_threshold <= (carried.fitted_conformal_threshold or 0.0)
+        ),
+        "at_operating_price": operating,
+        "under_budget_pressure": pressured,
+        # Stated so the tier bump is not read as routine: the observed end-of-run shadow
+        # price is about 400 at the tightest budget, far below the pressure used here.
+        "pressure_lambda": SESSION_PRESSURE_LAMBDA,
+    }
 
 
 def _drift(engine: AssessmentEngine, interactions: list[Interaction]) -> dict[str, Any]:

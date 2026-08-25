@@ -10,6 +10,7 @@ from controlplane.detectors import Tier0Rules, Tier1SmallModels, Tier2Judge
 from controlplane.economics import CostModel, allocate_verification
 from controlplane.economics.allocator import expected_loss_averted_inr
 from controlplane.effects import gate_effects
+from controlplane.feedback import SessionRiskStore, tightened_threshold
 from controlplane.guarantees import ConformalCalibration, learn_then_test
 from controlplane.ledger import LedgerStore
 from controlplane.models import (
@@ -60,6 +61,8 @@ class AssessmentEngine:
         # No invented defaults. Serving a route before calibrate() has fitted it would
         # price traffic against a made-up threshold, which is what the gateway did.
         self.conformal_thresholds: dict[str, float] = dict(conformal_thresholds or {})
+        # Multi-turn risk. Only ever tightens the floor; see feedback/session.py.
+        self.sessions = SessionRiskStore()
 
     def detect(self, interaction: Interaction, include_tier2: bool = False) -> DetectionBundle:
         return self._bundle(interaction, self._signals(interaction, include_tier2))
@@ -118,9 +121,15 @@ class AssessmentEngine:
         mandatory_only: bool = False,
         admission_mode: Literal["unbounded", "normal", "degraded"] = "unbounded",
         queue_wait_ms: float = 0.0,
+        session_id: str | None = None,
     ) -> DecisionTrace:
         policy = self.policy_store.resolve(interaction.route, interaction.jurisdiction)
-        threshold = self._threshold(interaction.route)
+        fitted = self._threshold(interaction.route)
+        # Risk carried in from earlier turns of this session lowers the bar at which a
+        # check becomes mandatory. It never raises it, so the certified per-route bound is
+        # never relaxed by conversation history.
+        session_risk = self.sessions.risk(session_id)
+        threshold = tightened_threshold(fitted, session_risk)
         signals = self._signals(interaction)
         bundle = self._bundle(interaction, signals)
         tiers = self.cost_model.tiers(policy, interaction.tool_calls)
@@ -164,12 +173,18 @@ class AssessmentEngine:
         trace = trace.model_copy(
             update={
                 "effect_actions": actions,
+                "session_id": session_id,
+                "session_risk": session_risk,
+                "fitted_conformal_threshold": fitted,
                 "degraded": mandatory_only,
                 "admission_mode": admission_mode,
                 "queue_wait_ms": queue_wait_ms,
                 "mandatory_assessment_completed": True,
             }
         )
+        # Fold this turn in only after it has been decided, so a turn never raises its own
+        # bar and the accumulator reflects what was actually observed.
+        self.sessions.observe(session_id, bundle.harm.maximum())
         if self.ledger is not None:
             self.ledger.append(trace)
         return trace

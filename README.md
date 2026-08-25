@@ -119,6 +119,13 @@ condition in `docs/00-assessment.md`.** Tier selection moves; the verdict never 
 prices a check and does not enter the release rule. A buyer who disputes our consequence estimates
 is disputing the assurance bill, not the safety behaviour.
 
+Multi-turn risk is wired rather than declared. A questionable turn lowers the mandatory-check
+threshold for later turns in the same session, carried over an `x-controlplane-session` header. It
+**only ever tightens the floor** — session risk is deducted from the threshold and never added to
+it — so conversation history can buy more checking and never less, which is what keeps the certified
+per-route bound valid. On two real held-out rows the follow-up's check goes from discretionary to
+mandatory; under severe budget pressure its tier rises with history as the only difference.
+
 Every decision and every review is in one hash chain: 1500 of 1500 decisions recorded, 280 reviews
 in the same chain, and 224 of 224 proposed effects logged.
 

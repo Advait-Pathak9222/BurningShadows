@@ -168,6 +168,33 @@ tightest budget, though it serves far less value and drops 16 top-decile cases a
 ordering remains the smaller lever: keeping up with arrivals needs 4.8 reviewers against the 2
 configured, and no serving rule substitutes for that.
 
+### Multi-turn session risk, and what it is not
+
+A questionable turn now lowers the mandatory-check threshold for later turns in the same session,
+carried over an `x-controlplane-session` header and recorded in the decision trace as `session_risk`
+alongside both the fitted and the applied threshold.
+
+**It only ever tightens the floor.** Session risk is deducted from the threshold and never added to
+it, so history can buy more checking and never less. That direction is what keeps the certified
+per-route bound valid: checking more than the threshold requires cannot push escaped harm above the
+bound, while checking less would invalidate it silently, because the threshold was selected by a
+risk test over the route population and nothing certifies a per-session one. It also never touches
+the calibrated harm score, so the score the bound is stated over is unchanged.
+
+What the committed scenario shows, on two real held-out rows with history as the only difference:
+at the operating shadow price the follow-up's check goes from **discretionary to mandatory**, and
+under severe budget pressure — lambda 5,000, against the roughly 400 the controller actually reaches
+at the tightest budget — the tier rises from 0 to 1 because economics has stopped paying for that
+turn and history is what keeps a check on it.
+
+**The tier bump therefore requires a budget pressure this system does not reach in any committed
+run.** At realistic lambda the mechanism changes whether a check may be skipped, not which check
+runs. That is a real difference and it is smaller than "the second turn gets a better check", which
+is what we would have liked to report.
+
+The evaluation passes no session id, so every committed number is unaffected by this feature. That
+is deliberate: a mechanism that silently moved the headline result would be impossible to audit.
+
 ### The queue now assumes uniform arrivals, which is the next thing that is wrong
 
 The batch model assumed everything arrived at once. The corrected model assumes arrivals are uniform
@@ -233,8 +260,12 @@ not yet addressed.
 - Harm axes are summed. Correlated consequences may be double counted, while unmodelled harms receive
   zero economic weight.
 - The unverifiable path abstains but does not yet rewrite the answer or persist a human review queue.
-- `ConversationRiskAccumulator` exists but has no caller. There is no multi-turn risk accumulation in
-  any runtime path, despite it being a stated design goal.
+- Multi-turn risk is wired but the session store is process-local and unbounded. It has no eviction,
+  so a long-running gateway leaks one accumulator per session id, and several workers do not share
+  session state, so the same conversation hitting two workers accumulates twice as slowly as it
+  should. Both are deployment problems, not design ones, and neither is solved.
+- The decay constant on session risk (0.75) is a design choice with nothing behind it. How fast a
+  session should forget a questionable turn is an empirical question and we have not measured it.
 - `ReviewOverride` has no caller either. There is no feedback loop from reviewer decisions.
 - `c` is never recalibrated by anything. Only `r` is fitted, and only once. Its uncertainty is
   now measured (`make sensitivity`) but not reduced.
