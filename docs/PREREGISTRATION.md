@@ -173,3 +173,100 @@ allocator's value on this workload is confined to buying the expensive tier wher
 high, and the attention economics is a statement about the cost structure of assurance rather than
 about our allocator specifically. That is still a defensible business claim, and it is the one we
 would then make.
+
+---
+
+# Pre-registration 3: does allocating attention beat a naive queue?
+
+Written before the comparison was implemented and before any number from it existed. Locked at
+commit `efed34e`, corpus `manifest_version: 3`, seed `20260824`.
+
+## Why this is the experiment that matters
+
+Pre-registration 2 came back partial, and the reason was more interesting than the result. Total
+assurance cost is 30 to 70 times compute cost, every policy that raises more than a shift's worth of
+cases saturates the same fixed reviewer capacity, and so every policy pays **the same attention
+bill**. Allocating compute barely moves the total. We measured our own differentiator and found it
+governs the smaller number.
+
+What differs between policies at saturation is not what they spend. It is **what gets shed**. At 166
+cases of capacity against 244 to 396 raised, between a third and three fifths of everything raised
+is dropped, and which third is dropped is currently decided by a rule nobody has tested.
+
+So the question that decides whether this product is differentiated is not *which rows get a Tier 2
+check*. It is **which cases get the reviewer's hour**. That is what this tests.
+
+## The rules under comparison
+
+All at identical capacity, on identical raised cases, from the allocator run at each budget.
+
+| Rule | Serving order | Why it is in the comparison |
+|---|---|---|
+| `deadline_density` | SLA deadline, then expected loss per reviewer minute | **Ours.** The shipped rule |
+| `fifo` | Arrival order | What an unmanaged queue does, and what most review desks actually do |
+| `random` | Deterministic shuffle | The honest null. If we cannot beat this, there is no allocation happening |
+| `density` | Expected loss per reviewer minute only | Ours with the deadline term removed, to price what the deadline term costs |
+| `deadline` | SLA deadline only | Ours with the value term removed, to price what the value term costs |
+
+`density` and `deadline` are ablations, not rivals. They exist so that if we win, we can say which
+half of our rule did the work — and if one of them beats the full rule, that is a finding about our
+rule being worse than its own components.
+
+## Primary endpoint
+
+**Our rule must dominate `fifo` at every budget**: at least as much expected loss served, and no
+more SLA breaches. Dominance rather than a single scalar, because a rule that serves more value by
+letting tight-deadline cases breach has not improved anything — it has moved the failure.
+
+Success: `deadline_density` weakly dominates `fifo` on both axes at all six budgets, and strictly
+improves at least one axis at the 10% and 25% budgets.
+
+Partial success: dominance at four or more of six budgets.
+
+Failure: anything else, including a win on served value that is paid for in breaches.
+
+## Secondary endpoints, reported either way
+
+- Against `random`. Losing to a deterministic shuffle would mean the queue is not allocating at all,
+  and it would be the most important negative result in the project.
+- The two ablations. We expect `density` to serve more expected loss and breach more, and `deadline`
+  the reverse. If the full rule does not sit between them on both axes, our combination is not doing
+  what we claim.
+- Shed cases above the 90th percentile of expected loss, per rule. Total value served can look
+  healthy while the most expensive cases are the ones being dropped.
+- Shed cases on `finops-agent` specifically, which carries the tightest SLA and the highest
+  consequence.
+
+## What is deliberately not claimed
+
+Expected loss is `r * c` and both terms are ours: `r` is a calibrated detector score and `c` is a
+policy assumption inside a 0.25x-4x band. This comparison therefore measures whether the queue
+allocates well **against our own estimate of value**, not whether it allocates well against a real
+review desk's outcomes. That is a genuine limitation and it goes next to the result, not in a
+footnote.
+
+Reviewer handling time is a constant 6 minutes per case. A real desk's handling time varies with
+case difficulty, and a rule that knew the difference would allocate differently. Constant handling
+time makes the comparison a ranking problem rather than a knapsack, which is a simplification in
+every rule's favour equally.
+
+## Methodology guards
+
+1. **The queue, its capacity, and the case-raising rule are not touched.** Only the serving order
+   varies. Everything else — `config/economics.yaml`, `case_from_trace`, the shed rule — stays as
+   committed.
+2. **The rules are compared on identical raised cases** from the same allocator run at each budget,
+   so no rule is advantaged by seeing a different case mix.
+3. **`random` is seeded and committed**, so the null is reproducible rather than resampled until it
+   loses.
+4. **The ablations are run whether or not they flatter us**, and if one beats the full rule that is
+   reported as the headline.
+5. **No metric substitution.** If the primary endpoint fails, it goes in `README.md` and
+   `docs/LIMITATIONS.md` as a failure.
+
+## What happens on failure
+
+If our rule does not beat FIFO, the honest conclusion is that the reviewer queue is a cost centre we
+have measured accurately and not yet improved — which is still a finding worth having, because the
+measurement is what nobody else has. The shipped rule would stay, labelled as untested rather than
+as a differentiator, and the business case would rest on the cost structure alone.
