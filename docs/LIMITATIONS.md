@@ -270,7 +270,9 @@ not yet addressed.
   should. Both are deployment problems, not design ones, and neither is solved.
 - The decay constant on session risk (0.75) is a design choice with nothing behind it. How fast a
   session should forget a questionable turn is an empirical question and we have not measured it.
-- `ReviewOverride` has no caller either. There is no feedback loop from reviewer decisions.
+- `ReviewOverride` has been deleted. It was a five-field dataclass with no caller, superseded by
+  `ReviewRecord`, which carries the same information plus the observed label and joins the hash
+  chain. Leaving it in place read as an unimplemented promise rather than as dead code.
 - `c` is never recalibrated by anything. Only `r` is fitted, and only once. Its uncertainty is
   now measured (`make sensitivity`) but not reduced.
 
