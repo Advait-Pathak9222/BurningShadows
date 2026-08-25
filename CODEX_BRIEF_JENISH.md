@@ -10,13 +10,22 @@ onward; read **this** file for what to do, where you may write, and how the merg
 
 ## 0. Set up
 
+**The lanes are merged. `jenish` is gone and there is one branch again.**
+
 ```bash
 git checkout main
 git pull origin main
-git checkout -b jenish
 ```
 
-Work on `jenish` only. Never commit to `main`. Push `jenish` when a milestone is green.
+Your J1 pre-registration is on `main`. It merged with zero conflicts, because you touched only
+files you owned — that is the ownership manifest in section 1 working, and it is worth keeping even
+now the branches are unified.
+
+Since there is one branch, two rules change and everything else in section 1 still holds:
+
+- **Log to `progress.csv`.** `progress-jenish.csv` has been concatenated into it and deleted.
+- **Branch per task off `main`** (`runtime/<slug>`), push it, and say so. Do not commit to `main`
+  directly; that is where the merge boundary lives now.
 
 Before you start, run the gate and confirm it is clean on your machine, so a later failure is
 yours and not inherited:
@@ -58,7 +67,6 @@ tests/test_ledger_concurrency.py
 tests/test_loadtest.py
 docs/results/runtime*.md
 docs/RUNTIME_*.md
-progress-jenish.csv
 ```
 
 Plus any **new** file inside those directories. New tests go in `tests/test_runtime_*.py` or
@@ -88,9 +96,8 @@ I put these on `main` before writing this brief, precisely so you do not have to
 - **`make slo-sweep`, `make chaos`, `make replay`** already exist in the `Makefile` and already
   dispatch into `controlplane/runtime/commands.py`, which is **yours**. Implement the three
   functions in that file. Do not add targets to the `Makefile` and do not add branches to `cli.py`.
-- **`progress-jenish.csv`** is your log. Same columns as `progress.csv`, one row per commit. We
-  concatenate at merge time, so neither side ever appends to a file the other side appends to.
-  That is where our last merge actually conflicted.
+- **`progress.csv`** is the single log again now the lanes are merged. Append one row per commit
+  at the end. If both lanes are appending at the same time, say so and we will split it again.
 - **`config/runtime.yaml`** is yours for every knob you need. Do not add runtime keys to
   `config/economics.yaml`.
 
@@ -102,8 +109,8 @@ I put these on `main` before writing this brief, precisely so you do not have to
    `docs/RUNTIME_LIMITATIONS.md`. I fold them into `README.md` and `docs/LIMITATIONS.md` at
    integration. Two agents editing one README paragraph is the most reliable way to manufacture a
    conflict and the least useful one to have.
-3. **If you need a change in a file I own, stop and write it down** in `progress-jenish.csv` with
-   status `blocked`. Do not make the change. I will make it on `main` and you rebase.
+3. **If you need a change in a file the detection lane owns, stop and write it down** in
+   `progress.csv` with status `blocked`. Do not make the change.
 4. **Rebase on `main` before you push**, every time: `git pull --rebase origin main`. If that
    rebase conflicts, a rule was broken — tell me rather than resolving it.
 
