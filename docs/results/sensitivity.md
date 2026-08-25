@@ -10,19 +10,19 @@ The budget is held fixed in rupees and the controller is re-run for every scenar
 
 `docs/00-assessment.md` says the thesis is not ready for unattended use if more than 20% of decisions flip across plausible consequence ranges.
 
-**Measured: 15.0% — PASSES.**
+**Measured: 15.8% — PASSES.**
 
 ## Ranking sensitivity
 
 Each route and harm axis drawn independently, log-uniform inside the band. This is the question that matters: allocation only beats blanket coverage if the ordering of expected loss is roughly right.
 
 - Draws: 48
-- Mean flip rate: 15.0%
-- Worst single draw: 22.3%
-- Decisions that flipped in at least one draw: 54.0%
-- Of the mean flip rate, tier changes: 15.0%; verdict changes: 0.0%
+- Mean flip rate: 15.8%
+- Worst single draw: 27.7%
+- Decisions that flipped in at least one draw: 58.0%
+- Of the mean flip rate, tier changes: 15.8%; verdict changes: 0.0%
 
-**The mean clears the stop condition and the worst single draw does not** (22.3% against 20%). There exist consequence assignments inside the approved band under which more than the permitted share of decisions move. The stop condition is stated over the range rather than over its worst corner, so this passes as written — but a pilot should approve the band before unattended use, not after.
+**The mean clears the stop condition and the worst single draw does not** (27.7% against 20%). There exist consequence assignments inside the approved band under which more than the permitted share of decisions move. The stop condition is stated over the range rather than over its worst corner, so this passes as written — but a pilot should approve the band before unattended use, not after.
 
 ### The verdict does not move
 
@@ -34,14 +34,14 @@ So the softest input in the system governs **how much we spend looking**, not **
 
 Every consequence scaled by the same factor. This walks the budget off its operating point by construction, so a high flip rate here is expected and is a statement about the budget binding, not about the ranking.
 
-Base coverage at the 25% budget: 82.9%.
+Base coverage at the 25% budget: 80.4%.
 
 | Scale | Decisions flipped | Tier changed | Verdict changed | Coverage |
 |---:|---:|---:|---:|---:|
-| 0.25x | 14.8% | 14.8% | 0.0% | 85.5% |
-| 0.5x | 13.7% | 13.7% | 0.0% | 84.2% |
-| 2.0x | 7.7% | 7.7% | 0.0% | 84.7% |
-| 4.0x | 14.3% | 14.3% | 0.0% | 86.3% |
+| 0.25x | 10.2% | 10.2% | 0.0% | 83.0% |
+| 0.5x | 10.2% | 10.2% | 0.0% | 81.3% |
+| 2.0x | 7.6% | 7.6% | 0.0% | 80.1% |
+| 4.0x | 15.1% | 15.1% | 0.0% | 82.1% |
 
 ## How to read this
 

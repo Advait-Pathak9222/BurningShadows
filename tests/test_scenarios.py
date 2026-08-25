@@ -109,20 +109,33 @@ def test_alert_fatigue_reports_both_sides_at_matched_budget(scenarios: dict[str,
 def test_conversation_history_tightens_the_floor_for_later_turns(
     scenarios: dict[str, Any],
 ) -> None:
-    """Multi-turn compounding risk, which the problem statement names and we scored zero on.
+    """Multi-turn compounding risk, which the problem statement names.
 
-    Both turns are real held-out rows. The same follow-up is run twice and history is the
-    only difference, so the effect cannot come from a hand-picked fixture.
+    Both turns are real held-out rows and the same follow-up is scored twice, so history is
+    the only difference. The scenario escalates one probing turn at a time, which is the
+    honest shape of the claim: one questionable turn should not put a session under full
+    scrutiny, and a sustained pattern should.
     """
     session = scenarios["multi_turn_session"]
     assert session["available"] is True
     assert session["session_risk_carried"] > 0.0
-    # The property the conformal bound depends on: history may only tighten the floor.
+    # The property the certified bound depends on: history may only tighten the floor.
     assert session["threshold_only_tightens"] is True
     assert session["threshold_applied"] < session["fitted_threshold"]
-    # At the operating price the check becomes non-negotiable rather than discretionary.
-    assert session["at_operating_price"]["became_mandatory"] is True
-    # Under enough budget pressure the economics abandons the turn and history is what
-    # keeps a check on it at all.
-    assert session["under_budget_pressure"]["tier_raised_by_history"] is True
-    assert session["under_budget_pressure"]["extra_spend_inr"] > 0.0
+    # It has to actually fire, and it has to take more than one turn to do so.
+    assert session["became_mandatory_after_turns"] is not None
+    assert session["became_mandatory_after_turns"] > 1
+    assert session["turn_2_alone"]["forced_by_conformal"] is False
+    assert session["turn_2_after_probing"]["forced_by_conformal"] is True
+
+
+def test_session_risk_rises_and_the_bar_falls_monotonically(
+    scenarios: dict[str, Any],
+) -> None:
+    """Each probing turn must make the session stricter, never looser."""
+    escalation = scenarios["multi_turn_session"]["escalation"]
+    assert len(escalation) > 1
+    risks = [step["session_risk"] for step in escalation]
+    thresholds = [step["threshold_applied"] for step in escalation]
+    assert risks == sorted(risks)
+    assert thresholds == sorted(thresholds, reverse=True)

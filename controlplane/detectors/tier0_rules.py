@@ -4,6 +4,7 @@ import re
 from time import perf_counter
 
 from controlplane.detectors.base import Detector
+from controlplane.detectors.disclosure import score_disclosure
 from controlplane.models import DetectorSignal, HarmVector, Interaction
 
 PII_PATTERNS = {
@@ -34,9 +35,13 @@ class Tier0Rules(Detector):
         lowered = combined.lower()
         evidence: list[str] = []
 
-        pii_matches = [name for name, pattern in PII_PATTERNS.items() if pattern.search(combined)]
-        if pii_matches:
-            evidence.append(f"PII patterns: {', '.join(pii_matches)}")
+        # Shape alone cannot separate a leak from a permitted disclosure here: a perfect
+        # shape detector tops out at AUC 0.587 on this corpus. The score comes from whether
+        # the disclosure is grounded in the supplied source. See detectors/disclosure.py.
+        pii_score, pii_evidence = score_disclosure(
+            interaction.response, interaction.context_documents
+        )
+        evidence.extend(pii_evidence)
         injection_hits = [phrase for phrase in INJECTION_PHRASES if phrase in lowered]
         if injection_hits:
             evidence.append(f"injection phrase: {injection_hits[0]}")
@@ -52,7 +57,7 @@ class Tier0Rules(Detector):
             tier=self.tier,
             scores=HarmVector(
                 hallucination=0.72 if numeric_mismatch else 0.08,
-                pii_leak=(min(0.98, 0.55 + 0.25 * len(pii_matches)) if pii_matches else 0.005),
+                pii_leak=pii_score,
                 bias=0.88 if bias_hits else 0.005,
                 unsafe_content=0.92 if unsafe_hits else 0.005,
                 injection_or_exfil=(

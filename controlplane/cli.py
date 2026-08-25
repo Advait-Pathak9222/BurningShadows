@@ -75,9 +75,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         summary = run_pii_probe(ROOT)
         write_pii_probe(ROOT, summary)
         print(
-            f"PII: regex F1 {summary['regex']['f1']:.4f} (AUC "
-            f"{summary['regex']['auc']:.4f}) against presidio F1 "
-            f"{summary['presidio']['f1']:.4f} (AUC {summary['presidio']['auc']:.4f})."
+            f"PII axis: Tier 0 AUC {summary['tier0']['auc']:.4f} "
+            f"(F1 {summary['tier0']['f1']:.4f}) against a shape-only ceiling of "
+            f"{summary['shape_ceiling']:.4f}; presidio AUC "
+            f"{summary['presidio']['auc']:.4f}."
         )
         return 0
     if args.command == "judge-probe":

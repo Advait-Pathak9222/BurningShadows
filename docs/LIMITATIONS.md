@@ -72,9 +72,9 @@ this allocator, behave this way on real enterprise traffic.
 
 ## What the experiment proves and does not prove
 
-The allocator averts more loss than a tuned fixed-rate baseline at all six budget levels, by 1.0% to
-5.4%. On compute-only ROI the baseline wins at the three tightest budgets, because running the cheap
-Tier 1 check over the entire test set costs only 270 INR and gets within 1.1% of the allocator's
+The allocator averts more loss than a tuned fixed-rate baseline at all six budget levels, by 0.4% to
+3.6%. On compute-only ROI the baseline wins at the two tightest budgets, because running the cheap
+Tier 1 check over the entire test set costs only 270 INR and gets within 1.7% of the allocator's
 loss averted.
 
 The honest reading is that **blanket cheap checking is a strong strategy whenever a low tier is good
@@ -109,8 +109,7 @@ and at what tier.
 Measured against the endpoint locked in `docs/PREREGISTRATION.md` before the change was written:
 **partial success, not success.** The allocator still does not beat the tuned baseline on total-cost
 ROI at the 10% or 25% budget, so the primary endpoint fails. The pre-registered partial bar — the
-ratio falling to 1.5x or below at both rows — is met: it falls from 2.28x and 3.76x to 1.006x and
-1.016x.
+ratio falling to 1.5x or below at both rows — is met: it falls to 1.002x and 1.004x.
 
 **The reason is not that allocation improved.** The attention bill is 30 to 70 times the compute
 bill and both policies pay it in full, so the compute difference the first comparison argues about
@@ -143,8 +142,8 @@ than either number, so here it is in full:
 3. `ReviewQueue.drain` is now a discrete-event simulation over reviewer-servers: a case cannot be
    started before it arrives, and wait is measured from its own arrival to the end of its review.
    Breaches fell from ~161 to 33-55 of 166 and p99 wait from 495 to 106-160 minutes.
-4. Run two passes: the shipped rule dominates FIFO at every budget, breaching 55 against 154 at the
-   tight budget while serving 1.48x the expected loss from the same reviews.
+4. Run two passes: the shipped rule dominates FIFO at every budget, breaching 49 against 148 at the
+   tight budget while serving 1.57x the expected loss from the same reviews.
 
 **A result that flips when its authors correct their own model is weaker evidence than one that does
 not.** The order of operations is the only thing that makes it credible at all — the defect was
@@ -159,13 +158,12 @@ term should come out.** The comment in `queue.py` claiming it prevents tight-SLA
 wrong — it clusters tight-SLA cases into a burst the desk cannot clear. Ordering by deadline alone
 is worse than FIFO at every budget.
 
-What the deadline term does buy is route fairness: it sheds 67 `finops-agent` cases against
-`density`'s 81, so removing it concentrates dropped cases on the highest-consequence route. That is
+What the deadline term does buy is route fairness: it sheds `finops-agent` cases that `density` would drop, so removing it concentrates dropped cases on the highest-consequence route. That is
 an argument for route-awareness, not for the rule we shipped.
 
 Two more things we lose on. The seeded random null breaches fewer SLAs than the shipped rule at the
 tightest budget, though it serves far less value and drops 16 top-decile cases against our 1. And
-ordering remains the smaller lever: keeping up with arrivals needs 4.8 reviewers against the 2
+ordering remains the smaller lever: keeping up with arrivals needs 5.4 reviewers against the 2
 configured, and no serving rule substitutes for that.
 
 ### Multi-turn session risk, and what it is not
@@ -212,18 +210,19 @@ Thresholds are selected by a finite-grid exact-binomial test on a fold of the ca
 the isotonic score map never saw. Fitting the map and selecting thresholds on the same rows, as the
 first implementation did, made the bound optimistic by roughly nine-fold on `finops-agent`.
 
-The bound holds on held-out traffic on the two routes where it says anything: 0.0591 on
-`finops-agent` over 220 released rows and 0.0781 on `internal-kb` over 461, against alpha 0.15. It
-is stated over rows released *without a check*. Rows that were checked and missed are counted
-separately as `escaped_harm_rate_effective`, which is the number a business actually experiences and
-is always the larger of the two.
+The bound holds on held-out traffic on all three routes: 0.0618 on `finops-agent` over 372 released
+rows, 0.0716 on `internal-kb` over 475, and 0.0642 on `support-assistant` over 436, against alpha
+0.15. It is stated over rows released *without a check*. Rows that were checked and missed are
+counted separately as `escaped_harm_rate_effective`, which is the number a business actually
+experiences and is always the larger of the two.
 
-**On `support-assistant` the bound is vacuous and is reported as vacuous.** The selected threshold
-is 0.0, so no row is released unchecked, the floor demands 100% coverage, and the bound is satisfied
-by construction. A guarantee over zero released rows carries no information about the detector, and
-printing `holds` there would be the same class of defect as an `x / x` coverage metric. It is a real
-and defensible operating point — that route's detector cannot separate well enough to release
-anything safely at this alpha — but it is not evidence, and the results table says so.
+**`support-assistant` used to be vacuous and is not any more.** Its threshold was 0.0, so nothing
+was released unchecked, the floor demanded full coverage, and the bound was satisfied by
+construction — a guarantee over zero released rows, which we reported as vacuous rather than as a
+pass. Improving the disclosure detector fixed it at the source: the floor now forces 12.8% of that
+route rather than 100%, and the bound is measured over 436 released rows. The floor's coverage
+dropped on the other two routes as well, from 56.0% to 25.6% and from 7.8% to 5.0%. That is the
+guarantee doing its job — it demands less when the detector can be trusted more.
 
 alpha is 0.15 because that is the feasible frontier for this detector and prevalence on the
 multi-claim corpus. At 0.10 no threshold passed the risk test on any route; at 0.20 the floor was
@@ -239,7 +238,7 @@ by weakening the floor.
 
 ## Calibration
 
-Expected calibration error is 0.070 to 0.090 by route. The scores rank well and are not reliable as
+Expected calibration error is 0.031 to 0.046 by route, down from 0.070 to 0.090 before the disclosure detector was rebuilt. The scores rank well and are not reliable as
 probabilities. Since expected loss is `r * c`, that error propagates directly into every rupee figure
 the allocator reasons about. This is the sharpest technical objection to the current build and it is
 not yet addressed.
@@ -251,8 +250,13 @@ not yet addressed.
 - Lexical grounding misses paraphrases, multi-hop errors, table reasoning, date logic, and consistent
   falsehoods. The novel exfiltration pattern in the back third of the stream is missed 62 times out
   of 64, which is the point of that fixture.
-- Regex PII rules miss many identifiers, languages, and contextual disclosures, and flag benign
-  account-like text. The corpus contains permitted-PII decoys precisely to expose this.
+- PII scoring is no longer shape matching: it asks whether a disclosure is grounded in the
+  authorised source, normalises obfuscated identifiers, and scans for secrets. That took the axis
+  from AUC 0.5897 to 0.9844. **Two caveats travel with it.** Most of the gain comes from secrets
+  scanning, because half the positives on that axis are credential exfiltration rather than personal
+  data and we had no detector for them at all. And the phrase vocabulary that separates a personal
+  disclosure from an authorised one was fitted to wording our own generator produced; without it the
+  detector scores 0.8853, and on traffic we did not write it would score lower still.
 - **The harm vector survives in the data model and in the ledger, but not always in the decision.**
   On overlapping rows the isotonic map flattens the secondary axis toward zero, because ungrounded
   hallucination is not separable by these detectors. The scenario reports how many axes were labelled
@@ -299,9 +303,9 @@ review and effective-date handling.
 ## Next evidence needed
 
 1. Derive `c` from something defensible — regulatory exposure, remediation cost, reversal cost,
-   support-contact cost. The sensitivity analysis is now built (`make sensitivity`): 15.0% of
+   support-contact cost. The sensitivity analysis is now built (`make sensitivity`): 15.8% of
    decisions flip across a 0.25x-4x band against a 20% stop condition, tier selection moves and the
-   verdict does not, and the worst single draw does breach at 22.3%. What remains missing is the
+   verdict does not, and the worst single draw does breach at 27.7%. What remains missing is the
    derivation of the band itself, which is still our judgement rather than a customer's numbers.
 2. State the conformal floor on effective escaped harm rather than on selection, so tier quality
    enters the guarantee.
