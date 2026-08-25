@@ -41,3 +41,55 @@ The implementation passes only if one command in the repository demonstrates all
 
 The run fails if any denominator needed by criteria 2-4 is zero. No speedup or production-capacity
 claim is preregistered for this work item.
+
+## J1 admission SLO tuning objective
+
+Locked on 2026-08-25 at base commit `bce1217`, before implementing or running `make slo-sweep`.
+This objective governs tuning for `support-assistant` under the existing offline scheduler harness.
+It does not turn stub-detector throughput into a production capacity claim.
+
+### Declared capacity and service objective
+
+The declared capacity is **80 offered interactions per second**. A candidate passes only if every
+condition below holds in the same sweep command:
+
+1. At 20 and 80 offered RPS, effect-decision p99 is at most 150 ms and first-text p99 is at most
+   50 ms.
+2. At 20 and 80 offered RPS, the rejection rate is at most 1%. A zero-request denominator is a
+   failed run, not a zero rejection rate.
+3. At 20 and 80 offered RPS, achieved served throughput is at least 95% of the higher achieved
+   throughput from same-command unbounded measurements taken before and after the sweep. The 5%
+   margin is the declared timer and scheduler tolerance; a larger loss is a regression.
+4. At 400 offered RPS, effect-decision p99 for served requests is at most 150 ms and achieved
+   served throughput is at least 76 RPS, which is 95% of declared capacity. Beyond capacity,
+   explicit rejection is preferred to unbounded queue growth.
+5. At every offered load, every degraded response completes mandatory assessment, every required
+   conformal floor is honoured, no degraded request selects Tier 2, no rejected request generates
+   text, and observed queue depth stays within its configured bound.
+
+Empty latency samples fail the candidate. Percentiles use the existing nearest-rank definition.
+The 75 ms blocking hold, seeded provider, lexical detectors, offered rates and run duration remain
+fixed so this sweep measures admission scheduling rather than a changed workload.
+
+### Candidate grid
+
+The sweep applies each multiplier to both discretionary and mandatory lanes of the currently
+committed `support-assistant` limits. Integer fields round upward after multiplication; queue
+timeouts do not change.
+
+| Dimension | Multipliers |
+|---|---|
+| concurrency | 1.0, 1.5, 2.0 |
+| queue capacity | 0.5, 1.0, 2.0 |
+| token rate | 1.0, 1.5, 2.0 |
+| burst | 0.5, 1.0, 2.0 |
+
+All 81 combinations must appear in the committed result, including failures. Unbounded baselines
+run at the beginning and end of the same command; the less favourable comparison is used when
+testing candidate throughput. This prevents a transiently slow baseline from making a candidate
+pass.
+
+If several candidates pass, choose lexicographically by the lowest total concurrency, token rate,
+queue capacity and burst, in that order. Rerun the chosen candidate three times; all three must pass
+before `config/runtime.yaml` changes. If no candidate passes, keep the current limits and record the
+failed objective in `docs/RUNTIME_LIMITATIONS.md` rather than moving a threshold after seeing data.
