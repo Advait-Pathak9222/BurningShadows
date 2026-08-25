@@ -64,7 +64,7 @@ def _log_run(
     policy = str(record["policy"])
     fraction = float(record["budget_fraction"])
     with mlflow.start_run(run_name=f"{policy}@{fraction:.2f}"):
-        mlflow.set_tags({"author": "claude-code", "milestone": "phase-b", "policy": policy})
+        mlflow.set_tags({"lane": "detection", "milestone": "round-3", "policy": policy})
         mlflow.log_params(
             shared
             | {

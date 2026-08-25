@@ -89,7 +89,7 @@ the branches diverge.
 
 ### The ownership manifest
 
-| Owned by **Codex** (`jenish`) | Owned by **Claude Code** (`main`) |
+| Owned by the **runtime lane** (`jenish`) | Owned by the **detection lane** (`main`) |
 |---|---|
 | `controlplane/gateway/**` | `controlplane/detectors/**` |
 | `controlplane/effects/**` | `controlplane/risk/**` |
@@ -132,7 +132,7 @@ If that merge reports a conflict, a rule was broken. Fix the rule, not just the 
 
 ---
 
-## 3. My lane: evidence, correctness, narrative
+## 3. The detection lane (`main`): evidence, correctness, narrative
 
 Ordered by value per hour, not by dependency.
 
@@ -334,7 +334,7 @@ Verify zero dead references afterwards. Already rehearsed once; it left no dangl
 
 ---
 
-## 4. Codex's lane: runtime, durability, operations
+## 4. The runtime lane (`jenish`): durability and operations
 
 Full brief in `CODEX_BRIEF_JENISH.md`. Summary and ordering:
 

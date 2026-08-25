@@ -315,5 +315,5 @@ It has been told to leave alone: `sim/traffic.py`, `sim/claims.py`, `data/*.json
 ## Conventions
 
 Branch per task, `<phase>/<short-slug>`. Never commit to `main`. `git pull --rebase origin main`
-before starting and before pushing. Conventional commits, imperative, no emojis, trailer
-`Tooling: claude-code` or `Tooling: codex`. Never force-push a shared branch.
+before starting and before pushing. Conventional commits, imperative, no emojis. No agent trailers of any kind: this is an
+official submission and every commit must carry a human author. Never force-push a shared branch.

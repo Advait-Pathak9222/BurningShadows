@@ -1,6 +1,6 @@
 # Phase A: implementation audit
 
-Auditor: claude-code. Date: 2026-08-23. Commit audited: `e88f1c9`.
+Internal implementation audit. Date: 2026-08-23. Commit audited: `e88f1c9`.
 Environment: Windows 11, Python 3.13.4, fresh clone, fresh venv, no GPU, no API key.
 No application code was changed to produce this document.
 
