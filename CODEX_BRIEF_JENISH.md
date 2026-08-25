@@ -27,9 +27,10 @@ make demo       # offline, no key, no network
 make loadtest
 ```
 
-Commit trailer: `Tooling: codex`. Conventional commits, imperative mood, no emojis. **Never add a
-`Co-Authored-By` trailer** — this is an official competition submission and the commit authors must
-be the two humans on the team.
+Conventional commits, imperative mood, no emojis. **No agent trailers of any kind** — no
+`Co-Authored-By`, no `Tooling:`. This is an official competition submission, the history was
+rewritten once already to remove agent attribution, and every commit on `main` now carries only a
+human author. Keep it that way; check with `git log --format='%an %ae'` before you push.
 
 ---
 
