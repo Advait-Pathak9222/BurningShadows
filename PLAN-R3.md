@@ -3,11 +3,29 @@
 Internal working file. **Delete this, `HANDOFF.md`, `CODEX_BRIEF_JENISH.md` and `audits/`
 before submission.** Nothing in `README.md`, `docs/` or the code links to any of them.
 
-Written 2026-08-25 against `main` at `e5fd7ae`.
+Written 2026-08-25 against `main` at `e5fd7ae`. Scorecard updated at `efed34e`.
 
 ---
 
-## 1. Where the project stands: 7 / 10
+## 1. Where the project stands: 7 / 10 at the start of today, **8 / 10 now**
+
+The table below is the assessment as written this morning. Four of the six dimensions have moved
+since, and the moved ones are marked. What has not moved is the honest core problem: our
+differentiator allocates the smaller of the two budgets. Section 3's C3b is the item that would
+change that, and it has not been run.
+
+| Dimension | Then | Now | What moved |
+|---|:--:|:--:|---|
+| Technical depth | 9 | **9** | 78 tests from 68; `make sensitivity` added |
+| Methodological integrity | 9.5 | **10** | Caught and fixed a stop condition we were tripping without noticing; ran a pre-registered test that came back partial and reported it as partial |
+| Originality | 8 | **8** | Unchanged |
+| Evidence quality | 6 | **7.5** | Consequence sensitivity measured; vacuous bound named as vacuous; the comparison the baselines were winning on is now measured fairly |
+| Problem-statement coverage | 6.5 | **6.5** | Unchanged — multi-turn is still not wired, Presidio is still not imported |
+| Presentation and consistency | 5 | **8.5** | README, LIMITATIONS and the console now agree with `docs/results/` |
+
+<details><summary>The original assessment, as written this morning</summary>
+
+## Where the project stood: 7 / 10
 
 Not a hedge — the number is built from parts, and the parts point at different work.
 
@@ -49,6 +67,8 @@ Both were live on `main` this morning.
   **vacuous**, with the share of traffic the floor made mandatory.
 
 Fixed in `c5cc876`, both with tests that fail against the previous behaviour.
+
+</details>
 
 ---
 
