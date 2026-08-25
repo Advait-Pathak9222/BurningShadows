@@ -270,3 +270,92 @@ If our rule does not beat FIFO, the honest conclusion is that the reviewer queue
 have measured accurately and not yet improved — which is still a finding worth having, because the
 measurement is what nobody else has. The shipped rule would stay, labelled as untested rather than
 as a differentiator, and the business case would rest on the cost structure alone.
+
+
+---
+
+# Pre-registration 4: can PII detection reach AUC 0.9 without cheating?
+
+Written before the detector was changed and before any number from the new detector existed.
+Locked at commit `47e586e`, corpus `manifest_version: 3`, seed `20260824`.
+
+## The problem, stated correctly
+
+The PII axis scores **AUC 0.5897** on held-out traffic through the full calibrated pipeline.
+Tier 1's PII signal alone is **0.4973**, which is chance. That is bad and it needs fixing.
+
+But the reason is not that the detector guesses. Measured on the held-out set, the corpus
+splits four ways:
+
+| | Labelled a leak | Not a leak |
+|---|---:|---:|
+| Contains PII-shaped text | 37 | **309** |
+| No pattern to match | **57** | 1097 |
+
+A detector that scores every PII-shaped row above every plain row — a *perfect* shape
+detector — reaches **AUC 0.5869** on this split. Our regexes score 0.5881. **They are
+already at the ceiling of what text shape can tell you here**, and the remaining 0.41 of
+AUC is not available to any amount of better pattern matching. Microsoft Presidio confirms
+this from the other side: it finds strictly more (698 rows the regexes missed) and is wrong
+about 94% of them.
+
+So the target is reachable only by using a signal that is not the shape of the text.
+
+## The claim under test
+
+**Three mechanisms, each of which a production DLP system would implement independently of
+this corpus, close most of the gap.**
+
+1. **Obfuscation normalisation.** `arun dot personal at example dot com` is an email address
+   written to evade a pattern match. Real filters normalise `dot`/`at`/spacing before
+   matching, and attackers obfuscate precisely because filters do not.
+2. **Grounded disclosure.** An identifier that appears in the response but not in the
+   authorised source is an unauthorised disclosure; one that appears in both is the system
+   repeating something it was given. This is the evidence-regime idea the whole product
+   rests on, applied to the PII axis.
+3. **Personal-context classification.** A disclosure framed as personal contact detail
+   (`home address`, `personal`, `reach them directly`) is a different act from repeating a
+   record the caller is entitled to (`work address on file`, `verified contact`).
+
+## Primary endpoint
+
+**AUC on the PII axis, over the 1500 held-out test rows, through the calibrated pipeline.**
+
+- Success: **AUC >= 0.90**.
+- Partial success: AUC >= 0.75, which would be past the shape ceiling by a wide margin.
+- Failure: anything below 0.75, reported as a failure in `README.md` and
+  `docs/LIMITATIONS.md`.
+
+Precision, recall and F1 at the shipped decision threshold are reported alongside, because
+an AUC that rises while precision collapses has moved the problem rather than solved it.
+
+## The guard that matters: development happens on calibration only
+
+The corpus has a 1500-row calibration split and a 1500-row held-out test split. **Every
+phrase, threshold and rule in the new detector is derived from the calibration split.** The
+test split is scored once, after the detector is frozen, and whatever it says is what gets
+reported.
+
+This is the guard against the failure this project has already caught in itself once: in
+Phase A the corpus made harm perfectly predictable from row structure, calibrated AUC hit
+1.000 on two routes, and the evaluation was measuring the fixture. A detector tuned against
+the test set would reproduce exactly that, with a better-looking number.
+
+## Reported either way: which mechanism earned the score
+
+Each mechanism is measured separately and cumulatively, on test, in one table. This is not
+decoration. Mechanisms 1 and 2 are corpus-independent and should transfer to real traffic.
+**Mechanism 3 is a vocabulary, and vocabularies fitted to a generator we wrote do not
+transfer.** If most of the gain comes from mechanism 3, the honest headline is that we fitted
+our own corpus, and that is what will be written down.
+
+The corpus is not regenerated, reweighted or relabelled. `tests/test_corpus_integrity.py`
+must still pass, and `make data` must still reproduce the committed JSONL byte for byte.
+
+## What happens on failure
+
+The number is reported as measured, the shape ceiling above is published next to it so a
+reader can see what was and was not achievable, and the honest conclusion is written down:
+that offline lexical detectors cannot separate authorised from unauthorised disclosure, and
+that this axis needs either a real judge or the policy context the gateway already has and
+the detector does not see.
