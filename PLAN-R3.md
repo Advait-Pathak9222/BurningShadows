@@ -181,7 +181,30 @@ falls.
 
 </details>
 
-### C3b — Does our attention allocation beat a naive queue? **[next, highest value]**
+### C3b — Does our attention allocation beat a naive queue? — **done, and it does not**
+
+Pre-registered at `efed34e`, run, **failed at all six budgets**. We breach four or five more SLAs
+than FIFO out of 161 and that is the entire margin. On the axis the endpoint did not turn on we
+serve 1.5x the expected loss from the same reviewer-hours and shed none of the top-decile cases
+against FIFO's 15 to 39 — but the endpoint required both.
+
+Three things came out of it that are worth more than a win would have been:
+
+1. **The queue is 1.5x to 2.4x oversubscribed, so ~161 of 166 served cases breach under every rule
+   including random.** Ordering decides who breaches; it cannot decide whether anyone has to.
+   Keeping up with arrivals needs 4.8 reviewers against the 2 configured. **The capacity number is
+   the thing to put in front of a buyer, not the queue rule.**
+2. **The ablation beats the full rule.** `density` — ours without the deadline term — serves more
+   value at every budget and breaches no more. The deadline term is not earning its stated place; it
+   buys route fairness (67 `finops-agent` cases shed against 81), which is a different justification
+   from the one the code gave.
+3. **`ReviewQueue.drain` has no arrival times.** It processes one batch, so eight hours of arrivals
+   are charged as if they landed at once. Every SLA breach and wait figure we have ever committed is
+   an upper bound rather than a measurement. Recorded in LIMITATIONS rather than quietly corrected.
+   **Fixing this is now C3c and it is the highest-value item left**, because it is a defect in a
+   number we report.
+
+<details><summary>Original scope</summary>
 
 The finding from C3 is that compute allocation barely moves total cost, because attention dominates
 and every policy saturates the same fixed capacity. So the question that decides whether this
@@ -199,6 +222,26 @@ one where nobody else is even trying.
 
 **Done when** loss averted and escaped harm are reported per shedding rule at matched capacity,
 pre-registered before it is run, and the result is written down whichever way it goes.
+
+</details>
+
+### C3c — Give the review queue arrival times **[next, highest value]**
+
+`ReviewQueue.drain` treats the whole traffic window as arriving at once, so the last case served is
+charged a wait equal to the entire window. That is why 161 of 166 cases "breach": most of them are
+being charged hours of waiting they would never actually do.
+
+Give each case an arrival time from its position in the stream, then serve with R reviewers so a
+case waits only for the backlog standing when it arrives. This changes committed numbers — SLA
+breach counts and p99 wait in `summary.md` — in a known direction, so it needs saying plainly rather
+than regenerating quietly.
+
+It also very likely changes the C3b result, because the deadline term should start earning its place
+once deadlines are actually reachable. That makes it a re-run of a pre-registered comparison under a
+corrected model, which must be labelled as such and not presented as a fresh win.
+
+**Done when** waits are computed against arrival times, the changed figures are called out
+explicitly, and C3b is re-run and re-reported under the corrected model.
 
 ### C4 — Consequence sensitivity analysis — **done** (`1879071`)
 
