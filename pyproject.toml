@@ -27,9 +27,13 @@ dev = [
   "pytest>=8,<10",
   "ruff>=0.8,<1",
 ]
+# Optional, and never on the demo path. `presidio-analyzer` backs the Tier 0 PII adapter
+# in `controlplane/detectors/presidio_pii.py` and needs a spaCy model installed separately:
+#   pip install -e ".[models]" && python -m spacy download en_core_web_lg
+# The adapter refuses to download that model itself. Presidio's default engine fetches
+# 400 MB over the network on first use, and this prototype promises to run offline.
 models = [
   "presidio-analyzer>=2.2,<3",
-  "transformers>=4.45,<6",
 ]
 tracking = [
   "mlflow>=3,<4",

@@ -29,6 +29,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "report",
             "sensitivity",
             "attention",
+            "pii-probe",
             "judge-probe",
             "loadtest",
             "slo-sweep",
@@ -68,6 +69,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"{verdict['budgets_total']:.0f} budgets dominated)."
         )
         return 0 if verdict["outcome"] != "failure" else 1
+    if args.command == "pii-probe":
+        from controlplane.eval.pii_probe import run_pii_probe, write_pii_probe
+
+        summary = run_pii_probe(ROOT)
+        write_pii_probe(ROOT, summary)
+        print(
+            f"PII: regex F1 {summary['regex']['f1']:.4f} (AUC "
+            f"{summary['regex']['auc']:.4f}) against presidio F1 "
+            f"{summary['presidio']['f1']:.4f} (AUC {summary['presidio']['auc']:.4f})."
+        )
+        return 0
     if args.command == "judge-probe":
         summary = run_probe(ROOT)
         write_probe(ROOT, summary)

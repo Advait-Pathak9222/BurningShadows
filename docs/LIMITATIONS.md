@@ -281,8 +281,16 @@ Policy pack hashes are taken over raw file bytes, so a checkout with CRLF line e
 different audit stamps than one with LF. Audit records are reproducible on a given platform, not
 across platforms.
 
-`presidio-analyzer` and `transformers` are declared in the `models` extra and imported nowhere. The
-claim that we compose with third-party detectors is currently positioning, not code.
+`presidio-analyzer` now backs a real Tier 0 adapter behind the `Detector` interface, and
+`make pii-probe` measures it against our regexes on held-out data. `transformers` was declared and
+imported nowhere, so it has been removed from the extra rather than left as padding.
+
+The measured result is in `docs/results/pii.md` and it does not favour either detector: Presidio
+more than doubles recall and flags 70% of all traffic doing it. The four-way split of the corpus
+explains why, and it is the more useful finding — 309 held-out rows carry a well-formed identifier
+and are **permitted** disclosures, while 57 real leaks contain no pattern at all. Recognising PII is
+not the binding constraint; knowing whether a disclosure was authorised is, and that is a property
+of the route, the requester and the policy rather than of the text.
 
 Policy files contain a legal-control mapping, not legal advice or a compliance determination. Dates
 were checked against official sources on 22 August 2026, but a production release needs counsel

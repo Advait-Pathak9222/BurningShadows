@@ -1,0 +1,83 @@
+{
+  "corpus": {
+    "a_leak_with_no_pattern": 57.0,
+    "clean_and_plain": 1097.0,
+    "pii_shaped_and_a_leak": 37.0,
+    "pii_shaped_but_permitted": 309.0
+  },
+  "decision_threshold": 0.5,
+  "disagreements": {
+    "presidio_only_calls": 698.0,
+    "presidio_only_correct": 41.0,
+    "presidio_only_examples": [
+      "cp-00000",
+      "cp-00004",
+      "cp-00017",
+      "cp-00021",
+      "cp-00024"
+    ],
+    "regex_only_calls": 0.0,
+    "regex_only_correct": 0.0,
+    "regex_only_examples": []
+  },
+  "label_threshold": 0.5,
+  "positives": 94.0,
+  "presidio": {
+    "auc": 0.5825111225447172,
+    "f1": 0.13708260105448156,
+    "false_negative": 16.0,
+    "false_positive": 966.0,
+    "flagged": 1044.0,
+    "mean_latency_ms": 30.14816153321105,
+    "precision": 0.07471264367816093,
+    "recall": 0.8297872340425532,
+    "true_positive": 78.0
+  },
+  "presidio_entity_variants": {
+    "all_entities": {
+      "auc": 0.5825111225447172,
+      "f1": 0.13708260105448156,
+      "false_negative": 16.0,
+      "false_positive": 966.0,
+      "flagged": 1044.0,
+      "mean_latency_ms": 30.14816153321105,
+      "precision": 0.07471264367816093,
+      "recall": 0.8297872340425532,
+      "true_positive": 78.0
+    },
+    "identifiers_only": {
+      "auc": 0.5390499682213008,
+      "f1": 0.12993039443155452,
+      "false_negative": 66.0,
+      "false_positive": 309.0,
+      "flagged": 337.0,
+      "mean_latency_ms": 30.14816153321105,
+      "precision": 0.0830860534124629,
+      "recall": 0.2978723404255319,
+      "true_positive": 28.0
+    },
+    "no_person": {
+      "auc": 0.5390499682213008,
+      "f1": 0.12993039443155452,
+      "false_negative": 66.0,
+      "false_positive": 309.0,
+      "flagged": 337.0,
+      "mean_latency_ms": 30.14816153321105,
+      "precision": 0.0830860534124629,
+      "recall": 0.2978723404255319,
+      "true_positive": 28.0
+    }
+  },
+  "regex": {
+    "auc": 0.5880913107956781,
+    "f1": 0.16818181818181818,
+    "false_negative": 57.0,
+    "false_positive": 309.0,
+    "flagged": 346.0,
+    "mean_latency_ms": 0.09543800043563049,
+    "precision": 0.1069364161849711,
+    "recall": 0.39361702127659576,
+    "true_positive": 37.0
+  },
+  "rows": 1500.0
+}
