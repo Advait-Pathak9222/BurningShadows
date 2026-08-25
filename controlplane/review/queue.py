@@ -38,9 +38,17 @@ class ReviewEconomics:
 
 
 def case_from_trace(
-    trace: DecisionTrace, policy: RoutePolicy, economics: ReviewEconomics
+    trace: DecisionTrace,
+    policy: RoutePolicy,
+    economics: ReviewEconomics,
+    arrived_at_minutes: float = 0.0,
 ) -> ReviewCase | None:
-    """Raise a case only for verdicts where the system declined to decide on its own."""
+    """Raise a case only for verdicts where the system declined to decide on its own.
+
+    `arrived_at_minutes` is when the interaction happened, measured from the start of the
+    traffic window. The queue needs it because a reviewer cannot work a case that does not
+    exist yet; leaving it at zero reproduces the batch model and its inflated waits.
+    """
     reason = REVIEW_REASONS.get(trace.verdict)
     if reason is None:
         return None
@@ -52,6 +60,7 @@ def case_from_trace(
         review_minutes=economics.minutes_per_case,
         review_cost_inr=economics.cost_per_case_inr,
         sla_minutes=policy.review_sla_minutes,
+        arrived_at_minutes=arrived_at_minutes,
     )
 
 
@@ -101,18 +110,56 @@ class ReviewQueue:
         self.pending.append(case)
 
     def drain(self, minutes_available: float) -> list[ReviewDecision]:
-        """Serve what capacity allows; shed the rest rather than letting it wait unbounded."""
+        """Work the queue across the traffic window; shed whatever is still waiting at the end.
+
+        A discrete-event simulation over `reviewers` servers, not one pass down a sorted
+        list. The difference is the whole point: **a reviewer cannot start a case before it
+        arrives.** Charging the last case served a wait equal to the entire window is what
+        a batch model does, and it inflated every SLA figure this project has reported.
+        Wait is now measured from a case's own arrival to the moment its review finishes,
+        which is what an SLA is actually stated over.
+
+        `minutes_available` is reviewer-minutes for the window, so the window in wall-clock
+        minutes is that divided by the people on shift.
+        """
+        reviewers = max(1, int(round(self.economics.parallel_reviewers)))
+        window = minutes_available / reviewers
+        key = _sort_key(self.strategy)
+        arrivals = sorted(
+            self.pending, key=lambda case: (case.arrived_at_minutes, case.interaction_id)
+        )
+        self.pending.clear()
+
+        free_at = [0.0] * reviewers
+        waiting: list[ReviewCase] = []
+        next_arrival = 0
         decisions: list[ReviewDecision] = []
-        consumed = 0.0
-        reviewers = self.economics.parallel_reviewers
-        for case in self._serving_order():
-            if consumed + case.review_minutes > minutes_available:
-                decisions.append(self._shed(case, consumed / reviewers))
+
+        while True:
+            reviewer = min(range(reviewers), key=lambda index: free_at[index])
+            now = free_at[reviewer]
+            # Everything that has landed by the time this reviewer frees up is a candidate.
+            # This is what makes the serving rule matter: it chooses from the backlog that
+            # actually exists at that moment, not from the whole day at once.
+            while (
+                next_arrival < len(arrivals)
+                and arrivals[next_arrival].arrived_at_minutes <= now
+            ):
+                waiting.append(arrivals[next_arrival])
+                next_arrival += 1
+            if not waiting:
+                if next_arrival >= len(arrivals):
+                    break
+                # Idle until the next case exists, rather than inventing work to do.
+                free_at[reviewer] = arrivals[next_arrival].arrived_at_minutes
                 continue
-            consumed += case.review_minutes
-            # Reviewer-minutes are consumed in parallel, so wall-clock wait is the work
-            # divided across the people on shift.
-            waited = consumed / reviewers
+            case = min(waiting, key=lambda item: (*key(item), item.interaction_id))
+            waiting.remove(case)
+            finished = max(now, case.arrived_at_minutes) + case.review_minutes
+            if finished > window:
+                break
+            free_at[reviewer] = finished
+            waited = finished - case.arrived_at_minutes
             decisions.append(
                 ReviewDecision(
                     case=case,
@@ -125,14 +172,14 @@ class ReviewQueue:
                     spend_inr=case.review_cost_inr,
                 )
             )
-        self.pending.clear()
-        return decisions
 
-    def _serving_order(self) -> list[ReviewCase]:
-        key = _sort_key(self.strategy)
-        # The interaction id is the final tiebreak everywhere, so no strategy's result
-        # depends on the order cases happened to be submitted in.
-        return sorted(self.pending, key=lambda case: (*key(case), case.interaction_id))
+        served = {decision.case.interaction_id for decision in decisions}
+        for case in arrivals:
+            if case.interaction_id not in served:
+                decisions.append(
+                    self._shed(case, max(0.0, window - case.arrived_at_minutes))
+                )
+        return decisions
 
     @staticmethod
     def _shed(case: ReviewCase, elapsed: float) -> ReviewDecision:

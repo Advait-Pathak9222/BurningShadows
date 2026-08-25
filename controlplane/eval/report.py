@@ -373,9 +373,13 @@ def _run_review(
     economics = engine.cost_model.review
     queue = ReviewQueue(economics)
     by_id = {item.interaction_id: item for item in test}
-    for interaction, trace in zip(test, traces, strict=True):
+    # The test set is a stream, so a row's position in it is when it happened. Without
+    # this every case is treated as arriving at minute zero.
+    window_minutes = len(test) / INTERACTIONS_PER_HOUR * 60.0
+    for position, (interaction, trace) in enumerate(zip(test, traces, strict=True)):
         policy = engine.policy_store.resolve(interaction.route, interaction.jurisdiction)
-        case = case_from_trace(trace, policy, economics)
+        arrived = position / len(test) * window_minutes if test else 0.0
+        case = case_from_trace(trace, policy, economics, arrived)
         if case is not None:
             queue.submit(case)
     raised = len(queue.pending)

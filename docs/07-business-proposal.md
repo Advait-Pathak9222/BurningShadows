@@ -48,8 +48,8 @@ Two consequences worth stating plainly to a buyer:
   week demanding 792 reviewer-hours against 333 available, and 58% of cases shed. Intervention
   precision is 0.328, so two thirds of what is escalated a reviewer disagrees with. That is alert
   fatigue, measured rather than asserted. **Keeping up with arrivals at all needs 4.8 reviewers
-  against the two configured** — and no queue rule substitutes for that, which we established by
-  testing ours and failing.
+  against the two configured**, and no queue rule substitutes for that. Allocation decides which
+  cases a short-staffed desk loses; it cannot decide that the desk is short-staffed.
 
 ## Where the money comes from
 
@@ -97,13 +97,16 @@ charged the reviewer minutes they generate it is smaller still — the baseline'
 from 2.28x to 1.006x at the tight budget, but because the attention bill dwarfs compute for both, not
 because allocation improved.
 
-Note more honestly still: **we tested whether our reviewer queue allocates attention better than a
-naive one, and against the pre-registered endpoint it failed.** `docs/results/attention.md` has the
-full result. The queue is so oversubscribed that almost every served case breaches its SLA under
-every rule including random, so ordering decides who breaches rather than whether anyone does. What
-our rule does buy, on the axis the endpoint did not turn on, is 1.5x the expected loss served from
-the same reviewer-hours and none of the top-decile cases dropped. That is a real operational
-difference and it is not the claim we set out to prove.
+Where we do beat the obvious alternative is on the resource that costs the money. Our reviewer
+queue serves **1.48x the expected loss FIFO does from the same reviewer-hours**, breaching 55 SLAs
+against 154 and dropping 1 top-decile case against 15. At two thirds of a desk's output being shed,
+that is the difference between losing your cheapest cases and losing your most expensive ones.
+
+State it with its caveats, because they are the reason to trust it: the first run of that
+pre-registered comparison **failed**, under a queue model of ours that had no arrival times; we
+found and committed the defect before fixing it, then re-ran. And an ablation without our deadline
+term still beats the full rule at every budget, so the rule as shipped is not the best version of
+itself. `docs/results/attention.md` has all of it.
 
 ## Target users
 
@@ -166,13 +169,14 @@ Three things we set out to prove and did not:
    a blanket cheap check gets within 1.1% for a fraction of the spend.
 2. **That allocating compute meaningfully lowers total assurance cost.** It does not, because
    compute is 3% to 16% of the bill.
-3. **That our reviewer queue allocates attention better than a naive one.** Pre-registered, tested,
-   failed. `docs/results/attention.md`.
+3. **That our reviewer queue allocates attention better than a naive one, first time.**
+   Pre-registered, tested, **failed** — then we found that our own queue model had no arrival times,
+   fixed it, and the re-run passed. Discount it accordingly; we do.
 
-**SLA breach counts in our results are upper bounds, not measurements.** The review queue has no
-arrival times, so it charges a whole traffic window of waiting to the last case served. The
-comparison between queue rules is unaffected — every rule is charged identically — but the absolute
-figures are wrong in a known direction and we found it ourselves rather than shipping it quietly.
+**And an ablation beats the rule we ship.** Removing the deadline term from the queue serves more
+expected loss and breaches fewer SLAs at every budget. We are reporting a result that says our own
+design is not its best version, because pre-registration 3 said an ablation beating the full rule
+becomes the headline.
 
 What we do stand behind, because it is measured rather than asserted: **the cost structure.**
 Attention is 84% to 97% of assurance cost. The queue is 2.4x oversubscribed and needs 4.8 reviewers

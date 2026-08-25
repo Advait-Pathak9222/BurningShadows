@@ -17,6 +17,12 @@ from controlplane.review import ReviewEconomics, ReviewQueue, case_from_trace
 ECONOMICS = ReviewEconomics(
     reviewer_cost_per_hour_inr=1200.0, minutes_per_case=6.0, capacity_minutes_per_hour=120.0
 )
+# One reviewer, for the ordering tests. With two people on shift both cases are worked in
+# parallel and the serving order becomes unobservable, so a two-reviewer fixture would let
+# a broken ordering rule pass.
+SOLO = ReviewEconomics(
+    reviewer_cost_per_hour_inr=1200.0, minutes_per_case=6.0, capacity_minutes_per_hour=60.0
+)
 
 
 def _policy(route: str, sla: int) -> RoutePolicy:
@@ -118,7 +124,7 @@ def test_shed_cases_cost_nothing() -> None:
 
 def test_the_tightest_deadline_is_served_first() -> None:
     """Ordering by value alone lets a 15-minute finops case sit behind richer slow ones."""
-    queue = ReviewQueue(ECONOMICS)
+    queue = ReviewQueue(SOLO)
     queue.submit(_case("internal-kb", 240, 10_000.0))
     queue.submit(_case("finops-agent", 15, 10.0))
     decisions = queue.drain(minutes_available=6.0)
@@ -128,7 +134,7 @@ def test_the_tightest_deadline_is_served_first() -> None:
 
 
 def test_value_density_breaks_ties_within_a_deadline() -> None:
-    queue = ReviewQueue(ECONOMICS)
+    queue = ReviewQueue(SOLO)
     queue.submit(_case("support-assistant", 30, 5.0))
     queue.submit(_case("support-assistant", 30, 900.0))
     decisions = queue.drain(minutes_available=6.0)
@@ -147,3 +153,87 @@ def test_more_reviewers_shorten_the_wait() -> None:
         decisions = queue.drain(minutes_available=30.0)
         waits.append(max(d.wait_minutes for d in decisions))
     assert waits[1] < waits[0]
+
+
+def test_a_reviewer_cannot_work_a_case_before_it_arrives() -> None:
+    """The defect this model exists to fix.
+
+    A batch queue charges the last case served a wait equal to the whole window, because
+    it treats every arrival as landing at minute zero. Real cases wait only for the
+    backlog standing when they turn up.
+    """
+    queue = ReviewQueue(SOLO)
+    late = _case("internal-kb", 240, 100.0).model_copy(
+        update={"interaction_id": "late", "arrived_at_minutes": 100.0}
+    )
+    queue.submit(late)
+    decisions = queue.drain(minutes_available=200.0)
+    served = [d for d in decisions if d.outcome is not ReviewOutcome.SHED]
+    assert len(served) == 1
+    # Six minutes of review, not 106 minutes of imagined queueing.
+    assert served[0].wait_minutes == pytest.approx(6.0)
+
+
+def test_arrival_times_stop_the_queue_inventing_sla_breaches() -> None:
+    """Under the batch model these all breached. Spread out, none of them do."""
+    queue = ReviewQueue(SOLO)
+    for index in range(20):
+        base = _case("finops-agent", 15, float(index))
+        queue.submit(
+            base.model_copy(
+                update={
+                    "interaction_id": f"spread-{index:02d}",
+                    # One case every 30 minutes: a single reviewer keeps up comfortably.
+                    "arrived_at_minutes": index * 30.0,
+                }
+            )
+        )
+    decisions = queue.drain(minutes_available=600.0)
+    breached = [d for d in decisions if d.outcome is ReviewOutcome.BREACHED_SLA]
+    served = [d for d in decisions if d.outcome is not ReviewOutcome.SHED]
+    assert len(served) == 20
+    assert breached == []
+
+
+def test_a_backlog_still_breaches_when_arrivals_outpace_the_desk() -> None:
+    """The fix must not make breaches impossible, only honest."""
+    queue = ReviewQueue(SOLO)
+    for index in range(20):
+        base = _case("finops-agent", 15, float(index))
+        queue.submit(
+            base.model_copy(
+                update={
+                    "interaction_id": f"burst-{index:02d}",
+                    # One case a minute against six minutes of work each: the desk falls
+                    # behind and the backlog grows without bound.
+                    "arrived_at_minutes": float(index),
+                }
+            )
+        )
+    decisions = queue.drain(minutes_available=600.0)
+    breached = [d for d in decisions if d.outcome is ReviewOutcome.BREACHED_SLA]
+    assert breached
+
+
+def test_wait_is_measured_from_arrival_not_from_the_start_of_the_window() -> None:
+    queue = ReviewQueue(SOLO)
+    for index in range(3):
+        base = _case("internal-kb", 240, 1.0)
+        queue.submit(
+            base.model_copy(
+                update={
+                    "interaction_id": f"seq-{index}",
+                    "arrived_at_minutes": index * 6.0,
+                }
+            )
+        )
+    decisions = {
+        d.case.interaction_id: d.wait_minutes
+        for d in queue.drain(minutes_available=100.0)
+    }
+    # Each arrives exactly as the previous finishes, so nobody queues behind anybody.
+    assert decisions == {
+        "seq-0": pytest.approx(6.0),
+        "seq-1": pytest.approx(6.0),
+        "seq-2": pytest.approx(6.0),
+    }

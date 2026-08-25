@@ -5,10 +5,13 @@ import pytest
 from controlplane.models import ReviewCase, ReviewOutcome, ReviewReason
 from controlplane.review import ReviewEconomics, ReviewQueue
 
+# One reviewer on shift. Every test in this file is about which case gets worked first,
+# and with two people in parallel both candidates are served and the ordering rule becomes
+# unobservable — a fixture that would let a broken rule pass.
 ECONOMICS = ReviewEconomics(
     reviewer_cost_per_hour_inr=1200.0,
     minutes_per_case=6.0,
-    capacity_minutes_per_hour=120.0,
+    capacity_minutes_per_hour=60.0,
 )
 
 

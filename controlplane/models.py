@@ -153,6 +153,11 @@ class ReviewCase(BaseModel):
     review_minutes: float = Field(gt=0.0)
     review_cost_inr: float = Field(ge=0.0)
     sla_minutes: int = Field(gt=0)
+    # Minutes from the start of the traffic window. Without this the queue treats a whole
+    # window of arrivals as landing at once and charges the last case served a wait equal
+    # to the entire window, which made every SLA figure an upper bound rather than a
+    # measurement. A case cannot be worked before it exists.
+    arrived_at_minutes: float = Field(default=0.0, ge=0.0)
 
     @property
     def value_density(self) -> float:

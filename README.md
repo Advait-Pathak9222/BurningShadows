@@ -87,17 +87,24 @@ the resource every guardrail product competes on. The reviewer queue — 2.4x ov
 58% at full budget, and allocated by nobody — is where the money and the risk both sit.
 
 So `make attention` asks the obvious follow-up: at a fixed reviewer capacity, does our queue rule
-beat a naive one? **Against the pre-registered endpoint it fails at all six budgets.** It breaches
-four or five more SLAs than FIFO out of 161, and that is the whole margin. On the other axis it
-serves **1.5x the expected loss** from the same reviewer-hours and sheds none of the top-decile cases
-against FIFO's 15 to 39 — but the endpoint required both, and it does not get both.
+beat a naive one? **It does — at all six budgets, breaching 55 SLAs against FIFO's 154 while serving
+1.48x the expected loss from the same reviews.** That result needs three caveats, and they are not
+footnotes.
 
-The reason is the useful part. The queue is 1.5x to 2.4x oversubscribed, so roughly 161 of 166 served
-cases breach under *every* rule including FIFO and random. **Ordering decides who breaches; it cannot
-decide whether anyone has to.** Keeping up with arrivals at all takes 4.8 reviewers against the 2
-configured. And the ablation without the deadline term serves more value at every budget while
-breaching no more, so that term is not earning its stated place — it buys route fairness instead,
-which is a different justification from the one the code claimed.
+**It is a re-run.** The first run of this same pre-registered comparison **failed at all six
+budgets**, under a review queue that had no arrival times and therefore charged a whole traffic
+window of waiting to the last case served. We found that defect while sanity-checking a capacity
+figure that came out absurd, recorded it and committed it *before* fixing it, then re-ran. The
+failing run is still in the git history. A result that flips when its authors correct their own model
+is weaker evidence than one that does not, and it should be read that way.
+
+**An ablation still beats the full rule.** Dropping the deadline term serves more expected loss *and*
+breaches fewer SLAs at 6 of 6 budgets. That was true before the model fix and after it. The deadline
+term should come out; ordering by deadline alone is worse than FIFO everywhere, because it clusters
+tight-SLA cases into a burst the desk cannot clear.
+
+**Ordering is the smaller lever.** Keeping up with arrivals needs 4.8 reviewers against the 2
+configured, and no serving rule substitutes for that. `docs/results/attention.md` has all of it.
 
 The conformal bound holds on held-out traffic on the two routes where it says anything: 0.0591 on
 `finops-agent` over 220 released rows and 0.0781 on `internal-kb` over 461, against alpha 0.15. On

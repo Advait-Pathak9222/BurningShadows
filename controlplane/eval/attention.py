@@ -79,12 +79,14 @@ def _raise_cases(
     economics = engine.cost_model.review
     cases: list[ReviewCase] = []
     running = 0.0
+    window_minutes = len(test) / INTERACTIONS_PER_HOUR * 60.0
     for position, item in enumerate(test, start=1):
         trace = engine.assess(item, shadow_price=controller.shadow_price)
         running += trace.assurance_spend_inr
         controller.update(running / position)
         policy = engine.policy_store.resolve(item.route, item.jurisdiction)
-        case = case_from_trace(trace, policy, economics)
+        arrived = (position - 1) / len(test) * window_minutes if test else 0.0
+        case = case_from_trace(trace, policy, economics, arrived)
         if case is not None:
             cases.append(case)
     return cases
@@ -200,8 +202,10 @@ def _full_check_spend(engine: AssessmentEngine, test: list[Interaction]) -> floa
 
 
 _OUTCOME_TEXT = {
-    "success": "**SUCCESS.** The shipped rule dominates FIFO at every budget on both axes, "
-    "and strictly improves at least one axis at the two tight budgets.",
+    "success": "**SUCCESS against FIFO.** The shipped rule dominates the pre-registered "
+    "null at every budget on both axes, and strictly improves at least one axis at the two "
+    "tight budgets. Read the three sections below before quoting that: this is a re-run "
+    "after we corrected our own model, and an ablation still beats the full rule.",
     "partial": "**PARTIAL SUCCESS.** The shipped rule dominates FIFO at four or more of six "
     "budgets, but not at all of them.",
     "failure": "**FAILURE.** The shipped rule does not dominate FIFO at enough budgets. The "
@@ -217,78 +221,104 @@ _LABELS = {
 }
 
 
+def _dominates(left: dict[str, float], right: dict[str, float]) -> bool:
+    """Weakly better on both axes: at least as much value served, no more breaches."""
+    return (
+        left["value_served_inr"] >= right["value_served_inr"]
+        and left["breached"] <= right["breached"]
+    )
+
+
 def _diagnosis_lines(summary: dict[str, Any]) -> list[str]:
-    """Say why the endpoint failed, using only what the run measured."""
-    tight = summary["budgets"][0]
+    """Read the result honestly, including where the shipped rule still loses."""
+    budgets = summary["budgets"]
+    tight = budgets[0]
     ours = tight["strategies"][SHIPPED]
     null = tight["strategies"][NULL]
-    density = tight["strategies"]["density"]
-    ratio = (
-        ours["value_served_inr"] / null["value_served_inr"]
-        if null["value_served_inr"]
-        else 0.0
+    ablation_wins = sum(
+        1
+        for row in budgets
+        if _dominates(row["strategies"]["density"], row["strategies"][SHIPPED])
     )
-    worst = max(row["reviewers_for_throughput"] for row in summary["budgets"])
+    random_better = sum(
+        1
+        for row in budgets
+        if row["strategies"]["random"]["breached"] < row["strategies"][SHIPPED]["breached"]
+    )
+    deadline_worse = sum(
+        1
+        for row in budgets
+        if row["strategies"]["deadline"]["breached"] > row["strategies"][NULL]["breached"]
+    )
+    capacity = max(row["reviewers_for_throughput"] for row in budgets)
     return [
-        "### Why it failed, and what the failure is actually about",
+        "### Read this before the result: it is a re-run, and the first run failed",
         "",
-        f"The shipped rule loses on breaches at every budget, by four or five cases out of "
-        f"{ours['breached']:.0f}. That is the whole margin, and the reason is not that the "
-        f"rule is bad at deadlines. It is that **at this capacity the deadlines are not "
-        f"reachable by any ordering.**",
+        "This comparison was run once before, under a queue that had no arrival times, and "
+        "against the same endpoint it **failed at all six budgets**. That failure is in the "
+        "git history and in `docs/LIMITATIONS.md`, not deleted.",
         "",
-        f"The queue is {tight['oversubscription']:.1f}x oversubscribed at the tightest "
-        f"budget and worse above it. On this batch model roughly {ours['breached']:.0f} of "
-        f"{ours['served']:.0f} served cases breach under *every* rule in the table, "
-        f"including FIFO and random. Ordering by deadline front-loads the cases with the "
-        f"tightest SLAs — `finops-agent` at 15 minutes — and those breach almost "
-        f"immediately, so deadline-awareness makes the count marginally **worse** while "
-        f"changing who is inside it. Ordering decides who breaches. It cannot decide "
-        f"whether anyone has to.",
+        "What changed is not the rule and not the endpoint. It is that the queue used to "
+        "treat a whole traffic window as arriving at once, so a case served last was charged "
+        "a wait equal to the entire window and almost everything breached under every rule. "
+        "The defect was found while sanity-checking a capacity figure that came out absurd "
+        "(110 reviewers), **recorded and committed before it was fixed**, and only then "
+        "corrected. The order matters: a model fix chosen after seeing which way it moves a "
+        "result is not a model fix.",
         "",
-        f"**Keeping up with arrivals at all takes {worst:.1f} reviewers**, against the "
-        f"{summary['reviewers_on_shift']:.0f} configured. That is a floor, not a target: "
-        f"clearing the work on average is not the same as clearing each case inside its "
-        f"own deadline. It is still the number worth putting in front of a buyer, because "
-        f"no ordering rule substitutes for it.",
+        "Weight this accordingly. **A result that flips when its authors correct their own "
+        "model is weaker evidence than one that does not**, and the honest position is that "
+        "the first version of this experiment measured our harness rather than our rule.",
         "",
-        "**A caveat that limits the breach counts above, found while checking this.** The "
-        "queue drains a single batch, so it has no arrival times: the whole traffic window "
-        "is treated as landing at once, and a case served last is charged a wait equal to "
-        "the entire window. Real cases arrive spread out and wait only for the backlog "
-        "standing when they arrive. **Every SLA breach count in this file, and in "
-        "`docs/results/summary.md`, is therefore an upper bound rather than a measurement.** "
-        "The comparison between rules is still sound — every rule is charged the same way "
-        "on the same cases — but the absolute breach numbers are not, and the fix is an "
-        "arrival-time model rather than a different ordering.",
+        "### Against FIFO, the pre-registered comparator",
         "",
-        "### What the rule does buy, reported as a pre-registered secondary",
+        f"The shipped rule dominates FIFO at every budget. At the 10% budget it breaches "
+        f"{ours['breached']:.0f} SLAs against FIFO's {null['breached']:.0f} while serving "
+        f"{ours['value_served_inr'] / null['value_served_inr']:.2f}x the expected loss from "
+        f"the same {ours['served']:.0f} reviews, and sheds "
+        f"{ours['high_value_shed']:.0f} of the top-decile cases against FIFO's "
+        f"{null['high_value_shed']:.0f}.",
         "",
-        f"On the axis the endpoint did not turn on, the margin is not small. At the 10% "
-        f"budget the shipped rule serves **{ratio:.2f}x the expected loss** FIFO does "
-        f"({ours['value_served_inr']:,.0f} against {null['value_served_inr']:,.0f}) from "
-        f"the same {ours['served']:.0f} reviewer-hours, and sheds "
-        f"**{ours['high_value_shed']:.0f} of the top-decile cases against FIFO's "
-        f"{null['high_value_shed']:.0f}**. That holds at every budget.",
+        f"`deadline` — ordering by SLA alone — is **worse than FIFO** at "
+        f"{deadline_worse} of {len(budgets)} budgets. Serving every tight-SLA case first "
+        f"clusters them into a burst that the desk cannot clear, so they breach together. "
+        f"That is a useful warning about the obvious design: deadline-first scheduling is "
+        f"actively harmful on an oversubscribed queue.",
         "",
-        "This is reported next to the failure, not instead of it. The pre-registration "
-        "named dominance on both axes and the rule does not achieve it.",
+        "### The headline is the ablation, not the win",
         "",
-        "### The ablation beats the full rule, which is the finding we least wanted",
+        f"Pre-registration 3 said that if an ablation beats the full rule it becomes the "
+        f"headline. **`density` — our rule with the deadline term removed — dominates the "
+        f"full rule at {ablation_wins} of {len(budgets)} budgets**, serving more expected "
+        f"loss *and* breaching fewer SLAs. Not a tie, not a tradeoff: strictly better on "
+        f"both axes, everywhere.",
         "",
-        f"`density` — our rule with the deadline term removed — serves more expected loss "
-        f"than the full rule at every budget ({density['value_served_inr']:,.0f} against "
-        f"{ours['value_served_inr']:,.0f} at 10%) and breaches no more. By the "
-        f"pre-registered guard that an ablation beating the full rule becomes the headline: "
-        f"**the deadline term is not earning its place at this level of oversubscription.**",
+        "This survived the model correction. It was true under the batch queue and it is "
+        "true with arrival times, which is the only reason to believe it. **The deadline "
+        "term should come out**, and the code comment claiming it prevents tight-SLA "
+        "starvation is wrong: it causes the clustering that produces breaches.",
         "",
-        f"What it does buy is route fairness rather than deadline compliance. It sheds "
+        f"The one thing the deadline term does buy is route fairness — it sheds "
         f"{ours['finops_shed']:.0f} `finops-agent` cases against `density`'s "
-        f"{density['finops_shed']:.0f}, so removing it would concentrate every dropped case "
-        f"on the highest-consequence route. That is a defensible reason to keep a deadline "
-        f"term and it is **not** the reason we gave for having one. The honest statement is "
-        f"that the term is doing a different job than the docstring claims, and the docstring "
-        f"is what needs to change.",
+        f"{tight['strategies']['density']['finops_shed']:.0f}, so removing it concentrates "
+        f"dropped cases on the highest-consequence route. That is a real argument for "
+        f"keeping some route-awareness. It is not an argument for the rule we shipped, and "
+        f"it is not the argument the code made.",
+        "",
+        "### Where we still lose",
+        "",
+        f"The seeded random null breaches fewer SLAs than the shipped rule at "
+        f"{random_better} of {len(budgets)} budgets — the tightest one. It serves far less "
+        f"value ({tight['strategies']['random']['value_served_inr']:,.0f} against "
+        f"{ours['value_served_inr']:,.0f}) and drops "
+        f"{tight['strategies']['random']['high_value_shed']:.0f} top-decile cases against "
+        f"our {ours['high_value_shed']:.0f}, so it is not a better rule. But a shuffle "
+        f"beating us on any axis is worth saying out loud.",
+        "",
+        f"And ordering is still the smaller lever. Keeping up with arrivals needs "
+        f"{capacity:.1f} reviewers against the {summary['reviewers_on_shift']:.0f} "
+        f"configured. **No serving rule substitutes for that**, and it remains the number "
+        f"worth putting in front of a buyer.",
         "",
     ]
 
@@ -371,6 +401,14 @@ def write_attention(root: Path, summary: dict[str, Any]) -> Path:
             "therefore safe and expensive rather than unsafe — the cost is unreviewed "
             "false positives that a person would have released, and pricing that needs a "
             "false-positive cost we have not derived.",
+            "",
+            "**Arrivals are uniform across the window**, because our corpus is a stream "
+            "with no timestamps and position is the only ordering it carries. Real traffic "
+            "is bursty, and burstiness is exactly what a serving rule has to survive: a "
+            "queue that keeps up on average can still breach badly at a peak. This is now "
+            "the load-bearing assumption of the whole comparison, and it replaces the "
+            "batch model's assumption that everything arrives at once. Both are wrong; "
+            "this one is wrong in a smaller and more defensible way.",
             "",
         ]
     )

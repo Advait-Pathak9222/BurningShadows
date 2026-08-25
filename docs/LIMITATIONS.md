@@ -125,41 +125,59 @@ Two further readings, both unflattering, both in the results table:
 - Attention spend is identical across every policy that raises more than a shift's worth of cases,
   because reviewer capacity is fixed and the queue saturates. What differs is what gets shed.
 
-### Does our queue rule beat a naive one? Not on the endpoint we set
+### Does our queue rule beat a naive one? Yes — on the second attempt, after we fixed our own model
 
 `make attention` compares the shipped serving order against FIFO, a seeded random null, and two
 ablations, at identical capacity on identical cases. Pre-registration 3 required dominance over FIFO
 on both served value and SLA breaches.
 
-**It fails, at all six budgets.** The shipped rule breaches four or five more SLAs than FIFO out of
-161, and that is the entire margin. Reported next to it, because it was also pre-registered: on the
-other axis the rule serves **1.5x the expected loss** FIFO does from the same reviewer-hours, and
-sheds **none** of the top-decile cases against FIFO's 15 to 39.
+**The first run failed at all six budgets. The re-run passes at all six.** The sequence matters more
+than either number, so here it is in full:
 
-The reason for the failure is more useful than the result. The queue is 1.5x to 2.4x oversubscribed,
-so on this model roughly 161 of 166 served cases breach under *every* rule including FIFO and
-random. Ordering by deadline front-loads the cases with the tightest SLAs, and those breach first.
-**Ordering decides who breaches; it cannot decide whether anyone has to.** Keeping up with arrivals
-at all takes 4.8 reviewers against the 2 configured, and no serving rule substitutes for that.
+1. Run one used a review queue with **no arrival times**. It processed a single batch, so the whole
+   traffic window was treated as landing at once and a case served last was charged a wait equal to
+   the entire window. Roughly 161 of 166 served cases "breached" under every rule including random.
+   The shipped rule lost to FIFO by four or five breaches. **Reported as a failure and committed.**
+2. The defect was found while sanity-checking a capacity figure that came out absurd — 110 reviewers
+   for a queue of 247 cases. It was **written into this file and committed before it was fixed**.
+3. `ReviewQueue.drain` is now a discrete-event simulation over reviewer-servers: a case cannot be
+   started before it arrives, and wait is measured from its own arrival to the end of its review.
+   Breaches fell from ~161 to 33-55 of 166 and p99 wait from 495 to 106-160 minutes.
+4. Run two passes: the shipped rule dominates FIFO at every budget, breaching 55 against 154 at the
+   tight budget while serving 1.48x the expected loss from the same reviews.
 
-The `density` ablation — our rule with the deadline term removed — serves more expected loss at
-every budget and breaches no more. Pre-registration 3 said an ablation beating the full rule becomes
-the headline, so: **the deadline term is not earning its stated place.** What it does buy is route
-fairness, shedding 67 `finops-agent` cases against `density`'s 81, so removing it would concentrate
-every dropped case on the highest-consequence route. That is a defensible reason to keep the term
-and it is not the reason the code gave for having it.
+**A result that flips when its authors correct their own model is weaker evidence than one that does
+not.** The order of operations is the only thing that makes it credible at all — the defect was
+recorded before the fix, and the failing run is still in the git history. A reader who discounts
+this heavily is reading it correctly.
 
-### The review queue has no arrival times, so breach counts are upper bounds
+**And the ablation still beats the full rule.** `density` — ours with the deadline term removed —
+dominates it at 6 of 6 budgets, serving more expected loss *and* breaching fewer SLAs. That was true
+under the batch model and remains true with arrival times, which is the only reason to believe it.
+Pre-registration 3 said an ablation beating the full rule becomes the headline, so: **the deadline
+term should come out.** The comment in `queue.py` claiming it prevents tight-SLA starvation is
+wrong — it clusters tight-SLA cases into a burst the desk cannot clear. Ordering by deadline alone
+is worse than FIFO at every budget.
 
-Found while checking the capacity figure above. `ReviewQueue.drain` processes a single batch, so the
-entire traffic window is treated as arriving at once and a case served last is charged a wait equal
-to the whole window. Real cases arrive spread out and wait only for the backlog standing when they
-arrive.
+What the deadline term does buy is route fairness: it sheds 67 `finops-agent` cases against
+`density`'s 81, so removing it concentrates dropped cases on the highest-consequence route. That is
+an argument for route-awareness, not for the rule we shipped.
 
-**Every SLA breach and wait-time figure in `docs/results/summary.md` and `docs/results/attention.md`
-is therefore an upper bound rather than a measurement.** The comparison between serving rules is
-unaffected — every rule is charged identically on identical cases — but the absolute numbers are
-wrong in a known direction, and the fix is an arrival-time model rather than a different queue.
+Two more things we lose on. The seeded random null breaches fewer SLAs than the shipped rule at the
+tightest budget, though it serves far less value and drops 16 top-decile cases against our 1. And
+ordering remains the smaller lever: keeping up with arrivals needs 4.8 reviewers against the 2
+configured, and no serving rule substitutes for that.
+
+### The queue now assumes uniform arrivals, which is the next thing that is wrong
+
+The batch model assumed everything arrived at once. The corrected model assumes arrivals are uniform
+across the window, because our corpus is a stream with no timestamps and position is the only
+ordering it carries.
+
+Real traffic is bursty, and burstiness is precisely what a serving rule has to survive: a desk that
+keeps up on average can still breach badly at a peak. **This is now the load-bearing assumption of
+the attention comparison.** Both models are wrong; this one is wrong in a smaller and more
+defensible way, and a timestamped corpus is what would settle it.
 
 ## Guarantee limits
 
