@@ -1,203 +1,141 @@
-# ControlPlane.ai prototype
+# ControlPlane
 
-ControlPlane allocates a fixed assurance budget across AI interactions. It combines a per-route
-finite-sample verification floor with the Round 1 economic rule:
+ControlPlane is an OpenAI-shaped gateway that treats responsible-AI verification as a constrained allocation problem. It combines an untradeable per-route risk floor with priced verification, a budget shadow price, effect gating, and a hash-chained decision and review ledger. The default build runs offline against a seeded provider and lexical detector stubs, so the committed evidence tests the decision system—not production model quality.
 
-```text
-sum(risk_j * consequence_j * catch_rate_tj) > (1 + shadow_price) * (check_cost_t + delay_cost_t)
-```
+## Three findings
 
-The guarantee determines which traffic may not be skipped. The allocator chooses which additional
-checks are worth buying. Response text can stream while verification runs; proposed financial,
-irreversible, or external effects wait for the decision.
+### Attention is the real assurance cost
 
-This repository is a CPU-only competition prototype. It needs no API key, network call, or GPU at
-runtime.
+Across the evaluated allocation budgets, queue attention accounts for **85.2–96.8%** of operating assurance cost. This is `attention_spend_inr / (attention_spend_inr + assurance_spend_inr)` from the committed metrics; the separate audit slice is measurement apparatus and is not charged to the operating headline. A completed review costs **INR 120**, while a full automated check costs **INR 3.20 per interaction**.
 
-## Run in ten minutes
+At the tightest budget, the shipped queue served **1.57x** the expected loss served by FIFO from the same **166** completed reviews. It breached **49 vs 148** SLAs and shed **1 vs 22** top-decile cases. The harder fact is capacity: keeping up with arrivals needs **5.4 reviewers**, while the scenario staffs **2**.
 
-Python 3.11 or newer is required.
+Evidence: [cost and review metrics](docs/results/results.json), [queue comparison](docs/results/attention.json), and [queue provenance](docs/results/attention.md).
+
+### Authorisation beats recognition
+
+The previous shape-only PII detector reached **0.5881 AUC**, almost exactly its **0.5869** perfect-shape ceiling. The held-out corpus explains why: **309** rows contain a real identifier in a permitted disclosure, while **57** actual leaks contain no recognisable pattern.
+
+The authorisation-aware detector reaches **0.9879 AUC**, with **1.000 precision** and **0.766 recall**. Microsoft Presidio reaches **0.5825 AUC** here: it flags **1,044 of 1,500** rows but has **0.0747 precision**. Recognition is not the binding constraint when the decision is whether this requester may disclose this value in this route and context.
+
+The ablations are not hidden. Removing secrets scanning drops AUC to **0.7765**, removing the fitted personal-context vocabulary drops it to **0.8853**, and removing grounding improves it to **0.9899**. Secrets scanning carries much of the gain, the fitted vocabulary may not transfer, and grounding does not earn its place on this synthetic corpus.
+
+Evidence: [PII probe JSON](docs/results/pii.json), [analysis and disagreements](docs/results/pii.md), and [locked target](docs/PREREGISTRATION.md).
+
+### The evidence can disagree with the design
+
+The project preregistered its endpoints before implementing the work and publishes failures and partial success beside passes. The attention comparison initially failed because the queue model had no arrival times; that defect was recorded before correction. With uniform arrivals, the rerun passes against FIFO at **6 of 6** budgets—but the density-only ablation still beats the shipped rule at **6 of 6**, so the deadline term is not supported by this experiment.
+
+That provenance matters more than a clean success label. The earlier paging endpoint failed, the fair total-cost comparison achieved only partial success, and the queue result changed when its model was corrected.
+
+Evidence: [all preregistrations](docs/PREREGISTRATION.md), [machine-readable rerun](docs/results/attention.json), and [failure-to-rerun history](docs/results/attention.md).
+
+## Evidence at a glance
+
+Every measured figure below is committed in `docs/results/*.json`.
+
+| Question | Committed result | Artifact |
+| --- | --- | --- |
+| Does allocation beat a tuned fixed-rate policy? | More loss averted at **6 of 6** budgets, but only by **0.4–3.6%**; compute ROI wins at **4 of 6**. At the tightest budget: **INR 5,315,700** averted for **INR 660.90**, versus **INR 5,224,700** for **INR 270**. | [results](docs/results/results.json) |
+| Does the per-route release floor hold? | Observed unchecked harm is **0.0618 / 0.0716 / 0.0642** against alpha **0.15**, over **372 / 475 / 436** released rows. Mandatory coverage is **25.6% / 5.0% / 12.8%**. | [results](docs/results/results.json) |
+| Are risk scores calibrated? | Route ECE is **0.030–0.046**. | [results](docs/results/results.json) |
+| Do consequence assumptions move decisions? | Mean tier-decision flip rate is **15.8%** across a **0.25x–4x** band, below the **20%** stop condition; the worst draw reaches **27.7%** and breaches it. Verdict flip rate is **0%**. | [sensitivity](docs/results/sensitivity.json) |
+| Is the audit trail complete? | **1,500 of 1,500** decisions and **299** reviews share one valid chain; **224 of 224** proposed effects are logged. | [results](docs/results/results.json) |
+| Is detector catch rate measured or configured? | Labelled Tier 2 catch rate is **0.950** versus **0.880** configured, over **398** observations. Intervention precision is **0.396**. | [results](docs/results/results.json) |
+
+Loss and cost figures above are arithmetic over synthetic traffic and scenario-configured consequences. They are evidence about this implementation and its assumptions, not production loss reduction.
+
+## Run it locally
+
+The default path needs no API key, network call, model download, or GPU.
 
 ```bash
+git clone https://github.com/Jenish3119/BurningShadows.git
+cd BurningShadows
 make install
 make demo
 make console
 ```
 
-The console opens at `http://localhost:8501`. On PowerShell without `make`, use:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
-.\.venv\Scripts\python.exe -m controlplane.cli demo
-.\.venv\Scripts\python.exe -m streamlit run console\streamlit_app.py
-```
-
-Regenerate the evaluation and run all checks with:
+`make demo` regenerates the synthetic corpus, calibrates route scores and release thresholds, exercises the scenarios, and verifies the audit chain. `make console` regenerates the report before opening the inspection UI. Run the complete quality gate with:
 
 ```bash
-make report
-make sensitivity
-make attention
-make loadtest
 make check
 ```
 
-`make demo` takes about 18 seconds and `make report` about 15 on a laptop.
+Other reproducible evidence commands are `make report`, `make attention`, `make pii-probe`, `make sensitivity`, and `make loadtest`.
 
-Experiment tracking is optional. With `pip install -e ".[tracking]"` every `make report` writes one
-MLflow run per policy and budget to `./mlruns`; `make mlflow-ui` opens them. Without it, tracking is
-inert and everything else behaves identically.
+## Architecture
 
-## What to inspect first
+The gateway uses request, response, context, samples, and proposed tool calls only. Text may stream while verification runs; effect-bearing actions remain behind a separate gate.
 
-1. `controlplane/economics/allocator.py` contains the expected-loss decision in plain arithmetic.
-2. `controlplane/guarantees/conformal.py` learns the mandatory per-route release threshold.
-3. `docs/results/summary.md` is the committed result table, regenerated by `make report`.
-4. `docs/results/runtime.md` is the committed admission and saturation run.
-5. `docs/results/attention.md` compares reviewer-queue serving rules at fixed capacity,
-   `docs/results/sensitivity.md` sweeps the consequence assumption, and `docs/results/pii.md`
-   measures the disclosure detector against a shape-only ceiling and against Microsoft Presidio.
-6. `docs/PREREGISTRATION.md` states what would count as success for work in progress, written
-   before that work started.
-7. `docs/LIMITATIONS.md` states where the current evidence is insufficient.
-
-## Current measured result
-
-`make report` fits on 1500 calibration rows and evaluates 1500 held-out rows. Every policy runs the
-same decision path: each may block or abstain, each is credited for harm that never reached anyone,
-and each is charged the reviewer minutes its own verdicts raise. They differ in one thing — which
-rows they check, and at what tier. The allocator streams the test set with the budget controller
-live; the fixed-rate baseline is tuned over its tier choice and is allowed to rank the whole test
-set at once.
-
-**On compute alone the allocator averts more loss than the tuned baseline at all six budgets, by
-0.4% to 3.6%, and wins on ROI at four of six.** At a 10% budget the baseline averts 5,224,700 for
-270 INR by running the cheap Tier 1 check over everything, while the allocator spends 661 INR to
-avert 5,315,700. Blanket cheap coverage is hard to beat when a low tier is good enough.
-
-**On total cost the picture changes, and not in the way we expected.** A review costs INR 120
-against INR 3.20 for the dearest automated check. Once both policies are charged the reviewer
-minutes they generate, the baseline's ROI advantage at the tight budgets falls from 2.28x and 3.76x
-to 1.002x and 1.004x — but that is not the allocator winning. It is the attention bill being 30 to
-70 times the compute bill and both policies paying it in full, so the compute difference the first
-comparison argues about is nearly irrelevant to what assurance actually costs.
-
-That cuts against us as much as for us: the resource we allocate is the smaller number. It is also
-the resource every guardrail product competes on. The reviewer queue — 2.4x oversubscribed, shedding
-58% at full budget, and allocated by nobody — is where the money and the risk both sit.
-
-So `make attention` asks the obvious follow-up: at a fixed reviewer capacity, does our queue rule
-beat a naive one? **It does — at all six budgets, breaching 49 SLAs against FIFO's 148 while serving
-more expected loss from the same reviews.** That result needs three caveats, and they are not
-footnotes.
-
-**It is a re-run.** The first run of this same pre-registered comparison **failed at all six
-budgets**, under a review queue that had no arrival times and therefore charged a whole traffic
-window of waiting to the last case served. We found that defect while sanity-checking a capacity
-figure that came out absurd, recorded it and committed it *before* fixing it, then re-ran. The
-failing run is still in the git history. A result that flips when its authors correct their own model
-is weaker evidence than one that does not, and it should be read that way.
-
-**An ablation still beats the full rule.** Dropping the deadline term serves more expected loss *and*
-breaches fewer SLAs at 6 of 6 budgets. That was true before the model fix and after it. The deadline
-term should come out; ordering by deadline alone is worse than FIFO everywhere, because it clusters
-tight-SLA cases into a burst the desk cannot clear.
-
-**Ordering is the smaller lever.** Keeping up with arrivals needs 5.4 reviewers against the 2
-configured, and no serving rule substitutes for that. `docs/results/attention.md` has all of it.
-
-The conformal bound holds on held-out traffic on **all three routes, and none of them is vacuous
-any more**: 0.0618 on `finops-agent` over 372 released rows, 0.0716 on `internal-kb` over 475, and
-0.0642 on `support-assistant` over 436, against alpha 0.15. `support-assistant` previously released
-nothing — the floor demanded 100% coverage and the bound held by construction, which we reported as
-vacuous rather than as a pass. A better detector fixed that: the floor now needs to force only
-12.8% of that route's traffic. Expected calibration error is 0.031 to 0.046, down from 0.070 to
-0.090.
-
-**PII detection was the weak axis and is now the strongest.** It scored AUC 0.5897 through the
-calibrated pipeline, and the honest diagnosis was that a *perfect* pattern detector could only reach
-0.5869 on this corpus: 309 held-out rows carry a well-formed identifier and are permitted
-disclosures, while 57 real leaks contain no pattern at all. Microsoft Presidio confirms it from the
-other side — a state-of-the-art recogniser that flags 70% of all traffic and is wrong about almost
-all of it. Scoring **whether a disclosure is grounded in the authorised source**, rather than
-whether it looks like PII, takes the axis to **0.9844** with precision 1.000. `docs/results/pii.md`
-reports which mechanism earned that and which of them would not survive contact with traffic we did
-not write.
-
-Consequence is the softest input in the system, so `make sensitivity` sweeps it over a 0.25x-4x band
-with each route and axis drawn independently. **15.8% of decisions flip, against the 20% stop
-condition in `docs/00-assessment.md`.** Tier selection moves; the verdict never does, because `c`
-prices a check and does not enter the release rule. A buyer who disputes our consequence estimates
-is disputing the assurance bill, not the safety behaviour.
-
-Multi-turn risk is wired rather than declared. A questionable turn lowers the mandatory-check
-threshold for later turns in the same session, carried over an `x-controlplane-session` header. It
-**only ever tightens the floor** — session risk is deducted from the threshold and never added to
-it — so conversation history can buy more checking and never less, which is what keeps the certified
-per-route bound valid. On two real held-out rows the follow-up's check goes from discretionary to
-mandatory; under severe budget pressure its tier rises with history as the only difference.
-
-Every decision and every review is in one hash chain: 1500 of 1500 decisions recorded, 299 reviews
-in the same chain, and 224 of 224 proposed effects logged.
-
-Full numbers, including both escape-rate definitions and the shadow price at each budget, are in
-`docs/results/summary.md`, `docs/results/sensitivity.md` and `docs/results/results.json`. The
-figures are:
-
-- `reports/figures/loss_averted_vs_spend.png`
-- `reports/figures/reliability_by_route.png`
-
-The runtime saturation test passes its preregistered safety conditions but is not yet a win. At 400
-offered RPS the bounded path cut effect p99 from 1426.73 ms to 136.59 ms, completed the conformal
-floor on every degraded response, and never let overload reach the provider — while throughput fell
-from 203.2 to 60.1 RPS with 506 of 600 requests rejected. At 80 offered RPS it is a **regression**
-on both percentiles. The current limits favour a short tail over throughput and need tuning against
-a stated service objective. The test uses stub detectors plus a declared 75 ms blocking hold; it is
-a scheduler measurement, not production detector capacity.
-
-## Request path
-
-The FastAPI endpoint accepts an OpenAI-shaped request at `POST /v1/chat/completions`. A blocking
-per-route token bucket and bounded queue admit work before provider generation. Under pressure a
-reserved lane retains Tier 0 and Tier 1 while pricing out discretionary Tier 2; if that lane is also
-full, the gateway returns 503 without generating text. Preflight rejects known injection patterns.
-The provider then returns or streams text, the allocator applies the conformal floor and
-shadow-priced cost rule, the effect gate holds sensitive tool calls, and SQLite records the trace.
-
-Start the API with `make api`, then send:
-
-```bash
-curl -s http://127.0.0.1:8000/v1/chat/completions \
-  -H "content-type: application/json" \
-  -H "x-controlplane-route: support-assistant" \
-  -d '{"model":"controlplane-sim","messages":[{"role":"user","content":"What is the renewal fee?"}],"context_documents":["The renewal fee is INR 499."]}'
+```mermaid
+flowchart TD
+    A[AI use case] --> B[OpenAI-shaped gateway]
+    B --> Q{Per-route admission}
+    Q -->|normal| C[Blocking preflight]
+    Q -->|mandatory only| C
+    Q -->|both lanes full| X[503 before generation]
+    C --> D[Seeded or adapted model provider]
+    D -. text streams .-> U[User]
+    D --> E0[Tier 0 rules]
+    E0 --> E1[Tier 1 small-model adapter]
+    E1 --> E2[Tier 2 judge when selected]
+    E0 --> F[Calibrated harm vector and evidence regime]
+    E1 --> F
+    E2 --> F
+    P[Versioned jurisdiction policy] --> C
+    P --> H[Allocator]
+    G[Consequence, catch, check and delay costs] --> H
+    F --> H
+    R[Per-route conformal floor] --> H
+    H --> V{Verdict}
+    V --> U
+    V --> K[Effect gate]
+    H --> L[Hash-chained ledger]
+    K --> L
+    L --> N[Feedback and recalibration inputs]
 ```
 
-## Real versus simulated
+The decision rule prices each candidate check without letting the assurance budget relax the route floor:
 
-Real code paths include policy hot reload and hashing, preflight blocking, detector composition,
-isotonic calibration, the exact-binomial finite-grid risk test on a held-out fold, budget allocation
-under a live shadow price, effect gating, streaming, ledger integrity checks, metrics, and the
-console.
+```text
+expected loss = calibrated risk × consequence
+check when expected loss × catch rate > (1 + shadow price) × check cost
+```
 
-The model provider, detector scores, catch-rate priors, consequence amounts, token and check prices
-are simulated. Latency figures are real `perf_counter` measurements of the stub detectors, which are
-regex and lexical matchers; they are not estimates of what a real NLI model or LLM judge would cost.
-Public datasets considered for the next evaluation are documented in `docs/06-datasets.md`; none are
-downloaded or redistributed by the offline demo.
+See [the component contracts and request sequence](docs/ARCHITECTURE.md).
+
+## What we do not claim
+
+- **Not production detector quality.** The corpus is synthetic and generated by this project; the default detectors are regex and lexical stubs.
+- **Not allocator dominance.** The loss-averted margin over the tuned fixed-rate baseline is **0.4–3.6%**. At the two tightest budgets, baseline-to-allocator total-cost ROI is **1.002x** and **1.004x**, so the preregistered primary endpoint fails.
+- **Not a transferable disclosure vocabulary.** The fitted personal-context phrases are load-bearing on this corpus, and the grounding ablation outperforms the shipped detector.
+- **Not consequence robustness in every draw.** The average sensitivity result stays below its stop condition, but the worst draw breaches it at **27.7%**.
+- **Not the best queue rule.** The full rule beats FIFO after the model correction, but its density-only ablation beats it at every tested budget; arrivals are assumed uniform because the corpus has no timestamps.
+- **Not production capacity.** The runtime benchmark measures a scheduler harness with seeded providers, lexical stubs, and an explicit blocking hold on one uncontrolled Windows host.
+- **Not protection from already-streamed harmful text.** The effect gate can stop an external action; it cannot retract text the user has already seen.
+- **Not a compliance determination.** Policy packs are versioned control mappings and still require legal and operational review.
+
+The full boundary, including calibration assumptions, multi-worker gaps, audit-store limits, and next evidence needed, is in [Limitations](docs/LIMITATIONS.md).
 
 ## Repository map
 
-```text
-controlplane/   gateway, runtime, policies, detectors, risk, economics, guarantees, effects, ledger
-console/        Streamlit assurance console
-config/         EU and India route policies plus tier economics
-data/           seeded JSONL corpus and its manifest
-docs/           assessment, sources, compliance map, ADRs, audit, results, and limitations
-reports/        regenerated metrics, scenarios, tables, and figures
-tests/          properties, corpus integrity, conformal behavior, scenarios, gateway, tampering
-```
+| Path | Purpose |
+| --- | --- |
+| `controlplane/gateway/` | OpenAI-shaped API, streaming, and admission integration |
+| `controlplane/runtime/` | Bounded concurrency, reserved mandatory capacity, and load harnesses |
+| `controlplane/detectors/` | Tiered detector interfaces, offline stubs, disclosure logic, and optional adapters |
+| `controlplane/risk/` | Per-axis calibration and evidence regimes |
+| `controlplane/guarantees/` | Per-route finite-sample release thresholds |
+| `controlplane/economics/` | Cost model, budget controller, and allocator |
+| `controlplane/review/` | Human-review economics and queue strategies |
+| `controlplane/effects/` | Independent effect gating |
+| `controlplane/ledger/` | Hash-chained decision and review records |
+| `controlplane/eval/` | Reproducible evaluation, ablation, sensitivity, and runtime commands |
+| `config/` | Versioned policies, economics, runtime limits, and optional judge settings |
+| `data/` | Seeded synthetic calibration and held-out traffic |
+| `docs/results/` | Machine-readable results and human-readable interpretations |
+| `tests/` | Invariants, failure behaviour, reproducibility, and regression coverage |
 
-The architecture and component contracts are in `docs/ARCHITECTURE.md`. Dataset licensing and
-provenance are in `data/README.md` and `data/dataset_manifest.yaml`.
+For the commercial framing, see [Business proposal](docs/07-business-proposal.md).
