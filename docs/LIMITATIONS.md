@@ -123,9 +123,43 @@ Two further readings, both unflattering, both in the results table:
   does. A ratio rewards spending nothing. ROI is the wrong headline for a safety control and we
   report it only because we pre-registered it.
 - Attention spend is identical across every policy that raises more than a shift's worth of cases,
-  because reviewer capacity is fixed and the queue saturates. What differs is what gets shed —
-  and whether our shedding rule beats a naive one is the comparison that would actually
-  differentiate the product. It has not been run.
+  because reviewer capacity is fixed and the queue saturates. What differs is what gets shed.
+
+### Does our queue rule beat a naive one? Not on the endpoint we set
+
+`make attention` compares the shipped serving order against FIFO, a seeded random null, and two
+ablations, at identical capacity on identical cases. Pre-registration 3 required dominance over FIFO
+on both served value and SLA breaches.
+
+**It fails, at all six budgets.** The shipped rule breaches four or five more SLAs than FIFO out of
+161, and that is the entire margin. Reported next to it, because it was also pre-registered: on the
+other axis the rule serves **1.5x the expected loss** FIFO does from the same reviewer-hours, and
+sheds **none** of the top-decile cases against FIFO's 15 to 39.
+
+The reason for the failure is more useful than the result. The queue is 1.5x to 2.4x oversubscribed,
+so on this model roughly 161 of 166 served cases breach under *every* rule including FIFO and
+random. Ordering by deadline front-loads the cases with the tightest SLAs, and those breach first.
+**Ordering decides who breaches; it cannot decide whether anyone has to.** Keeping up with arrivals
+at all takes 4.8 reviewers against the 2 configured, and no serving rule substitutes for that.
+
+The `density` ablation — our rule with the deadline term removed — serves more expected loss at
+every budget and breaches no more. Pre-registration 3 said an ablation beating the full rule becomes
+the headline, so: **the deadline term is not earning its stated place.** What it does buy is route
+fairness, shedding 67 `finops-agent` cases against `density`'s 81, so removing it would concentrate
+every dropped case on the highest-consequence route. That is a defensible reason to keep the term
+and it is not the reason the code gave for having it.
+
+### The review queue has no arrival times, so breach counts are upper bounds
+
+Found while checking the capacity figure above. `ReviewQueue.drain` processes a single batch, so the
+entire traffic window is treated as arriving at once and a case served last is charged a wait equal
+to the whole window. Real cases arrive spread out and wait only for the backlog standing when they
+arrive.
+
+**Every SLA breach and wait-time figure in `docs/results/summary.md` and `docs/results/attention.md`
+is therefore an upper bound rather than a measurement.** The comparison between serving rules is
+unaffected — every rule is charged identically on identical cases — but the absolute numbers are
+wrong in a known direction, and the fix is an arrival-time model rather than a different queue.
 
 ## Guarantee limits
 

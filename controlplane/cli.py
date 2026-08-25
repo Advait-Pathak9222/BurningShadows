@@ -5,6 +5,7 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
+from controlplane.eval.attention import run_attention, write_attention
 from controlplane.eval.judge_probe import run_probe, write_probe
 from controlplane.eval.loadtest import run_loadtest
 from controlplane.eval.report import build_report
@@ -27,6 +28,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "demo",
             "report",
             "sensitivity",
+            "attention",
             "judge-probe",
             "loadtest",
             "slo-sweep",
@@ -55,6 +57,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"{summary['flip_rate']:.1%} (stop condition {summary['stop_condition']:.0%})."
         )
         return 0 if summary["flip_rate"] <= summary["stop_condition"] else 1
+    if args.command == "attention":
+        interactions = ensure_corpus(ROOT / "data")
+        summary = run_attention(ROOT, interactions)
+        write_attention(ROOT, summary)
+        verdict = summary["verdict"]
+        print(
+            f"Attention allocation vs FIFO: {verdict['outcome'].upper()} "
+            f"({verdict['budgets_dominated']:.0f} of "
+            f"{verdict['budgets_total']:.0f} budgets dominated)."
+        )
+        return 0 if verdict["outcome"] != "failure" else 1
     if args.command == "judge-probe":
         summary = run_probe(ROOT)
         write_probe(ROOT, summary)

@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report sensitivity judge-probe loadtest slo-sweep chaos replay api console mlflow-ui test lint typecheck check clean
+.PHONY: install data demo report sensitivity attention judge-probe loadtest slo-sweep chaos replay api console mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -16,6 +16,9 @@ report: data
 
 sensitivity:
 	$(PYTHON) -m controlplane.cli sensitivity
+
+attention:
+	$(PYTHON) -m controlplane.cli attention
 
 judge-probe:
 	$(PYTHON) -m controlplane.cli judge-probe

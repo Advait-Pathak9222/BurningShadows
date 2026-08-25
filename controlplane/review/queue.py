@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from controlplane.models import (
@@ -53,6 +55,34 @@ def case_from_trace(
     )
 
 
+def _sort_key(strategy: str) -> Callable[[ReviewCase], tuple[float, ...]]:
+    """Serving orders under comparison. `deadline_density` is what ships.
+
+    The alternatives exist so the shipped rule can be falsified rather than asserted:
+    `fifo` is what an unmanaged desk does, `random` is the null that would mean the queue
+    is not allocating at all, and the two single-term rules are ablations that say which
+    half of ours did the work. See pre-registration 3 in `docs/PREREGISTRATION.md`.
+    """
+    orders: dict[str, Callable[[ReviewCase], tuple[float, ...]]] = {
+        # Deadline first, then value density. Ordering by density alone lets a tight-SLA
+        # finops case sit behind a queue of higher-value internal-kb ones and breach.
+        "deadline_density": lambda case: (case.sla_minutes, -case.value_density),
+        "deadline": lambda case: (case.sla_minutes,),
+        "density": lambda case: (-case.value_density,),
+        "fifo": lambda case: (),
+        "random": lambda case: (_stable_uniform(case.interaction_id),),
+    }
+    if strategy not in orders:
+        raise ValueError(f"unknown serving strategy: {strategy}")
+    return orders[strategy]
+
+
+def _stable_uniform(interaction_id: str) -> float:
+    """Seeded so the null is reproducible rather than resampled until it loses."""
+    digest = hashlib.sha256(f"queue-null:{interaction_id}".encode()).digest()
+    return int.from_bytes(digest[:8], "big") / 2**64
+
+
 @dataclass
 class ReviewQueue:
     """Allocate reviewer minutes the way the allocator allocates rupees.
@@ -65,6 +95,7 @@ class ReviewQueue:
 
     economics: ReviewEconomics
     pending: list[ReviewCase] = field(default_factory=list)
+    strategy: str = "deadline_density"
 
     def submit(self, case: ReviewCase) -> None:
         self.pending.append(case)
@@ -98,12 +129,10 @@ class ReviewQueue:
         return decisions
 
     def _serving_order(self) -> list[ReviewCase]:
-        # Deadline first, then value density. Ordering by density alone lets a tight-SLA
-        # finops case sit behind a queue of higher-value internal-kb ones and breach.
-        return sorted(
-            self.pending,
-            key=lambda case: (case.sla_minutes, -case.value_density, case.interaction_id),
-        )
+        key = _sort_key(self.strategy)
+        # The interaction id is the final tiebreak everywhere, so no strategy's result
+        # depends on the order cases happened to be submitted in.
+        return sorted(self.pending, key=lambda case: (*key(case), case.interaction_id))
 
     @staticmethod
     def _shed(case: ReviewCase, elapsed: float) -> ReviewDecision:
