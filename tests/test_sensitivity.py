@@ -114,3 +114,35 @@ def test_consequence_does_not_reach_the_verdict(project_root: Path) -> None:
             verdicts.add(trace.verdict)
         assert key == "finops-agent:eu"
     assert len(verdicts) == 1
+
+
+def test_a_baseline_runs_the_same_verdict_rule_we_do(project_root: Path) -> None:
+    """The fairness correction, asserted so it cannot quietly regress.
+
+    A comparison where only our policy may block or abstain measures the modelling
+    difference, not the allocation. `decide_verdict` is the shipped rule, and a baseline
+    with the same bundle and the same tier must reach the same verdict our allocator
+    would.
+    """
+    from controlplane.economics import decide_verdict
+
+    engine = AssessmentEngine(project_root)
+    item = _interaction()
+    bundle = engine.detect(item)
+    policy = engine.policy_store.resolve(item.route, item.jurisdiction)
+    trace = allocate_verification(
+        interaction_id=item.interaction_id,
+        bundle=bundle,
+        policy=policy,
+        tiers=engine.cost_model.tiers(policy, item.tool_calls),
+        shadow_price=0.0,
+        conformal_threshold=1.01,  # above any score, so nothing is forced
+        tool_calls=item.tool_calls,
+    )
+    verdict, _ = decide_verdict(
+        bundle,
+        trace.selected_tier,
+        forced=False,
+        has_effect=bool(item.tool_calls),
+    )
+    assert verdict == trace.verdict

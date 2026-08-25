@@ -70,6 +70,22 @@ def allocate_verification(
     )
 
 
+def decide_verdict(
+    bundle: DetectionBundle,
+    tier: int | None,
+    *,
+    forced: bool,
+    has_effect: bool,
+) -> tuple[Verdict, str]:
+    """The shipped verdict rule, exposed so a baseline runs the same one we do.
+
+    A comparison where only our policy may block or abstain is measuring the modelling
+    difference, not the allocation. The rule itself is unchanged: this is a name for it,
+    not a second copy of it.
+    """
+    return _verdict(bundle, tier, forced, has_effect)
+
+
 def _tier_choices(
     bundle: DetectionBundle,
     policy: RoutePolicy,

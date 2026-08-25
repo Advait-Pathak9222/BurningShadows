@@ -29,7 +29,7 @@
     "allocator_spend_inr": 1848.24,
     "budget_fraction": 0.4,
     "fixed_rate_false_positive_rate": 0.852,
-    "fixed_rate_loss_averted_inr": 5072700.0,
+    "fixed_rate_loss_averted_inr": 5127700.0,
     "fixed_rate_precision": 0.148,
     "fixed_rate_spend_inr": 270.0
   },

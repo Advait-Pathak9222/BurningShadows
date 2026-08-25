@@ -11,14 +11,72 @@ so the two policies are compared at matched budget, not at matched spend.
 
 | Budget | Allocator spend | Baseline spend | Allocator averted | Baseline averted | Averted delta | Allocator ROI | Baseline ROI |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | 623.48 | 270.00 | 5,184,700 | 5,072,700 | +2.2% | 8,316 | 18,788 |
-| 25% | 1,038.12 | 270.00 | 5,237,500 | 5,072,700 | +3.2% | 5,045 | 18,788 |
-| 40% | 1,848.24 | 270.00 | 5,347,800 | 5,072,700 | +5.4% | 2,893 | 18,788 |
+| 10% | 623.48 | 270.00 | 5,184,700 | 5,127,700 | +1.1% | 8,316 | 18,991 |
+| 25% | 1,038.12 | 270.00 | 5,237,500 | 5,127,700 | +2.1% | 5,045 | 18,991 |
+| 40% | 1,848.24 | 270.00 | 5,347,800 | 5,127,700 | +4.3% | 2,893 | 18,991 |
 | 60% | 2,922.02 | 2,921.60 | 5,364,600 | 5,153,400 | +4.1% | 1,836 | 1,764 |
 | 80% | 3,731.38 | 3,731.20 | 5,390,600 | 5,337,900 | +1.0% | 1,445 | 1,431 |
 | 100% | 3,800.84 | 3,798.40 | 5,390,600 | 5,337,900 | +1.0% | 1,418 | 1,405 |
 
 Allocator averts more loss at 6 of 6 budgets and achieves better assurance ROI at 3 of 6.
+
+## Total cost of assurance: the pre-registered comparison
+
+Every policy here runs the same decision path. Each may block or abstain, each is
+credited for harm that never reached anyone, and each is charged the reviewer
+minutes its own verdicts raise through the same queue at the same capacity. The
+policies differ in one thing only: which rows they check, and at what tier.
+
+Before this, only the allocator was charged for attention and only the allocator
+could block. Both distortions were real and they pointed in opposite directions.
+
+| Budget | Policy | Compute | Attention | Total | Averted | ROI on compute | ROI on total | Cases | Shed |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 10% | allocator | 623.48 | 19,920 | 20,543 | 5,184,700 | 8,316 | 252.4 | 247 | 81 |
+| 10% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,127,700 | 18,991 | 254.0 | 244 | 78 |
+| 10% | check_all | 4,800.00 | 19,920 | 24,720 | 5,405,400 | 1,126 | 218.7 | 244 | 78 |
+| 10% | check_none | 0.00 | 2,760 | 2,760 | 766,000 | 0 | 277.5 | 23 | 0 |
+| 25% | allocator | 1,038.12 | 19,920 | 20,958 | 5,237,500 | 5,045 | 249.9 | 280 | 114 |
+| 25% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,127,700 | 18,991 | 254.0 | 244 | 78 |
+| 25% | check_all | 4,800.00 | 19,920 | 24,720 | 5,405,400 | 1,126 | 218.7 | 244 | 78 |
+| 25% | check_none | 0.00 | 2,760 | 2,760 | 766,000 | 0 | 277.5 | 23 | 0 |
+| 40% | allocator | 1,848.24 | 19,920 | 21,768 | 5,347,800 | 2,893 | 245.7 | 307 | 141 |
+| 40% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,127,700 | 18,991 | 254.0 | 244 | 78 |
+| 40% | check_all | 4,800.00 | 19,920 | 24,720 | 5,405,400 | 1,126 | 218.7 | 244 | 78 |
+| 40% | check_none | 0.00 | 2,760 | 2,760 | 766,000 | 0 | 277.5 | 23 | 0 |
+| 60% | allocator | 2,922.02 | 19,920 | 22,842 | 5,364,600 | 1,836 | 234.9 | 396 | 230 |
+| 60% | fixed_rate | 2,921.60 | 19,920 | 22,842 | 5,153,400 | 1,764 | 225.6 | 227 | 61 |
+| 60% | check_all | 4,800.00 | 19,920 | 24,720 | 5,405,400 | 1,126 | 218.7 | 244 | 78 |
+| 60% | check_none | 0.00 | 2,760 | 2,760 | 766,000 | 0 | 277.5 | 23 | 0 |
+| 80% | allocator | 3,731.38 | 19,920 | 23,651 | 5,390,600 | 1,445 | 227.9 | 396 | 230 |
+| 80% | fixed_rate | 3,731.20 | 19,920 | 23,651 | 5,337,900 | 1,431 | 225.7 | 227 | 61 |
+| 80% | check_all | 4,800.00 | 19,920 | 24,720 | 5,405,400 | 1,126 | 218.7 | 244 | 78 |
+| 80% | check_none | 0.00 | 2,760 | 2,760 | 766,000 | 0 | 277.5 | 23 | 0 |
+| 100% | allocator | 3,800.84 | 19,920 | 23,721 | 5,390,600 | 1,418 | 227.3 | 396 | 230 |
+| 100% | fixed_rate | 3,798.40 | 19,920 | 23,718 | 5,337,900 | 1,405 | 225.1 | 227 | 61 |
+| 100% | check_all | 4,800.00 | 19,920 | 24,720 | 5,405,400 | 1,126 | 218.7 | 244 | 78 |
+| 100% | check_none | 0.00 | 2,760 | 2,760 | 766,000 | 0 | 277.5 | 23 | 0 |
+
+### Against the pre-registered endpoint
+
+The endpoint was ROI on total cost at the 10% and 25% budgets, with success requiring the allocator to match or beat the tuned baseline at both.
+
+| Budget | Baseline/allocator on compute | Baseline/allocator on total |
+|---:|---:|---:|
+| 10% | 2.28x | 1.006x |
+| 25% | 3.76x | 1.016x |
+
+**Result: partial success, and the reason matters more than the number.** The allocator does not beat the tuned baseline on total cost at either row, so the primary endpoint fails. The pre-registered partial-success bar — the ratio falling to 1.5x or below at both rows — is met, and comfortably.
+
+But the gap does not close because allocation got better. It closes because **the attention bill is roughly 30 to 70 times the compute bill and both policies pay it in full**, so the compute difference the first table argues about is arithmetically almost irrelevant to what assurance actually costs.
+
+That cuts against us as much as for us. It says the thing we allocate is the smaller number. It also says the thing every guardrail vendor competes on is the smaller number, and that the reviewer queue — oversubscribed, shedding, and allocated by nobody — is where the money and the risk both are.
+
+Two further readings the table forces, neither of them flattering:
+
+- **`check_none` posts the best ROI on total cost.** It averts a seventh of what the allocator does and pays almost nothing, and a ratio rewards that. ROI is the wrong headline for a safety control; loss averted is what a business carries, and `check_none` leaves the overwhelming majority of it on the table. We report ROI because we pre-registered it, not because it is the number to optimise.
+- **Attention spend is identical across every policy that raises more than a shift's worth of cases.** Reviewer capacity is fixed, so the queue saturates and every such policy pays the same. What differs is what gets shed. That is the comparison worth running next, and it is not in this table.
+
 
 ## Total cost of assurance: compute against attention
 
