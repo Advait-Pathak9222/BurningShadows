@@ -47,13 +47,15 @@ Raising the compute budget raises the number of cases needing a person, so buyin
 
 ## Conformal bound on held-out traffic
 
-- `finops-agent`: observed 0.0591 against alpha 0.15 on 220 released rows (holds)
-- `internal-kb`: observed 0.0781 against alpha 0.15 on 461 released rows (holds)
-- `support-assistant`: observed 0.0000 against alpha 0.15 on 0 released rows (holds)
+- `finops-agent`: observed 0.0591 against alpha 0.15 on 220 released rows, 56.0% checked under the floor (holds)
+- `internal-kb`: observed 0.0781 against alpha 0.15 on 461 released rows, 7.8% checked under the floor (holds)
+- `support-assistant`: **vacuous** — the floor demands 100% coverage at alpha 0.15, so no row is released unchecked and the bound is satisfied by construction. It is not evidence about the detector.
 
 ## Audit
 
 - hash chain valid: True
-- decisions recorded: 1780 of 1500
-- effects logged: 182 of 224 proposed (coverage 0.8125)
+- decisions recorded: 1500 of 1500
+- reviews recorded in the same chain: 280
+- chain length: 1780 records
+- effects logged: 224 of 224 proposed (coverage 1.0000)
 

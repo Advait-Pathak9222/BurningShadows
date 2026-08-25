@@ -396,19 +396,32 @@ def _fresh_ledger(root: Path, fraction: float) -> LedgerStore:
 
 
 def _audit_coverage(test: list[Interaction], run: AllocatorRun) -> dict[str, float | bool]:
-    """Count effects that survived into a verified ledger record, not effects proposed."""
+    """Count effects that survived into a verified ledger record, not effects proposed.
+
+    The window is the verified chain length, not the interaction count. Reviews join the
+    same chain, so sizing the read by ``len(test)`` silently dropped the oldest decisions
+    off the end of a ``sequence DESC`` page and under-reported effect coverage.
+    """
     ledger = run.ledger
     assert ledger is not None
     chain_ok, record_count = ledger.verify()
     logged = 0
-    for record in ledger.records(limit=len(test) + 1):
+    decisions = 0
+    reviews = 0
+    for record in ledger.records(limit=record_count):
         payload = json.loads(str(record["record_json"]))
+        if payload.get("kind") == "review":
+            reviews += 1
+            continue
+        decisions += 1
         logged += len(payload.get("effect_actions", []))
     proposed = sum(len(item.tool_calls) for item in test)
     return {
         "chain_valid": chain_ok,
         "records": float(record_count),
-        "decisions": float(len(run.traces)),
+        "decisions_recorded": float(decisions),
+        "reviews_recorded": float(reviews),
+        "decisions_expected": float(len(run.traces)),
         "effects_proposed": float(proposed),
         "effects_logged": float(logged),
         "coverage": logged / proposed if proposed else 1.0,
@@ -427,6 +440,10 @@ def _validate_conformal(
         ]
         escaped = sum(item.truth.has_harm() for item in released)
         rate = escaped / len(released) if released else 0.0
+        # A route that releases nothing unchecked satisfies the bound by construction:
+        # the floor has demanded full coverage. That is a real operating point, but the
+        # guarantee carries no information there and must not be reported as evidence.
+        vacuous = not released
         validation[route] = {
             "threshold": calibration.threshold,
             "alpha": calibration.alpha,
@@ -437,6 +454,8 @@ def _validate_conformal(
                 escaped, len(released), calibration.delta
             ),
             "holds": rate <= calibration.alpha,
+            "vacuous": vacuous,
+            "mandatory_coverage": (len(items) - len(released)) / len(items) if items else 0.0,
         }
     return validation
 
@@ -597,9 +616,17 @@ def _write_summary(path: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
         lines.append(f"- budget {float(fraction):.0%}: lambda {float(value):.3f}")
     lines.extend(["", "## Conformal bound on held-out traffic", ""])
     for route, values in detail["conformal_validation"].items():
+        if values["vacuous"]:
+            lines.append(
+                f"- `{route}`: **vacuous** — the floor demands 100% coverage at alpha "
+                f"{values['alpha']:.2f}, so no row is released unchecked and the bound is "
+                f"satisfied by construction. It is not evidence about the detector."
+            )
+            continue
         lines.append(
             f"- `{route}`: observed {values['observed_rate']:.4f} against alpha "
-            f"{values['alpha']:.2f} on {values['released']:.0f} released rows "
+            f"{values['alpha']:.2f} on {values['released']:.0f} released rows, "
+            f"{values['mandatory_coverage']:.1%} checked under the floor "
             f"({'holds' if values['holds'] else 'VIOLATED'})"
         )
     audit = next(iter(detail["audit"].values()))
@@ -609,7 +636,10 @@ def _write_summary(path: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
             "## Audit",
             "",
             f"- hash chain valid: {audit['chain_valid']}",
-            f"- decisions recorded: {audit['records']:.0f} of {audit['decisions']:.0f}",
+            f"- decisions recorded: {audit['decisions_recorded']:.0f} of "
+            f"{audit['decisions_expected']:.0f}",
+            f"- reviews recorded in the same chain: {audit['reviews_recorded']:.0f}",
+            f"- chain length: {audit['records']:.0f} records",
             f"- effects logged: {audit['effects_logged']:.0f} of "
             f"{audit['effects_proposed']:.0f} proposed "
             f"(coverage {audit['coverage']:.4f})",
