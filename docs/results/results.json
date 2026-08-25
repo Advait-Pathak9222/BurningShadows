@@ -659,7 +659,7 @@
       "interactions": 1500.0,
       "intervention_precision": 0.165402124430956,
       "loss_averted_inr": 5390600.0,
-      "p99_effect_latency_ms": 0.2,
+      "p99_effect_latency_ms": 0.3,
       "p99_text_latency_ms": 0.2,
       "policy": "allocator",
       "release_rate": 0.844,

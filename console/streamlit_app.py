@@ -87,7 +87,7 @@ with st.sidebar:
         ["allocator", "fixed_rate", "check_none", "check_all"],
         default=["allocator", "fixed_rate"],
     )
-    st.caption("Prototype v0.2 · seeded run 20260823")
+    st.caption("Prototype v0.3 · seeded corpus 20260824 · manifest v3")
 
 frame, detail, scenarios = load_artifacts()
 

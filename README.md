@@ -59,32 +59,58 @@ inert and everything else behaves identically.
 
 ## Current measured result
 
-`make report` fits on 1500 calibration rows and evaluates 1500 held-out rows. The allocator streams
-the test set with the budget controller live; the fixed-rate baseline is tuned over its tier choice
-at each budget and is allowed to rank the whole test set at once.
+`make report` fits on 1500 calibration rows and evaluates 1500 held-out rows. Every policy runs the
+same decision path: each may block or abstain, each is credited for harm that never reached anyone,
+and each is charged the reviewer minutes its own verdicts raise. They differ in one thing — which
+rows they check, and at what tier. The allocator streams the test set with the budget controller
+live; the fixed-rate baseline is tuned over its tier choice and is allowed to rank the whole test
+set at once.
 
-**The allocator averts more loss than the tuned baseline at all six budget levels, but the margin is
-0.3% to 5.8%, and the baseline achieves better assurance ROI at the two tightest budgets.** At a 10%
-budget the baseline averts 5,594,700 for 270 INR by running the cheap Tier 1 check over everything,
-while the allocator spends 608 INR to avert 5,640,800. Blanket cheap coverage is hard to beat when a
-low tier is good enough; the allocator's advantage comes from buying the expensive tier where the
-consequence is high, and on this corpus that advantage is small.
+**On compute alone the allocator averts more loss than the tuned baseline at all six budgets, by
+1.0% to 5.4%, and loses on ROI at the tightest three.** At a 10% budget the baseline averts
+5,127,700 for 270 INR by running the cheap Tier 1 check over everything, while the allocator spends
+623 INR to avert 5,184,700. Blanket cheap coverage is hard to beat when a low tier is good enough.
 
-The conformal bound holds on held-out traffic on every route: observed escaped-harm rate 0.0485,
-0.0282 and 0.0000 against a target alpha of 0.10. Expected calibration error is 0.077 to 0.116,
-so the risk scores rank well and are not well calibrated as probabilities.
+**On total cost the picture changes, and not in the way we expected.** A review costs INR 120
+against INR 3.20 for the dearest automated check. Once both policies are charged the reviewer
+minutes they generate, the baseline's ROI advantage at the tight budgets falls from 2.28x and 3.76x
+to 1.006x and 1.016x — but that is not the allocator winning. It is the attention bill being 30 to
+70 times the compute bill and both policies paying it in full, so the compute difference the first
+comparison argues about is nearly irrelevant to what assurance actually costs.
+
+That cuts against us as much as for us: the resource we allocate is the smaller number. It is also
+the resource every guardrail product competes on. The reviewer queue — 2.4x oversubscribed, shedding
+58% at full budget, and allocated by nobody — is where the money and the risk both sit.
+
+The conformal bound holds on held-out traffic on the two routes where it says anything: 0.0591 on
+`finops-agent` over 220 released rows and 0.0781 on `internal-kb` over 461, against alpha 0.15. On
+`support-assistant` it is **vacuous** — the floor demands 100% coverage, so no row is released
+unchecked and the bound is satisfied by construction. That is reported as vacuous rather than as a
+pass. Expected calibration error is 0.070 to 0.090, so the risk scores rank well and are not
+reliable as probabilities.
+
+Consequence is the softest input in the system, so `make sensitivity` sweeps it over a 0.25x-4x band
+with each route and axis drawn independently. **15.0% of decisions flip, against the 20% stop
+condition in `docs/00-assessment.md`.** Tier selection moves; the verdict never does, because `c`
+prices a check and does not enter the release rule. A buyer who disputes our consequence estimates
+is disputing the assurance bill, not the safety behaviour.
+
+Every decision and every review is in one hash chain: 1500 of 1500 decisions recorded, 280 reviews
+in the same chain, and 224 of 224 proposed effects logged.
 
 Full numbers, including both escape-rate definitions and the shadow price at each budget, are in
-`docs/results/summary.md` and `docs/results/results.json`. The figures are:
+`docs/results/summary.md`, `docs/results/sensitivity.md` and `docs/results/results.json`. The
+figures are:
 
 - `reports/figures/loss_averted_vs_spend.png`
 - `reports/figures/reliability_by_route.png`
 
-The runtime saturation test also passes its preregistered safety conditions. At 400 offered RPS,
-the bounded path served 97 of 600 requests, degraded 30 to mandatory-only verification, rejected
-503 before generation, and completed the conformal floor on all 30 degraded responses. Effect p99
-for served requests was 101.26 ms against 2521.26 ms on the unbounded path, but achieved throughput
-fell from 149.0 to 61.5 RPS. The test uses stub detectors plus a declared 75 ms blocking hold; it is
+The runtime saturation test passes its preregistered safety conditions but is not yet a win. At 400
+offered RPS the bounded path cut effect p99 from 1426.73 ms to 136.59 ms, completed the conformal
+floor on every degraded response, and never let overload reach the provider — while throughput fell
+from 203.2 to 60.1 RPS with 506 of 600 requests rejected. At 80 offered RPS it is a **regression**
+on both percentiles. The current limits favour a short tail over throughput and need tuning against
+a stated service objective. The test uses stub detectors plus a declared 75 ms blocking hold; it is
 a scheduler measurement, not production detector capacity.
 
 ## Request path
