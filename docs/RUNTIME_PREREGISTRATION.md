@@ -44,7 +44,15 @@ claim is preregistered for this work item.
 
 ## J1 admission SLO tuning objective
 
-Locked on 2026-08-25 at base commit `bce1217`, before implementing or running `make slo-sweep`.
+**Status: locked, not executed.** This objective was registered before the sweep was written, and
+the sweep was never implemented — the work stopped before that item. The `slo-sweep` command it
+refers to has been removed rather than shipped as a stub that exits non-zero. Nothing in this
+repository claims a result against these criteria, and the committed admission limits remain
+what `docs/results/runtime.md` reports them to be: a bounded tail bought at a throughput cost,
+and a regression at 80 offered RPS. This section is retained because a registered objective that
+went unrun is part of the record, not something to delete once it became inconvenient.
+
+Locked on 2026-08-25 at base commit `bce1217`, before implementing or running the admission sweep.
 This objective governs tuning for `support-assistant` under the existing offline scheduler harness.
 It does not turn stub-detector throughput into a production capacity claim.
 

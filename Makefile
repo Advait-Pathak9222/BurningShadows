@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report sensitivity attention pii-probe judge-probe loadtest slo-sweep chaos replay api console mlflow-ui test lint typecheck check clean
+.PHONY: install data demo report sensitivity attention pii-probe judge-probe loadtest api console mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -28,17 +28,6 @@ judge-probe:
 
 loadtest:
 	$(PYTHON) -m controlplane.cli loadtest
-
-# Runtime lane targets. Placed here so the runtime lane never has to edit this file:
-# two agents appending rules to one Makefile is a merge conflict waiting to happen.
-slo-sweep:
-	$(PYTHON) -m controlplane.cli slo-sweep
-
-chaos:
-	$(PYTHON) -m controlplane.cli chaos
-
-replay:
-	$(PYTHON) -m controlplane.cli replay
 
 api:
 	$(PYTHON) -m uvicorn controlplane.gateway.app:app --host 127.0.0.1 --port 8000

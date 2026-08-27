@@ -238,7 +238,7 @@ by weakening the floor.
 
 ## Calibration
 
-Expected calibration error is 0.031 to 0.046 by route, down from 0.070 to 0.090 before the disclosure detector was rebuilt. The scores rank well and are not reliable as
+Expected calibration error is 0.030 to 0.046 by route, down from 0.070 to 0.090 before the disclosure detector was rebuilt. The scores rank well and are not reliable as
 probabilities. Since expected loss is `r * c`, that error propagates directly into every rupee figure
 the allocator reasons about. This is the sharpest technical objection to the current build and it is
 not yet addressed.

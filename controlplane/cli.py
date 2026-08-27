@@ -11,7 +11,6 @@ from controlplane.eval.loadtest import run_loadtest
 from controlplane.eval.report import build_report
 from controlplane.eval.sensitivity import run_sensitivity, write_sensitivity
 from controlplane.ledger import LedgerStore
-from controlplane.runtime.commands import RUNTIME_COMMANDS, run_runtime_command
 from controlplane.service import AssessmentEngine
 from controlplane.sim.scenarios import run_scenarios
 from controlplane.sim.traffic import ensure_corpus, generate_corpus, write_corpus
@@ -32,18 +31,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             "pii-probe",
             "judge-probe",
             "loadtest",
-            "slo-sweep",
-            "chaos",
-            "replay",
             "clean",
         ),
     )
     args = parser.parse_args(argv)
-    # The runtime lane owns its own commands. Dispatching to a module it owns keeps this
-    # file single-owner, so the two lanes never append argument branches to the same
-    # function and never conflict here.
-    if args.command in RUNTIME_COMMANDS:
-        return run_runtime_command(ROOT, args.command)
     if args.command == "data":
         interactions = generate_corpus()
         write_corpus(interactions, ROOT / "data")
