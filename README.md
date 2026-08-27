@@ -18,8 +18,11 @@ tests the decision system rather than production model quality. No API key, no n
 > what makes the measured gain attributable to allocation rather than to a vendor's model — and it
 > means anyone can reproduce these numbers exactly.
 
-**Hosted:** [live console](https://controlplane-ai.streamlit.app) ·
-[project page](https://controlplane.vercel.app) — see [Deployment](docs/DEPLOYMENT.md).
+**Hosted:** [live console](https://controlplane-ai.streamlit.app) — see
+[Deployment](docs/DEPLOYMENT.md).
+
+On where an LLM judge belongs, what has to run locally, and what changes before an enterprise
+deployment: [Industry fit](docs/INDUSTRY-FIT.md).
 
 ---
 
