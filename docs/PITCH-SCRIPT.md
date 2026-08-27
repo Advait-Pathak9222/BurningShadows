@@ -176,7 +176,7 @@ The form is pre-filled. Read it out:
 > that we recorded before we fixed it, and the ablation you just saw that beats our own shipped
 > rule."
 
-> "124 tests, strict type checking, and an assumptions register that lists every input we could not
+> "179 tests, strict type checking, and an assumptions register that lists every input we could not
 > measure along with where it came from."
 
 ---

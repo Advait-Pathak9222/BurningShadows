@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from controlplane.detectors.fitted_bayes import FittedBayesTier1
+from controlplane.detectors.grounding_model import GroundingTier1
 from controlplane.economics import BudgetController, BudgetGovernor
 from controlplane.economics.allocator import expected_loss_inr
 from controlplane.eval.benchmark_metrics import (
@@ -99,8 +100,15 @@ def _detection(
     test: list[Interaction],
     scores: dict[str, float],
     spec: CorpusSpec,
+    bundles: dict[str, DetectionBundle],
 ) -> dict[str, Any]:
-    """Threshold-free ranking metrics, plus one honestly-chosen operating point."""
+    """Threshold-free ranking metrics, plus one honestly-chosen operating point.
+
+    Detection is passed in rather than recomputed. Scoring each row once per axis and again
+    per group made `make benchmarks` take tens of minutes on the 10,000-row corpora for no
+    additional information, and a reproduction command nobody is willing to wait for is not
+    much better than no reproduction command.
+    """
     labels = _labels(test)
     ordered = [scores[item.interaction_id] for item in test]
 
@@ -118,7 +126,7 @@ def _detection(
             float(item.truth.values_by_name()[axis]) >= 0.5 for item in test
         ]
         axis_scores = [
-            float(engine.detect(item).harm.values_by_name()[axis]) for item in test
+            float(bundles[item.interaction_id].harm.values_by_name()[axis]) for item in test
         ]
         per_axis[axis] = {
             "auc": rank_auc(axis_labels, axis_scores),
@@ -205,6 +213,7 @@ def probe(
     spec: CorpusSpec,
     *,
     fitted_tier1: bool = False,
+    grounding_tier1: bool = False,
 ) -> dict[str, Any]:
     """Calibrate on one split, score the other, and report detection and allocation.
 
@@ -217,10 +226,17 @@ def probe(
     lets it memorise the selection fold that certifies the conformal bound, which is how a
     certified 0.1407 came to sit against a measured 0.2800 on held-out ToxicChat rows.
     """
+    if fitted_tier1 and grounding_tier1:
+        raise ValueError("choose one fitted Tier 1, not both")
     engine = AssessmentEngine(root)
-    if fitted_tier1:
+    if fitted_tier1 or grounding_tier1:
         fitting, _ = _split_folds(calibration)
-        engine.tier1 = FittedBayesTier1.fit(fitting)  # type: ignore[assignment]
+        model = (
+            FittedBayesTier1.fit(fitting)
+            if fitted_tier1
+            else GroundingTier1.fit(fitting)
+        )
+        engine.tier1 = model  # type: ignore[assignment]
     conformal = engine.calibrate(calibration)
     floor_rate = engine.floor_rate_inr(calibration)
 
@@ -247,8 +263,8 @@ def probe(
             engine, test, candidates_by_tier, latency, spend, bundles
         )
         fixed = summarize(fixed_rows, spend)
-        averted = float(allocator["loss_averted_inr"])
-        reference = float(fixed["loss_averted_inr"])
+        averted = float(allocator["loss_averted_inr"] or 0.0)
+        reference = float(fixed["loss_averted_inr"] or 0.0)
         budgets.append(
             {
                 "budget_fraction": fraction,
@@ -267,7 +283,13 @@ def probe(
 
     wins = sum(1 for row in budgets if float(row["gain"]) > 0)
     return {
-        "tier1": "fitted_bayes_bow" if fitted_tier1 else "lexical_stub",
+        "tier1": (
+            "fitted_bayes_bow"
+            if fitted_tier1
+            else "fitted_grounding"
+            if grounding_tier1
+            else "lexical_stub"
+        ),
         # Consumed by callers that need a threshold sweep, then deleted before writing.
         "_scores": [scores[item.interaction_id] for item in test],
         "corpus": {
@@ -278,7 +300,7 @@ def probe(
             "test_rows": len(test),
             "labelled_axes": list(spec.labelled_axes),
         },
-        "detection": _detection(engine, calibration, test, scores, spec),
+        "detection": _detection(engine, calibration, test, scores, spec, bundles),
         "harm_mix": _harm_mix(engine, test, bundles),
         "conformal": {route: dict(vars(value)) for route, value in conformal.items()},
         "conformal_validation": _validate_conformal(test, conformal, scores),

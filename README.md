@@ -115,21 +115,22 @@ the evidence, not the words. Mechanism-by-mechanism attribution and ablations:
 The results above run on a corpus we generated, so the system was run against **five public
 benchmarks** — see [the corpus table](#the-corpora) below. Endpoints were pre-registered first.
 
-**The per-route release floor held on all five.** On three of them it held *non-vacuously*, on data
-the thresholds never saw:
+**The per-route release floor was never violated on held-out data.** On five conditions it held
+*non-vacuously* — meaning rows were actually released unchecked and the bound still bound:
 
 | Corpus | Observed unchecked harm | α | Released rows |
 |---|---:|---:|---:|
 | ToxicChat | 0.0712 | 0.15 | 5,083 |
-| ToxicChat (calibrated Tier 1) | 0.0639 | 0.15 | 5,037 |
-| ToxicChat (human-annotated subset) | 0.1147 | 0.15 | 2,808 |
+| ToxicChat (OpenAI moderation as Tier 1) | 0.0645 | 0.15 | 5,041 |
+| ToxicChat (human-annotated, OpenAI Tier 1) | 0.1156 | 0.15 | 2,811 |
 | BeaverTails | 0.0744 | 0.15 | 9,994 |
-| RAGTruth | 0.0939 | 0.15 | 522 |
+| RAGTruth | 0.0933 | 0.15 | 525 |
 
-**On the other two it held vacuously, and that is reported as a limit rather than a sixth and
-seventh success.** Aegis (52.8–66.1% harmful) and OR-Bench (33.5%) both have base rates far above
-α = 0.15, so the floor demands a check on essentially every row: mandatory coverage 1.0000, zero rows
-released unchecked, the bound satisfied by construction and carrying no information.
+**Elsewhere it held vacuously, and that is reported as a limit rather than as more successes.**
+Aegis (52.8–66.1% harmful), OR-Bench (33.5%), BeaverTails at its natural 55.8% rate, and ToxicChat's
+human-annotated subset under our own lexical Tier 1 all leave the floor demanding a check on
+essentially every row: mandatory coverage 1.0000, zero rows released unchecked, the bound satisfied
+by construction and carrying no information.
 
 That yields a rule worth having, computable from two numbers before deployment: **the release floor
 is only informative when α exceeds the harm base rate.** An operator whose traffic is a third
@@ -143,16 +144,33 @@ on the record.
 
 ### 4. Detection is in band on three benchmarks, and out of band on a fourth
 
-| Benchmark | ControlPlane | Published comparison | Verdict |
-|---|---:|---|---|
-| ToxicChat (AUPRC) | **0.662** | Llama Guard 0.626 · OpenAI Mod 0.588 · Perspective 0.532 | in band |
-| BeaverTails (F1) | **0.749** | band 0.364 – 0.839 | in band |
-| RAGTruth (F1) | **0.601** | LettuceDetect 0.792 · GPT-4 prompt 0.634 · RAGAS 0.520 | in band |
-| **Aegis (AUPRC)** | **0.811** | band 0.860 – 0.941 | **below band — endpoint failed** |
-| OR-Bench (over-refusal) | 13.5% at 66.7% catch | GPT-4o 6.7%/84.9% · Llama-3-70b 37.7%/78.7% | partial |
+Read the **null** column before the score. On an imbalanced corpus, a policy that flags every
+single row scores `2p/(1+p)`, which can look respectable and beat published numbers while detecting
+nothing. The margin over that null is the only part that is ours.
+
+| Benchmark | ControlPlane | Flag-everything null | Margin | Published comparison | Verdict |
+|---|---:|---:|---:|---|---|
+| ToxicChat (AUPRC) | **0.597** | 0.071 | +0.526 | Llama Guard 0.664 · OpenAI Mod 0.588 · Perspective 0.532 | in band ¹ |
+| RAGTruth (F1) | **0.601** | 0.518 | +0.083 | LettuceDetect 0.792 · GPT-4 prompt 0.634 · RAGAS 0.520 | in band ² |
+| BeaverTails, natural 55.8% harm (F1) | 0.747 | **0.716** | **+0.031** | band 0.364 – 0.839 | in band, but see ³ |
+| BeaverTails, corrected 7% harm (F1) | **0.165** | 0.139 | +0.026 | band 0.364 – 0.839 | **below band** |
+| **Aegis (AUPRC)** | **0.811** | 0.661 | +0.151 | band 0.860 – 0.941 | **below band — endpoint failed** |
+| OR-Bench (AUC) | 0.784 | 0.500 | +0.284 | operating point below | partial ² |
+
+¹ **This number is largely OpenAI's, not ours.** Pre-registration 6 substitutes OpenAI's bundled
+moderation score as the Tier 1 signal; ControlPlane supplies calibration, the floor and the
+allocator around it. With our own lexical Tier 1 the same corpus scores far lower.
+
+² Uses a detector fitted on that corpus (`fitted_grounding`, `fitted_bayes_bow`). These are
+**evaluation adapters**, fitted on the calibration fold and *not wired into the serving path*.
+
+³ **The BeaverTails headline was misleading and is corrected here.** 0.749 was measured at the
+corpus's natural 55.8% harm rate, where flagging every row already scores 0.716 — a margin of
+0.031. At a deployment-realistic 7% prevalence the same pipeline scores **0.165**, below the
+published band. Both rows are now shown; previously only the flattering one was.
 
 <p align="center">
-  <img src="docs/images/benchmark-comparison.png" alt="ControlPlane against published detectors on three public benchmarks" width="900">
+  <img src="docs/images/benchmark-comparison.png" alt="ControlPlane against published detectors on five public benchmarks, with the trivial null shown behind each score" width="900">
 </p>
 
 **[Aegis](docs/results/aegis.md) is a failure and is reported as one.** 0.811 AUPRC is below
@@ -168,7 +186,11 @@ Llama-3-70b's 37.7% — while catching 66.7% of genuinely toxic prompts against 
 Mistral-large beat us on both axes; Claude-3-Opus and Llama-3-70b do not.
 
 The harness was validated before it was trusted: our AUPRC for OpenAI Moderation on ToxicChat is
-0.6321 against the published 0.588. Full detail and every caveat:
+0.6321 against the published 0.588 — a 0.044 gap we cannot fully account for, most likely split or
+aggregation differences, and it bounds how precisely any of these comparisons can be read.
+
+Every figure in this section is regenerated by `make benchmarks`, which writes each result file and
+the comparison page from them. Full detail and every caveat:
 [benchmarks](docs/results/benchmarks.md).
 
 ### The corpora
@@ -269,7 +291,14 @@ corrected — is preserved in [the pre-registrations](docs/PREREGISTRATION.md) a
 
 ## Evidence at a glance
 
-Every figure below is computed and committed. None are typed by hand.
+Every figure below is written by a committed command — `make report`, `make attention`,
+`make pii-probe`, `make sensitivity` or `make benchmarks` — into a tracked file, and
+`./run_submission.sh` fails if any of them stops reproducing byte-for-byte.
+
+Two things that are **not** measurements and should not be read as such: the rupee consequences per
+harm axis and the ₹120 reviewer cost are **configured assumptions** from
+[`config/`](config/economics.yaml), so every monetary figure inherits them. The sensitivity sweep
+exists to bound how much that matters.
 
 | Question | Result |
 |---|---|
@@ -288,7 +317,11 @@ Every figure below is computed and committed. None are typed by hand.
 </p>
 
 Loss and cost figures are arithmetic over synthetic traffic and scenario-configured consequences.
-They describe this implementation and its assumptions. Machine-readable sources:
+They describe this implementation and its assumptions. **Wall-clock latency is not reported here at
+all**: it timed lexical stubs, so it measured the machine rather than the decision system, and it was
+not even stable between two runs on the same machine — which dirtied committed files on every run.
+Latency is characterised in [`runtime.md`](docs/results/runtime.md) instead, where it is labelled as
+a harness measurement and an empty sample is reported as `null` rather than as a perfect 0.0. Machine-readable sources:
 [results](docs/results/results.json) · [queue](docs/results/attention.json) ·
 [PII](docs/results/pii.json) · [sensitivity](docs/results/sensitivity.json) ·
 [Aegis](docs/results/aegis.json) · [OR-Bench](docs/results/orbench.json).
@@ -351,8 +384,14 @@ make console     # opens the inspection console at http://localhost:8501
 The console has five views over the same committed evidence. What each one shows, where its numbers
 come from, and what to look at first: [console guide](docs/CONSOLE.md).
 
-Run the full quality gate with `make check` (ruff, mypy and 124 tests). Every result above can be
-regenerated:
+**One command, from a clean clone:**
+
+```bash
+./run_submission.sh     # venv, install, full gate, demo, report, byte-identity check
+```
+
+It runs the offline path only — no API key, no network, no GPU — and fails loudly if any committed
+artifact does not reproduce byte-for-byte. Individual targets:
 
 | Command | Writes |
 |---|---|
@@ -361,6 +400,12 @@ regenerated:
 | `make pii-probe` | [`docs/results/pii.md`](docs/results/pii.md) — disclosure detection and ablations |
 | `make sensitivity` | [`docs/results/sensitivity.md`](docs/results/sensitivity.md) — the consequence sweep |
 | `make loadtest` | [`docs/results/runtime.md`](docs/results/runtime.md) — admission control under load |
+| `make toxicchat` | [`docs/results/toxicchat.json`](docs/results/toxicchat.json) — ToxicChat probe (downloads) |
+| `make benchmarks` | [`docs/results/benchmarks.md`](docs/results/benchmarks.md) + Aegis, OR-Bench, BeaverTails, RAGTruth JSON (downloads) |
+
+`make check` runs ruff, `mypy --strict` and the test suite. The two download targets fetch each
+corpus at a **pinned commit revision** and verify its SHA-256 before use, so a corpus re-uploaded
+upstream fails loudly rather than silently changing what these numbers mean.
 
 On PowerShell without `make`:
 
@@ -390,12 +435,15 @@ MLflow run per policy and budget to `./mlruns`.
 | `controlplane/effects/` | Independent effect gating |
 | `controlplane/ledger/` | Hash-chained decision and review records |
 | `controlplane/eval/` | Reproducible evaluation, ablation, sensitivity and runtime commands |
+| `controlplane/corpora/` | External-benchmark loaders, each pinned to a commit and checksummed |
 | `config/` | Versioned policies, economics, runtime limits |
 | `data/` | Seeded synthetic calibration and held-out traffic |
 | `docs/results/` | Machine-readable results and their written interpretations |
 | `console/` | The Streamlit inspection console — see [the console guide](docs/CONSOLE.md) |
-| `site/` | The static project page deployed to Vercel |
+| `site/` | Static project page, publishable to any host (see [Deployment](docs/DEPLOYMENT.md)) |
 | `tests/` | Invariants, failure behaviour, reproducibility, regression coverage |
+| `run_submission.sh` | Clone-and-run reviewer entrypoint: gate, demo, report, byte-identity check |
+| `LICENSE` | MIT for this code; the external corpora keep their own licences and are not vendored |
 
 **Worth reading first:** [`allocator.py`](controlplane/economics/allocator.py) holds the decision in
 plain arithmetic, and [`conformal.py`](controlplane/guarantees/conformal.py) holds the guarantee
@@ -410,3 +458,14 @@ documented in [Limitations](docs/LIMITATIONS.md). Policy packs are versioned con
 are intended to be reviewed alongside legal and operational sign-off.
 
 For the commercial framing, see the [business proposal](docs/07-business-proposal.md).
+
+## Licence and data
+
+The code and the generated synthetic corpus are **MIT** ([`LICENSE`](LICENSE)).
+
+**No external dataset is vendored here.** The five evaluation corpora are downloaded at run time
+into `data/external/`, which is untracked, each at a pinned commit revision whose SHA-256 is
+verified before use. They keep their own licences: RAGTruth is MIT, Aegis and OR-Bench are
+CC-BY-4.0, and **ToxicChat and BeaverTails are CC-BY-NC-4.0**. Results derived from the two
+non-commercial corpora are reported for research and evaluation only, and no commercial claim in
+this repository rests on them alone.

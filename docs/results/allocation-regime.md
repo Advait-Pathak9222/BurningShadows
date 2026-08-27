@@ -4,6 +4,10 @@ Budget-aware allocation is the mechanism this project is named after. It is **no
 better than a well-ranked fixed-rate policy. This page says exactly when it helps, how that was
 established, and which of our own earlier claims did not survive the check.
 
+*Written interpretation. Every number on this page comes from a file written by `make report`
+(synthetic corpus) or `make benchmarks` (BeaverTails, Aegis, OR-Bench) — see the `budgets` and
+`harm_mix` blocks in `docs/results/*.json`.*
+
 ---
 
 ## Two errors in how this was measured, both ours
@@ -114,10 +118,17 @@ whenever expected loss is large — spending budget that would have bought seven
 coverage. The project had already found the analogous result for the reviewer queue, where the
 `density` rule beat the shipped one.
 
-Ranking tiers by benefit per rupee instead was measured, and it is **worse by 26% to 58%**. Per-row
-density always selects Tier 0, the cheapest, and never escalates at all. The knapsack is over
-`(row, tier)` pairs across the whole stream, not within one row; given a shadow price, per-row
-maximisation of net value is already the correct Lagrangian rule. The change was not made.
+Ranking tiers by benefit per rupee instead was measured during development and was substantially
+worse. **That measurement is not a committed artifact and no number from it is quoted here**, because
+this repository should not carry figures that `make` cannot reproduce.
+
+The reason it fails is structural and can be checked by reading the code rather than trusting a
+number. Per-row benefit-per-rupee is maximised by the cheapest tier whenever the catch rates are
+within a small factor of one another, so `_select_tier` would return Tier 0 for every row and never
+escalate. The knapsack here is over `(row, tier)` pairs across the whole stream, not within a single
+row; given a shadow price, per-row maximisation of **net value** — which is what
+`controlplane/economics/allocator.py` does — is already the correct Lagrangian rule. The change was
+not made.
 
 ---
 

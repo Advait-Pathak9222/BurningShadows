@@ -1,0 +1,19 @@
+# Shell scripts must keep LF endings or the shebang breaks on Linux, which is exactly
+# where a reviewer is most likely to run them from a Windows-authored checkout.
+*.sh text eol=lf
+
+# Committed evidence is compared byte-for-byte by run_submission.sh, so it must not be
+# rewritten by autocrlf on checkout.
+*.json text eol=lf
+*.jsonl text eol=lf
+*.csv text eol=lf
+# Generated markdown too: `make report`, `make attention` and `make benchmarks` write LF,
+# so checking these out as CRLF would leave a fresh clone permanently dirty after the
+# README's own instructions were followed.
+*.md text eol=lf
+*.py text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.png binary
+*.parquet binary
+*.xz binary

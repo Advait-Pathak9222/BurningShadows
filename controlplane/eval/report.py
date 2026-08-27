@@ -95,10 +95,10 @@ def build_report(
     frame = pd.DataFrame(
         _evaluate_budgets(root, engine, test, detail, bundles, floor_rate)
     )
-    frame.to_csv(report_dir / "evaluation.csv", index=False)
+    frame.to_csv(report_dir / "evaluation.csv", index=False, lineterminator="\n")
     detail["metrics"] = frame.to_dict(orient="records")
     (report_dir / "evaluation.json").write_text(
-        json.dumps(detail, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        json.dumps(detail, indent=2, sort_keys=True, default=str), encoding="utf-8", newline="\n"
     )
     _plot_curve(frame, figure_dir / "loss_averted_vs_spend.png")
     _write_markdown(frame, detail, report_dir / "evaluation.md")
@@ -114,7 +114,7 @@ def _evaluate_budgets(
     detail: dict[str, Any],
     bundles: dict[str, DetectionBundle],
     floor_rate: float,
-) -> list[dict[str, float | str]]:
+) -> list[dict[str, float | str | None]]:
     scores = {key: bundle.harm.maximum() for key, bundle in bundles.items()}
     latency = {key: bundle.latency_ms for key, bundle in bundles.items()}
     full_spend = _full_check_spend(engine, test)
@@ -124,7 +124,7 @@ def _evaluate_budgets(
         engine, test, check_all(by_tier[2]), 2, latency, "check_all", bundles
     )
 
-    curve: list[dict[str, float | str]] = []
+    curve: list[dict[str, float | str | None]] = []
     audit: dict[str, Any] = {}
     pooled_records: list[ReviewRecord] = []
     for fraction in BUDGET_FRACTIONS:
@@ -162,12 +162,12 @@ def _evaluate_budgets(
             # would hand a policy that checks nothing an enormous bill for our
             # instrumentation. It is reported beside the total instead.
             attention = review["queue_spend_inr"]
-            total = float(summary["assurance_spend_inr"]) + attention
+            total = float(summary["assurance_spend_inr"] or 0.0) + attention
             summary["attention_spend_inr"] = attention
             summary["audit_spend_inr"] = review["audit_spend_inr"]
             summary["total_assurance_inr"] = total
             summary["total_assurance_roi"] = (
-                float(summary["loss_averted_inr"]) / total if total else 0.0
+                float(summary["loss_averted_inr"] or 0.0) / total if total else 0.0
             )
             summary["cases_raised"] = review["cases_raised"]
             summary["cases_shed"] = review["shed"]
@@ -690,7 +690,7 @@ def _write_markdown(frame: pd.DataFrame, detail: dict[str, Any], path: Path) -> 
             f"{values['base_rate']:.3f} on {values['samples']:.0f} rows"
         )
     lines.extend(["", "## Metrics by policy and budget", "", frame.to_markdown(index=False)])
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _write_results(root: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> None:
@@ -709,7 +709,7 @@ def _write_results(root: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
         "metrics": detail["metrics"],
     }
     (results_dir / "results.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8", newline="\n"
     )
     _write_summary(results_dir / "summary.md", frame, detail)
 
@@ -780,7 +780,7 @@ def _write_summary(path: Path, frame: pd.DataFrame, detail: dict[str, Any]) -> N
             "",
         ]
     )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def _total_cost_lines(

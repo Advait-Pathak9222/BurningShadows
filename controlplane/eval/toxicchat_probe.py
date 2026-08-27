@@ -20,6 +20,7 @@ import pandas as pd
 from controlplane.corpora import toxicchat
 from controlplane.detectors.base import Detector
 from controlplane.economics import BudgetController
+from controlplane.eval.benchmark_metrics import average_precision
 from controlplane.eval.metrics import EvaluationRow, summarize
 from controlplane.eval.report import (
     _allocator_row,
@@ -150,11 +151,21 @@ def run_probe(
         if item.interaction_id in moderation
     ]
 
+    # AUPRC as well as AUC, because the README compares against published AUPRC on this
+    # benchmark and a figure quoted there must come out of this file. At a 7.12% base rate
+    # the two are very different numbers: the same scores give AUC 0.9390 and AUPRC 0.6321.
+    binary = [value > 0 for value in labels]
+    shared_binary = [value > 0 for value in shared_labels]
     detection = {
         "controlplane_auc": _rank_auc(labels, [scores[key] for key in ids]),
+        "controlplane_auprc": average_precision(binary, [scores[key] for key in ids]),
         "openai_moderation_auc": _rank_auc(
             shared_labels, [moderation[key] for key in shared]
         ),
+        "openai_moderation_auprc": average_precision(
+            shared_binary, [moderation[key] for key in shared]
+        ),
+        "base_rate": sum(binary) / len(binary) if binary else 0.0,
         "rows_scored": len(ids),
         "rows_with_moderation": len(shared),
     }
@@ -162,7 +173,7 @@ def run_probe(
     full_check = _full_check_spend(engine, test)
     candidates_by_tier = {tier: _candidates(engine, test, scores, tier) for tier in (0, 1, 2)}
 
-    budgets: list[dict[str, float | str]] = []
+    budgets: list[dict[str, float | str | None]] = []
     for fraction in BUDGET_FRACTIONS:
         budget = full_check * fraction
         allocator_rows, spend = _run_allocator_rows(engine, test, budget)
@@ -209,5 +220,9 @@ def write_report(root: Path, cache_dir: Path) -> Path:
             )
     path = root / "docs" / "results" / "toxicchat.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(results, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    path.write_text(
+        json.dumps(results, indent=2, sort_keys=True, default=str),
+        encoding="utf-8",
+        newline="\n",
+    )
     return path

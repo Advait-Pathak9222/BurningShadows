@@ -4,6 +4,9 @@ Endpoints were fixed in [Pre-registrations 5 and 6](../PREREGISTRATION.md) befor
 primary endpoints failed.** This records what was measured, what caused it, and what the project is
 entitled to claim afterwards.
 
+*Written interpretation. Regenerate the underlying numbers with `make toxicchat`, which writes
+`docs/results/toxicchat.json`.*
+
 Corpus: `lmsys/toxic-chat`, split `0124`. 5,082 calibration rows and 5,083 held-out test rows of real
 user–assistant traffic from the Vicuna demo. Test-split toxicity 7.12%, jailbreak 1.79%.
 CC-BY-NC-4.0, so nothing here supports a commercial claim.

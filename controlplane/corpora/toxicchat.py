@@ -12,17 +12,25 @@ CSVs are cached under `data/external/` and reused afterwards. `make demo` never 
 from __future__ import annotations
 
 import hashlib
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 import pandas as pd
 
+from controlplane.corpora.fetch import fetch
 from controlplane.models import HarmVector, Interaction
 
 # Split 0124. The 1123 split is the earlier, smaller annotation round.
-BASE_URL = "https://huggingface.co/datasets/lmsys/toxic-chat/resolve/main/data/0124"
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+REVISION = "29df8e4dba60e1f4af4b4075c0705c5b313548a8"
+BASE_URL = (
+    f"https://huggingface.co/datasets/lmsys/toxic-chat/resolve/{REVISION}/data/0124"
+)
+DIGESTS = {
+    "train": "702eb9b7cac96c3c35e28b9b95855a71f26f21afba8666f9d243f1fa469e81ed",
+    "test": "3c2e49889626f7738dca0a29bface0ba0a0595b2ffdd17f0e02f19df7c3c4c9b",
+}
 FILES = {"train": "toxic-chat_annotation_train.csv", "test": "toxic-chat_annotation_test.csv"}
 
 # Pre-registered: ToxicChat labels two of our five axes. The other three carry no ground
@@ -52,21 +60,12 @@ def _cache_path(cache_dir: Path, split: str) -> Path:
 
 
 def ensure_downloaded(cache_dir: Path, split: str) -> Path:
-    """Fetch one split unless it is already cached. Returns the local path."""
+    """Fetch one split unless it is already cached, verifying its pinned digest."""
     if split not in FILES:
         raise ValueError(f"unknown split {split!r}; expected one of {sorted(FILES)}")
-    path = _cache_path(cache_dir, split)
-    if path.exists():
-        return path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    url = f"{BASE_URL}/{FILES[split]}"
-    # Written to a sibling first so an interrupted download cannot leave a truncated
-    # CSV that later loads as a short corpus without anyone noticing.
-    staging = path.with_suffix(".partial")
-    with urllib.request.urlopen(url, timeout=120) as response:  # noqa: S310 - fixed HTTPS host
-        staging.write_bytes(response.read())
-    staging.replace(path)
-    return path
+    return fetch(
+        f"{BASE_URL}/{FILES[split]}", _cache_path(cache_dir, split), DIGESTS[split], timeout=120
+    )
 
 
 def _interaction_id(conv_id: str, split: str) -> str:

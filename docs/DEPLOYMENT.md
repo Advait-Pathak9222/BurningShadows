@@ -118,14 +118,46 @@ signed in. It is not usable as a link you hand to a judge. Log in and deploy pro
 
 ## Verifying a deployment
 
+**Do not check the bare Streamlit hostname for a 200.** It returns `303` — and so does a hostname
+that does not exist at all:
+
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://controlplane.vercel.app          # expect 200
-curl -s https://controlplane.vercel.app | grep -c "0.9879"                        # expect 1
-curl -s -o /dev/null -w "%{http_code}\n" https://controlplane-ai.streamlit.app    # expect 200
+curl -s -o /dev/null -w "%{http_code}\n" https://controlplane-ai.streamlit.app
+# 303 -- and the control below returns 303 too, so this check proves nothing
+curl -s -o /dev/null -w "%{http_code}\n" https://a-name-nobody-registered.streamlit.app
+# 303
 ```
 
-A `302` from Vercel means deployment protection is still on — turn it off under
-**Project → Settings → Deployment Protection**.
+An earlier version of this page asked for a 200 there. It reads as a login wall or a redirect loop
+when it is neither, and it cost a reviewer time. The checks that actually discriminate are the
+served app and its health endpoint:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://controlplane-ai.streamlit.app/~/+/         # 200
+curl -s -o /dev/null -w "%{http_code}\n" https://controlplane-ai.streamlit.app/~/+/healthz  # 200
+```
+
+Streamlit Community Cloud suspends an app that has been idle, and the first request then serves a
+wake-up page while the container starts. That is not an outage, but it does mean **the console
+should be opened once shortly before any demo** so a reviewer never meets a cold start.
+
+Whatever the hosted state, the console runs locally with no key, no network and no GPU:
+
+```bash
+make console      # http://localhost:8501
+```
+
+### The Vercel host is not ours, and the link has been removed
+
+`controlplane.vercel.app` returns 200 but serves an unrelated "SaaS Template" belonging to someone
+else — the name was already taken. Recorded here so nobody re-adds it after seeing a 200:
+
+```bash
+curl -s https://controlplane.vercel.app | grep -c "0.9879"    # 0 -- not our page
+```
+
+A static mirror of the results pages can be published to any Vercel project from `site/`, but it
+must be verified by grepping for a number only our page carries, never by status code alone.
 
 ---
 

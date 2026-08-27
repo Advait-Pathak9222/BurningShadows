@@ -20,3 +20,6 @@ build/
 
 # Downloaded evaluation corpora (fetched on demand, ~16MB)
 data/external/
+
+# Internal build log, not part of the submission.
+progress.csv

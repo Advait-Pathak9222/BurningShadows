@@ -8,6 +8,12 @@ rows, in numpy, with no new dependency and no network call.
 It is deliberately modest. The claim under test is about how a budget is spent, not about
 detection quality, and a weak-but-real per-axis signal is exactly what the allocator is
 supposed to arbitrate between.
+
+**Evaluation adapter, not a shipped component.** This is fitted on the calibration fold of the
+corpus under test and is used only by `controlplane/eval/`. It is **not wired into
+`AssessmentEngine`**, so nothing the gateway serves uses it. Any number produced with it is a
+statement about the allocation and calibration machinery given a competent detector, not about
+what ControlPlane detects out of the box -- and every results page that quotes one says so.
 """
 
 from __future__ import annotations

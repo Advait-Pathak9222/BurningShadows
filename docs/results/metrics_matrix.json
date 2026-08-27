@@ -1,110 +1,104 @@
 [
   {
-    "corpus":"ToxicChat",
-    "detector":"ControlPlane lexical (scores response)",
-    "n":5083,
-    "pos":362,
-    "base":0.0712177848,
-    "ROC_AUC":0.4838121898,
-    "AUPRC":0.1880590485,
-    "bestF1":0.3119533528,
-    "prec@F1":0.3302469136,
-    "rec@F1":0.2955801105
+    "benchmark": "ToxicChat (OpenAI moderation as Tier 1)",
+    "caveat": "The Tier 1 signal is OpenAI's, not ours. We supply calibration, the floor and the allocator around it; with our lexical Tier 1 this corpus scores far lower.",
+    "controlplane": 0.5967,
+    "in_published_band": true,
+    "margin_over_null": 0.5255,
+    "metric": "AUPRC",
+    "published": {
+      "Llama Guard Base": 0.664,
+      "OpenAI Mod API": 0.588,
+      "Perspective API": 0.532
+    },
+    "published_band": [
+      0.532,
+      0.664
+    ],
+    "trivial_null": 0.0712
   },
   {
-    "corpus":"ToxicChat",
-    "detector":"ControlPlane lexical (scores prompt)",
-    "n":5083,
-    "pos":362,
-    "base":0.0712177848,
-    "ROC_AUC":0.6289501124,
-    "AUPRC":0.3204037653,
-    "bestF1":0.414479638,
-    "prec@F1":0.3082099596,
-    "rec@F1":0.6325966851
+    "benchmark": "Aegis 1.0 (defensive)",
+    "caveat": "Below the published band -- a failed endpoint. Fitted bag-of-words Tier 1.",
+    "controlplane": 0.8114,
+    "in_published_band": false,
+    "margin_over_null": 0.1508,
+    "metric": "AUPRC",
+    "published": {
+      "Aegis LlamaGuard": 0.941,
+      "Llama Guard Base": 0.93,
+      "OpenAI Mod API": 0.895,
+      "Perspective API": 0.86
+    },
+    "published_band": [
+      0.86,
+      0.941
+    ],
+    "trivial_null": 0.6606
   },
   {
-    "corpus":"ToxicChat",
-    "detector":"ControlPlane pipeline w\/ OpenAI Mod as Tier1",
-    "n":5083,
-    "pos":362,
-    "base":0.0712177848,
-    "ROC_AUC":0.9376744439,
-    "AUPRC":0.6623024193,
-    "bestF1":0.6454767726,
-    "prec@F1":0.5789473684,
-    "rec@F1":0.729281768
+    "benchmark": "BeaverTails (natural, 55.8% harm)",
+    "caveat": "At this base rate the margin over flagging everything is the only real signal.",
+    "controlplane": 0.7473,
+    "in_published_band": true,
+    "margin_over_null": 0.0313,
+    "metric": "F1",
+    "published": {
+      "published band high": 0.839,
+      "published band low": 0.364
+    },
+    "published_band": [
+      0.364,
+      0.839
+    ],
+    "trivial_null": 0.716
   },
   {
-    "corpus":"ToxicChat",
-    "detector":"OpenAI Moderation raw (bundled)",
-    "n":5083,
-    "pos":362,
-    "base":0.0712177848,
-    "ROC_AUC":0.939011189,
-    "AUPRC":0.6320798978,
-    "bestF1":0.6209150327,
-    "prec@F1":0.5125899281,
-    "rec@F1":0.7872928177
+    "benchmark": "BeaverTails (prevalence-corrected, 7% harm)",
+    "caveat": "The deployment-realistic prevalence, and far harder than the natural rate.",
+    "controlplane": 0.1646,
+    "in_published_band": false,
+    "margin_over_null": 0.0261,
+    "metric": "F1",
+    "published": {
+      "published band high": 0.839,
+      "published band low": 0.364
+    },
+    "published_band": [
+      0.364,
+      0.839
+    ],
+    "trivial_null": 0.1385
   },
   {
-    "corpus":"BeaverTails 7%",
-    "detector":"ControlPlane fitted-NB (any harm)",
-    "n":10000,
-    "pos":744,
-    "base":0.0744,
-    "ROC_AUC":0.7203495146,
-    "AUPRC":0.1859611688,
-    "bestF1":0.2931596091,
-    "prec@F1":0.2102803738,
-    "rec@F1":0.4838709677
+    "benchmark": "RAGTruth",
+    "caveat": "Threshold chosen on calibration and applied unchanged. Fitted grounding Tier 1.",
+    "controlplane": 0.6009,
+    "in_published_band": true,
+    "margin_over_null": 0.0832,
+    "metric": "F1",
+    "published": {
+      "Fine-tuned Llama-2-13B": 0.787,
+      "GPT-4 Turbo prompting": 0.634,
+      "LettuceDetect large": 0.7922,
+      "Luna": 0.654,
+      "RAGAS Faithfulness": 0.52
+    },
+    "published_band": [
+      0.52,
+      0.7922
+    ],
+    "trivial_null": 0.5177
   },
   {
-    "corpus":"BeaverTails 7%",
-    "detector":"ControlPlane fitted-NB (pii_leak)",
-    "n":10000,
-    "pos":60,
-    "base":0.006,
-    "ROC_AUC":0.8090057009,
-    "AUPRC":0.0758351467,
-    "bestF1":0.1912144703,
-    "prec@F1":0.1131498471,
-    "rec@F1":0.6166666667
-  },
-  {
-    "corpus":"BeaverTails 7%",
-    "detector":"ControlPlane fitted-NB (unsafe_content)",
-    "n":10000,
-    "pos":616,
-    "base":0.0616,
-    "ROC_AUC":0.7509079595,
-    "AUPRC":0.1831977897,
-    "bestF1":0.2944309927,
-    "prec@F1":0.209799862,
-    "rec@F1":0.4935064935
-  },
-  {
-    "corpus":"BeaverTails 7%",
-    "detector":"ControlPlane fitted-NB (bias)",
-    "n":10000,
-    "pos":192,
-    "base":0.0192,
-    "ROC_AUC":0.6193299369,
-    "AUPRC":0.0564360941,
-    "bestF1":0.1348314607,
-    "prec@F1":0.1185770751,
-    "rec@F1":0.15625
-  },
-  {
-    "corpus":"BeaverTails natural",
-    "detector":"ControlPlane fitted-NB (any harm)",
-    "n":10000,
-    "pos":5576,
-    "base":0.5576,
-    "ROC_AUC":0.7660210358,
-    "AUPRC":0.8027134285,
-    "bestF1":0.7491013659,
-    "prec@F1":0.6753564741,
-    "rec@F1":0.8409253945
+    "benchmark": "OR-Bench",
+    "caveat": "Over-refusal benchmark; the operating point matters more than the AUC.",
+    "controlplane": 0.7837,
+    "in_published_band": null,
+    "margin_over_null": 0.2837,
+    "metric": "AUC",
+    "published": {},
+    "published_band": null,
+    "trivial_null": 0.5
   }
 ]

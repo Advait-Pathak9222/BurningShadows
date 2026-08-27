@@ -17,14 +17,23 @@ from __future__ import annotations
 import hashlib
 import json
 import lzma
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
+from controlplane.corpora.fetch import fetch
 from controlplane.models import HarmVector, Interaction
 
-BASE_URL = "https://huggingface.co/datasets/PKU-Alignment/BeaverTails/resolve/main/round0/330k"
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+REVISION = "8401fe609d288129cc684a9b3be6a93e41cfe678"
+BASE_URL = (
+    "https://huggingface.co/datasets/PKU-Alignment/BeaverTails/resolve/"
+    f"{REVISION}/round0/330k"
+)
 FILES = ("train.jsonl.xz", "test.jsonl.xz")
+DIGESTS = {
+    "train.jsonl.xz": "12f04c9200000929ebbc616c29cb53331f6df36e7341d73e4a12cffac0eb1c08",
+    "test.jsonl.xz": "1c726c662b85bf4761913041fe9e098f80e5206344864597dbde86bc9a1bfc96",
+}
 
 ROUTE = "support-assistant"
 JURISDICTION = "eu"
@@ -63,18 +72,10 @@ class CorpusStats:
 
 
 def _download(cache_dir: Path) -> list[Path]:
-    paths = []
-    for name in FILES:
-        path = cache_dir / "beavertails" / name
-        if not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            staging = path.with_suffix(".partial")
-            url = f"{BASE_URL}/{name}"
-            with urllib.request.urlopen(url, timeout=300) as response:  # noqa: S310 - fixed host
-                staging.write_bytes(response.read())
-            staging.replace(path)
-        paths.append(path)
-    return paths
+    return [
+        fetch(f"{BASE_URL}/{name}", cache_dir / "beavertails" / name, DIGESTS[name])
+        for name in FILES
+    ]
 
 
 def _digest(text: str, salt: str) -> int:

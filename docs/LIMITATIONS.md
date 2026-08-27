@@ -210,19 +210,25 @@ Thresholds are selected by a finite-grid exact-binomial test on a fold of the ca
 the isotonic score map never saw. Fitting the map and selecting thresholds on the same rows, as the
 first implementation did, made the bound optimistic by roughly nine-fold on `finops-agent`.
 
-The bound holds on held-out traffic on all three routes: 0.0618 on `finops-agent` over 372 released
-rows, 0.0716 on `internal-kb` over 475, and 0.0642 on `support-assistant` over 436, against alpha
-0.15. It is stated over rows released *without a check*. Rows that were checked and missed are
+The bound holds on held-out traffic on all three routes: 0.0560 on `finops-agent` over 339
+released rows, 0.0714 on `internal-kb` over 476, and 0.0529 on `support-assistant` over 397,
+against alpha 0.15. It is stated over rows released *without a check*. Rows that were checked and missed are
 counted separately as `escaped_harm_rate_effective`, which is the number a business actually
 experiences and is always the larger of the two.
 
 **`support-assistant` used to be vacuous and is not any more.** Its threshold was 0.0, so nothing
 was released unchecked, the floor demanded full coverage, and the bound was satisfied by
 construction — a guarantee over zero released rows, which we reported as vacuous rather than as a
-pass. Improving the disclosure detector fixed it at the source: the floor now forces 12.8% of that
-route rather than 100%, and the bound is measured over 436 released rows. The floor's coverage
-dropped on the other two routes as well, from 56.0% to 25.6% and from 7.8% to 5.0%. That is the
+pass. Improving the disclosure detector fixed it at the source: the floor now forces 20.6% of that
+route rather than 100%, and the bound is measured over 397 released rows. Mandatory coverage stands
+at 32.2% on `finops-agent`, 4.8% on `internal-kb` and 20.6% on `support-assistant`. That is the
 guarantee doing its job — it demands less when the detector can be trusted more.
+
+**On two of the five public corpora the bound is vacuous, and that is now reported as a limit.**
+Aegis (52.8–66.1% harmful) and OR-Bench (33.5%) both have base rates far above alpha 0.15, so the
+floor forces a check on every row and the guarantee is satisfied by construction. The rule worth
+carrying is that the release floor is informative only when alpha exceeds the corpus harm base
+rate.
 
 alpha is 0.15 because that is the feasible frontier for this detector and prevalence on the
 multi-claim corpus. At 0.10 no threshold passed the risk test on any route; at 0.20 the floor was

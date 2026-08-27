@@ -134,7 +134,7 @@ def write_probe(root: Path, summary: dict[str, Any]) -> None:
     results_dir = root / "docs" / "results"
     results_dir.mkdir(parents=True, exist_ok=True)
     (results_dir / "judge_probe.json").write_text(
-        json.dumps(summary, indent=2, sort_keys=True, default=str), encoding="utf-8"
+        json.dumps(summary, indent=2, sort_keys=True, default=str), encoding="utf-8", newline="\n"
     )
     lines = [
         "# Local judge probe",
@@ -165,4 +165,6 @@ def write_probe(root: Path, summary: dict[str, Any]) -> None:
         "- two calls per row: one whole-response, one batch covering every page",
         "",
     ]
-    (results_dir / "judge_probe.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (results_dir / "judge_probe.md").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8", newline="\n"
+    )

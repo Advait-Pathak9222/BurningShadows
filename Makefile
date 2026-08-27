@@ -54,7 +54,7 @@ lint:
 	$(PYTHON) -m ruff check controlplane tests console
 
 typecheck:
-	$(PYTHON) -m mypy controlplane
+	$(PYTHON) -m mypy --strict controlplane
 
 check: lint typecheck test
 

@@ -21,16 +21,22 @@ Endpoints are fixed in `docs/PREREGISTRATION.md` (Pre-registration 10). CC-BY-4.
 from __future__ import annotations
 
 import hashlib
-import urllib.request
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 
+from controlplane.corpora.fetch import fetch
 from controlplane.models import HarmVector, Interaction
 
-BASE_URL = "https://huggingface.co/datasets/bench-llms/or-bench/resolve/main"
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+REVISION = "fd6ee135ee63ff6c4f3ff72c0e39627bf0a7f314"
+BASE_URL = f"https://huggingface.co/datasets/bench-llms/or-bench/resolve/{REVISION}"
+DIGESTS = {
+    "safe": "a6e2f1166416efe5901f3bb05c47dc92ab3aca3acfe143693d38b8057d841e6d",
+    "toxic": "3be45901faae3b4b2b51bf7f8a2784c1650a1cc8c631dbc8b171d5312d4e0057",
+}
 FILES = {"safe": "or-bench-hard-1k.csv", "toxic": "or-bench-toxic.csv"}
 
 ROUTE = "support-assistant"
@@ -78,17 +84,12 @@ def _cache_path(cache_dir: Path, part: str) -> Path:
 
 
 def ensure_downloaded(cache_dir: Path, part: str) -> Path:
-    """Fetch one file unless it is already cached. Returns the local path."""
+    """Fetch one file unless it is already cached, verifying its pinned digest."""
     if part not in FILES:
         raise ValueError(f"unknown part {part!r}; expected one of {sorted(FILES)}")
-    path = _cache_path(cache_dir, part)
-    if path.exists():
-        return path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    url = f"{BASE_URL}/{FILES[part]}"
-    with urllib.request.urlopen(url, timeout=300) as response:  # noqa: S310 - fixed HTTPS host
-        path.write_bytes(response.read())
-    return path
+    return fetch(
+        f"{BASE_URL}/{FILES[part]}", _cache_path(cache_dir, part), DIGESTS[part]
+    )
 
 
 def _digest(text: str) -> int:

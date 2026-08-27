@@ -93,7 +93,9 @@ def _caught_loss(
     return caught_any, averted
 
 
-def summarize(rows: list[EvaluationRow], budget_inr: float) -> dict[str, float | str]:
+def summarize(
+    rows: list[EvaluationRow], budget_inr: float
+) -> dict[str, float | str | None]:
     spend = sum(row.spend_inr for row in rows)
     averted = sum(row.loss_averted_inr for row in rows)
     interventions = [row for row in rows if row.checked]
@@ -121,17 +123,15 @@ def summarize(rows: list[EvaluationRow], budget_inr: float) -> dict[str, float |
         ),
         "coverage": _rate(len(interventions), len(rows)),
         "abstention_rate": _rate(sum(row.abstained for row in rows), len(rows)),
-        # Rounded because these are wall-clock stub timings: sub-0.1ms precision is
-        # run-to-run noise, and it would churn the committed results on every run.
-        "p99_text_latency_ms": round(
-            percentile([row.text_latency_ms for row in rows], 0.99), 1
-        ),
-        "p99_effect_latency_ms": round(
-            percentile([row.effect_latency_ms for row in rows if row.effect_count], 0.99), 1
-        ),
+        # Wall-clock latency is deliberately NOT reported here. These are timings of lexical
+        # stubs, so they measure whichever machine ran them rather than the decision system,
+        # and rounding to 0.1ms was not enough to stabilise them: two consecutive runs of
+        # `make report` on the same machine differed (0.3ms against 0.4ms), which dirtied
+        # committed evidence files on every run and made a clean clone look modified after
+        # following the README. Latency is characterised in `make loadtest` ->
+        # `docs/results/runtime.md`, where it is labelled as a harness measurement.
         "budget_variance": (spend - budget_inr) / budget_inr if budget_inr else 0.0,
         "cost_per_1k_inr": spend * 1000 / len(rows) if rows else 0.0,
-        "cost_per_1k_usd": spend * 1000 / len(rows) / 88.0 if rows else 0.0,
     }
 
 

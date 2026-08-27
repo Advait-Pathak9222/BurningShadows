@@ -7,6 +7,8 @@ name = "controlplane-ai"
 version = "0.1.0"
 description = "Budget-aware responsible AI verification prototype"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.141,<1",
@@ -71,5 +73,22 @@ packages = ["controlplane"]
 exclude = ["console"]
 
 [[tool.mypy.overrides]]
-module = ["pandas", "yaml", "mlflow", "mlflow.*"]
+# Third-party packages that ship no type information. Listed explicitly rather than
+# globally silenced, and the optional ones are here because `make check` must give the
+# same answer on a clean install as it does on a developer machine that happens to have
+# the extras -- otherwise the advertised gate is only green where it was written.
+module = [
+    "pandas",
+    "yaml",
+    "mlflow",
+    "mlflow.*",
+    "matplotlib",
+    "matplotlib.*",
+    "presidio_analyzer",
+    "presidio_analyzer.*",
+    "spacy",
+    "spacy.*",
+    "streamlit",
+    "streamlit.*",
+]
 ignore_missing_imports = true

@@ -52,7 +52,7 @@ def run_scenarios(
     }
     output = root / "reports" / "scenarios.json"
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(results, indent=2, sort_keys=True), encoding="utf-8")
+    output.write_text(json.dumps(results, indent=2, sort_keys=True), encoding="utf-8", newline="\n")
     return results
 
 

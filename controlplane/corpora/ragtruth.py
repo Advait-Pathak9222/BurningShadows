@@ -12,16 +12,24 @@ used as shipped.
 
 from __future__ import annotations
 
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 import pandas as pd
 
+from controlplane.corpora.fetch import fetch
 from controlplane.models import HarmVector, Interaction
 
-BASE_URL = "https://huggingface.co/datasets/wandb/RAGTruth-processed/resolve/main/data"
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+REVISION = "eb4f4b9d1b68eb7092d3e1a61c0cd82d9808737b"
+BASE_URL = (
+    f"https://huggingface.co/datasets/wandb/RAGTruth-processed/resolve/{REVISION}/data"
+)
+DIGESTS = {
+    "train": "c14ae31ff459c829edc860bda034ee2dbc0a11107b7511195a32bb4ab1ee8000",
+    "test": "2fc4fb703ea47ee0d4ab6110b86312f94fdf0bda157bc6ee67c7e61fb90d3bbd",
+}
 FILES = {"train": "train-00000-of-00001.parquet", "test": "test-00000-of-00001.parquet"}
 
 ROUTE = "support-assistant"
@@ -38,15 +46,12 @@ class CorpusStats:
 
 
 def ensure_downloaded(cache_dir: Path, split: str) -> Path:
-    path = cache_dir / "ragtruth" / FILES[split]
-    if path.exists():
-        return path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    staging = path.with_suffix(".partial")
-    with urllib.request.urlopen(f"{BASE_URL}/{FILES[split]}", timeout=300) as response:  # noqa: S310
-        staging.write_bytes(response.read())
-    staging.replace(path)
-    return path
+    """Fetch one split unless it is already cached, verifying its pinned digest."""
+    if split not in FILES:
+        raise ValueError(f"unknown split {split!r}; expected one of {sorted(FILES)}")
+    return fetch(
+        f"{BASE_URL}/{FILES[split]}", cache_dir / "ragtruth" / FILES[split], DIGESTS[split]
+    )
 
 
 def load(
@@ -99,3 +104,16 @@ def load(
         task_types={str(k): int(v) for k, v in frame.task_type.value_counts().items()},
     )
     return interactions, stats
+
+
+def task_types(cache_dir: Path, split: Literal["train", "test"]) -> dict[str, str]:
+    """Interaction id to RAGTruth `task_type`, for the per-task breakdown.
+
+    The pooled AUC is carried by `QA`; on `Data2txt` the detector is barely above chance,
+    and that only shows up broken out. See `docs/results/ragtruth.md`.
+    """
+    frame = pd.read_parquet(ensure_downloaded(cache_dir, split))
+    return {
+        f"rt-{split}-{row.id}-{row.model}": str(row.task_type)
+        for row in frame.itertuples(index=False)
+    }

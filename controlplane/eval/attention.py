@@ -424,8 +424,8 @@ def write_attention(root: Path, summary: dict[str, Any]) -> Path:
             "",
         ]
     )
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     (root / "docs" / "results" / "attention.json").write_text(
-        json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"
+        json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8", newline="\n"
     )
     return path

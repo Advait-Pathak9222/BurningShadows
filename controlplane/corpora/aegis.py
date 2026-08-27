@@ -17,18 +17,25 @@ from __future__ import annotations
 
 import hashlib
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 import pandas as pd
 
+from controlplane.corpora.fetch import fetch
 from controlplane.models import HarmVector, Interaction
 
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+REVISION = "bd96d862068e47630197de64eb91f8d1481ff3e0"
 BASE_URL = (
-    "https://huggingface.co/datasets/nvidia/Aegis-AI-Content-Safety-Dataset-1.0/resolve/main"
+    "https://huggingface.co/datasets/nvidia/Aegis-AI-Content-Safety-Dataset-1.0/resolve/"
+    + REVISION
 )
+DIGESTS = {
+    "train": "1bed0b8da79321501346cc5f55c8e360a926e75e695fafb4ebaee65e086b6748",
+    "test": "90cebe34ee64c7a0f533fe5534bc03f862f89981969c00376a45c9d9f4ca2159",
+}
 FILES = {
     "train": "Content Moderation Extracted Annotations 02.08.24_train_release_0418_v1.parquet",
     "test": "Content Moderation Extracted Annotations 02.08.24_test_release_0418_v1.parquet",
@@ -82,17 +89,11 @@ def _cache_path(cache_dir: Path, split: str) -> Path:
 
 
 def ensure_downloaded(cache_dir: Path, split: str) -> Path:
-    """Fetch one split unless it is already cached. Returns the local path."""
+    """Fetch one split unless it is already cached, verifying its pinned digest."""
     if split not in FILES:
         raise ValueError(f"unknown split {split!r}; expected one of {sorted(FILES)}")
-    path = _cache_path(cache_dir, split)
-    if path.exists():
-        return path
-    path.parent.mkdir(parents=True, exist_ok=True)
     url = f"{BASE_URL}/{urllib.parse.quote(FILES[split])}"
-    with urllib.request.urlopen(url, timeout=300) as response:  # noqa: S310 - fixed HTTPS host
-        path.write_bytes(response.read())
-    return path
+    return fetch(url, _cache_path(cache_dir, split), DIGESTS[split])
 
 
 def _interaction_id(text: str, split: str) -> str:

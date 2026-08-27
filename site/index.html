@@ -280,15 +280,15 @@ check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost<
       <tr><td style="white-space:normal">Does allocation beat checking everything?</td>
         <td style="white-space:normal">At the 80% and 100% budgets, yes — <strong>₹5,479,500</strong> averted for ₹3,470.60 against ₹5,476,400 for ₹4,800. More loss averted for <span class="win">28% less compute</span>.</td></tr>
       <tr><td style="white-space:normal">Does the per-route release floor hold?</td>
-        <td style="white-space:normal">Observed unchecked harm 0.0618 / 0.0716 / 0.0642 against α = 0.15, over 372 / 475 / 436 released rows.</td></tr>
+        <td style="white-space:normal">Observed unchecked harm 0.0560 / 0.0714 / 0.0529 against α = 0.15, over 339 / 476 / 397 released rows. Vacuous on Aegis and OR-Bench, where the base rate exceeds α.</td></tr>
       <tr><td style="white-space:normal">Are the risk scores calibrated?</td>
-        <td style="white-space:normal">Expected calibration error <strong>0.030 – 0.046</strong> by route.</td></tr>
+        <td style="white-space:normal">Expected calibration error <strong>0.0083 – 0.0429</strong> by route.</td></tr>
       <tr><td style="white-space:normal">Do consequence assumptions move decisions?</td>
         <td style="white-space:normal">Across a 0.25×–4× band, 15.8% of tier decisions change and the verdict flip rate is <strong>0%</strong> — consequence prices a check but does not enter the release rule.</td></tr>
       <tr><td style="white-space:normal">Is the audit trail complete?</td>
         <td style="white-space:normal"><strong>1,500 of 1,500</strong> decisions and 299 reviews in one valid chain; 224 of 224 proposed effects logged.</td></tr>
       <tr><td style="white-space:normal">Is the detector catch rate measured or assumed?</td>
-        <td style="white-space:normal">Measured. Labelled Tier 2 catch rate 0.950 against 0.880 configured, over 398 observations.</td></tr>
+        <td style="white-space:normal">Measured. Labelled Tier 2 catch rate 0.928 against 0.880 configured, over 359 observations.</td></tr>
     </tbody>
   </table></div>
   <figure>

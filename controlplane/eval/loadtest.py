@@ -99,6 +99,7 @@ def run_loadtest(root: Path) -> Path:
             work_hold_ms=WORK_HOLD_MS,
         ),
         encoding="utf-8",
+        newline="\n",
     )
     if failures:
         raise RuntimeError("Runtime acceptance failed: " + "; ".join(failures))

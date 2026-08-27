@@ -3,6 +3,9 @@
 Endpoints fixed in [Pre-registration 8](../PREREGISTRATION.md) before the test split was read.
 **The primary endpoint passed.** The secondary endpoints are where the useful information is.
 
+*Written interpretation. Regenerate the underlying numbers with `make benchmarks`, which writes
+`docs/results/ragtruth.json` and the comparison table in `benchmarks.md`.*
+
 Corpus: RAGTruth, 15,090 calibration and 2,700 held-out rows, responses from six LLMs over retrieved
 passages, annotated into *evident conflict* and *baseless information*. **MIT licensed** — the only
 corpus in this project without a non-commercial clause. Its official split is prompt-disjoint

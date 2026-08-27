@@ -193,7 +193,7 @@ def load_interactions(path: Path) -> list[Interaction]:
 
 def _write_jsonl(path: Path, interactions: list[Interaction]) -> None:
     content = "\n".join(interaction.model_dump_json() for interaction in interactions) + "\n"
-    path.write_text(content, encoding="utf-8")
+    path.write_text(content, encoding="utf-8", newline="\n")
 
 
 def agentic_transfer_interaction() -> Interaction:
