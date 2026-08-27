@@ -166,7 +166,7 @@ Component contracts and the full request sequence: [architecture notes](docs/ARC
 Python 3.11 or newer. The default path needs no API key, network call, model download, or GPU.
 
 ```bash
-git clone https://github.com/Jenish3119/BurningShadows.git
+git clone https://github.com/Advait-Pathak9222/BurningShadows.git
 cd BurningShadows
 make install
 make demo        # ~18s: builds the corpus, calibrates, runs the scenarios, verifies the chain

@@ -46,7 +46,7 @@ only `console/` lands on `sys.path`.
 1. Go to <https://share.streamlit.io> and sign in with the GitHub account that owns the repository.
 2. **New app → Deploy a public app from GitHub.**
 3. Fill in:
-   - **Repository:** `Jenish3119/BurningShadows`
+   - **Repository:** `Advait-Pathak9222/BurningShadows`
    - **Branch:** `main`
    - **Main file path:** `console/streamlit_app.py`
    - **App URL:** `controlplane-ai` → gives `https://controlplane-ai.streamlit.app`
@@ -57,20 +57,18 @@ only `console/` lands on `sys.path`.
 > `https://controlplane-ai.streamlit.app`. If you pick a different name, update the two `href`s in
 > that file and redeploy the site.
 
-### The repository is private, and that is the one real obstacle
+### On repository visibility
 
-Community Cloud [does deploy from private repositories](https://docs.streamlit.io/deploy/streamlit-community-cloud/status),
-but three things follow from it:
+Community Cloud [deploys from private repositories](https://docs.streamlit.io/deploy/streamlit-community-cloud/status)
+as well as public ones, so either works. Two things follow from staying private:
 
-- The free tier allows **one private app** (public apps are unlimited).
-- Streamlit authenticates by adding a **read-only deploy key** to the repository. GitHub requires
-  **admin** permission on a repo to add a deploy key, and it emails the repo admins when one appears.
-- `BurningShadows` is owned by `Jenish3119`. Write access is not admin access, so whoever deploys
-  either needs admin on that repo or needs the owner to do it.
+- The free tier allows **one private app**; public apps are unlimited.
+- Streamlit authenticates by adding a **read-only deploy key**, which needs admin on the repository.
+  That is satisfied — `BurningShadows` is owned by the deploying account.
 
-**The simple fix is to make the repository public.** Judges need to read the code anyway, it removes
-the deploy-key permission problem, it removes the one-private-app limit, and it makes the GitHub
-link on the landing page work for anyone who follows it.
+**Making it public is still worth doing before judging.** Judges need to read the code, and while
+the repository is private the GitHub links on the landing page and in this README return a 404 to
+everyone except collaborators.
 
 ### Three things to know about the hosted console
 

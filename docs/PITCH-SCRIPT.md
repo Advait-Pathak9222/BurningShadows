@@ -28,7 +28,7 @@ are nervous — you want to move by tab position, never by typing a URL.
 | 1 | Landing page | your `*.vercel.app` deployment |
 | 2 | Console — Decision lab | `http://localhost:8501` |
 | 3 | Console — Overview | `http://localhost:8501` *(second window, on Overview)* |
-| 4 | Repository | `https://github.com/Jenish3119/BurningShadows` |
+| 4 | Repository | `https://github.com/Advait-Pathak9222/BurningShadows` |
 
 Two console tabs is deliberate. Switching views inside Streamlit costs a second of re-render and
 breaks your rhythm; switching browser tabs is instant.
