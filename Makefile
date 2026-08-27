@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report sensitivity attention pii-probe judge-probe loadtest api console mlflow-ui test lint typecheck check clean
+.PHONY: install data demo report sensitivity attention pii-probe judge-probe loadtest toxicchat api console mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -28,6 +28,11 @@ judge-probe:
 
 loadtest:
 	$(PYTHON) -m controlplane.cli loadtest
+
+# Real-traffic evaluation. Downloads ToxicChat on first run (~16MB) and caches it
+# under data/external/. Never on the demo path: `make demo` stays fully offline.
+toxicchat:
+	$(PYTHON) -m controlplane.cli toxicchat
 
 api:
 	$(PYTHON) -m uvicorn controlplane.gateway.app:app --host 127.0.0.1 --port 8000

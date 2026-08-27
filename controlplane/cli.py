@@ -31,6 +31,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "pii-probe",
             "judge-probe",
             "loadtest",
+            "toxicchat",
             "clean",
         ),
     )
@@ -81,6 +82,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"page-max AUC {summary['auc_judge_page_max']:.4f}, "
             f"localisation {summary['localisation_rate']:.1%}"
         )
+        return 0
+    if args.command == "toxicchat":
+        from controlplane.eval.toxicchat_probe import write_report
+
+        report_path = write_report(ROOT, ROOT / "data" / "external")
+        print(f"Wrote {report_path.relative_to(ROOT)}.")
         return 0
     if args.command == "loadtest":
         report_path = run_loadtest(ROOT)

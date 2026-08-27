@@ -92,7 +92,43 @@ answered is whether this requester may receive this value on this route — and 
 the evidence, not the words. Mechanism-by-mechanism attribution and ablations:
 [PII probe](docs/results/pii.md).
 
-### 3. Endpoints were fixed before the work started
+### 3. Tested on real traffic, which sharpened the claim
+
+The results above run on a corpus we generated, so we ran the allocator against
+[ToxicChat](https://huggingface.co/datasets/lmsys/toxic-chat) — 5,083 held-out rows of real
+user–assistant traffic at a 7.12% harm rate. Endpoints were pre-registered first. **Both primary
+endpoints failed, and the reason is worth more than a pass would have been.**
+
+| | Result |
+|---|---|
+| Our lexical detectors on real traffic | **AUC 0.4838** — chance |
+| The same pipeline given a competent detector | **AUC 0.9377**, against the bundled OpenAI moderation score's 0.9390 |
+| Allocation against a tuned fixed-rate policy | Won **1 of 6** budgets, against a pre-registered bar of 5 of 6 |
+
+The cause is that **ToxicChat exercises only one harm axis.** It labels toxicity and jailbreak, and
+jailbreak is a strict subset of toxicity, so after calibration `unsafe_content` is the only axis that
+ever fires. With one active axis the consequence multiplier is a constant ₹7,000, so expected loss is
+just `risk × 7000` — a monotone rescaling of the risk score the baseline already ranks by:
+
+| Corpus | Axes firing per row | Rows firing on >1 axis | Spearman(risk, expected loss) |
+|---|---:|---:|---:|
+| ToxicChat | 1.00 | 0% | **1.000000** |
+| This corpus | 1.51 | 43.9% | 0.941539 |
+
+It is the axis mix that does this, not the route count: restricted to a single route, this corpus
+still returns 0.83–0.96, because *which* axis fires changes the price — `hallucination` costs ₹5,000
+and `pii_leak` ₹18,000, so two rows with identical risk carry different expected loss.
+
+So the honest claim is narrower and now tested in both directions: **allocation beats a fixed rate
+when the harm mix varies across traffic, and has no advantage when every flagged row is the same kind
+of harm.** Multi-axis traffic is the normal case in deployment; ToxicChat is not it, and the
+pre-registration forbade inventing the missing labels.
+
+What did survive: the finite-sample release floor certified **0.0777** against α = 0.15 and observed
+**0.0639** on 5,037 released held-out rows. The guarantee transferred even though the detectors did
+not. Full write-up: [real-traffic results](docs/results/toxicchat.md).
+
+### 4. Endpoints were fixed before the work started
 
 Each significant claim has a pre-registration written in advance stating what would count as
 success. Results are reported against those criteria whether or not they were met, and the record

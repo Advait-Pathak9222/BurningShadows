@@ -18,6 +18,7 @@ from typing import Any
 import pandas as pd
 
 from controlplane.corpora import toxicchat
+from controlplane.detectors.base import Detector
 from controlplane.economics import BudgetController
 from controlplane.eval.metrics import EvaluationRow, summarize
 from controlplane.eval.report import (
@@ -27,7 +28,7 @@ from controlplane.eval.report import (
     _full_check_spend,
     _validate_conformal,
 )
-from controlplane.models import Interaction
+from controlplane.models import DetectorSignal, HarmVector, Interaction
 from controlplane.service import AssessmentEngine
 
 BUDGET_FRACTIONS = (0.10, 0.25, 0.40, 0.60, 0.80, 1.00)
@@ -43,6 +44,39 @@ def _rank_auc(labels: list[float], scores: list[float]) -> float:
     ranks: list[float] = [float(value) for value in pd.Series(scores).rank(method="average")]
     positive_rank_sum = sum(rank for rank, label in zip(ranks, labels, strict=True) if label > 0)
     return (positive_rank_sum - positives * (positives + 1) / 2) / (positives * negatives)
+
+
+class ModerationTier1(Detector):
+    """Serve the corpus's bundled OpenAI moderation score through the Tier 1 slot.
+
+    Pre-registration 6. The scores ship inside the ToxicChat CSV, so substituting a
+    competent detector costs no API call and the offline promise holds. Nothing else about
+    the engine changes: calibration, Learn-Then-Test and the allocator all re-fit through
+    the same code path, which is the point of the adapter contract.
+    """
+
+    name = "openai_moderation_bundled"
+    version = "0124"
+    tier = 1
+
+    def __init__(self, scores: dict[str, float]) -> None:
+        self._scores = scores
+
+    def run(self, interaction: Interaction) -> DetectorSignal:
+        score = self._scores.get(interaction.interaction_id, 0.0)
+        return DetectorSignal(
+            name=self.name,
+            tier=self.tier,
+            scores=HarmVector(
+                hallucination=0.0,
+                pii_leak=0.0,
+                bias=0.0,
+                unsafe_content=score,
+                injection_or_exfil=0.0,
+            ),
+            latency_ms=0.0,
+            evidence=[f"bundled moderation max-category score {score:.4f}"],
+        )
 
 
 def _moderation_scores(cache_dir: Path, split: str, ids: list[str]) -> dict[str, float]:
@@ -76,7 +110,11 @@ def _run_allocator_rows(
 
 
 def run_probe(
-    root: Path, cache_dir: Path, *, human_annotated_only: bool = False
+    root: Path,
+    cache_dir: Path,
+    *,
+    human_annotated_only: bool = False,
+    moderation_tier1: bool = False,
 ) -> dict[str, Any]:
     calibration, train_stats = toxicchat.load(
         cache_dir, "train", human_annotated_only=human_annotated_only
@@ -86,6 +124,15 @@ def run_probe(
     )
 
     engine = AssessmentEngine(root)
+    if moderation_tier1:
+        # Pre-registration 6: swap in a competent detector, change nothing else.
+        every_id = [item.interaction_id for item in calibration + test]
+        engine.tier1 = ModerationTier1(  # type: ignore[assignment]
+            {
+                **_moderation_scores(cache_dir, "train", every_id),
+                **_moderation_scores(cache_dir, "test", every_id),
+            }
+        )
     conformal = engine.calibrate(calibration)
 
     bundles = {item.interaction_id: engine.detect(item) for item in test}
@@ -131,6 +178,7 @@ def run_probe(
 
     return {
         "condition": "human_annotated_only" if human_annotated_only else "all_rows",
+        "tier1": "openai_moderation_bundled" if moderation_tier1 else "lexical_stub",
         "corpus": {
             "name": "lmsys/toxic-chat split 0124",
             "licence": "CC-BY-NC-4.0",
@@ -146,3 +194,20 @@ def run_probe(
         "budgets": budgets,
         "full_check_spend_inr": full_check,
     }
+
+
+def write_report(root: Path, cache_dir: Path) -> Path:
+    """Run all four pre-registered conditions and write the machine-readable results."""
+    results: dict[str, Any] = {}
+    for human_only in (False, True):
+        for moderation in (False, True):
+            key = "human_annotated_only" if human_only else "all_rows"
+            if moderation:
+                key += "__moderation_tier1"
+            results[key] = run_probe(
+                root, cache_dir, human_annotated_only=human_only, moderation_tier1=moderation
+            )
+    path = root / "docs" / "results" / "toxicchat.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(results, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    return path

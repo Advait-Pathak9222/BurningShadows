@@ -27,6 +27,17 @@ A second criterion follows from what our detector actually scores. The disclosur
 whether a statement is **grounded in the authorised source**, so a dataset without context documents
 cannot exercise our strongest component at all.
 
+> **A third criterion, learned the hard way.** The ToxicChat run
+> ([results](results/toxicchat.md)) failed its pre-registered endpoint, and the cause was that the
+> corpus labels **one** harm axis. With a single active axis the consequence multiplier is constant,
+> `risk x consequence` reduces to a rescaling of `risk`, and the allocator is sorting the same list
+> as the baseline it is being compared against — it cannot win by construction.
+>
+> **A corpus must be labelled on more than one harm axis to test allocation at all.** This is not the
+> same as needing more routes: restricted to a single route, our own corpus still gives 0.83–0.96,
+> because *which* axis fires changes the price. Check the axis coverage of any candidate corpus
+> before spending a day on the ingest.
+
 ---
 
 ## Recommended corpora, in priority order
