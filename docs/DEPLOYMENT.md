@@ -57,15 +57,29 @@ only `console/` lands on `sys.path`.
 > `https://controlplane-ai.streamlit.app`. If you pick a different name, update the two `href`s in
 > that file and redeploy the site.
 
-**The repository is currently private.** Streamlit Community Cloud can deploy from a private repo,
-but the free tier allows only one private app and it will ask for extended GitHub permissions. If
-you are going to make the repo public for judging anyway, do that first — it makes this simpler.
+### The repository is private, and that is the one real obstacle
 
-### Two things to know about the hosted console
+Community Cloud [does deploy from private repositories](https://docs.streamlit.io/deploy/streamlit-community-cloud/status),
+but three things follow from it:
 
-- **It sleeps.** Community Cloud suspends apps after a period of inactivity, and waking one takes
-  30–60 seconds. **Open it five minutes before you present** so it is warm. This is the single most
-  likely thing to go wrong on the day.
+- The free tier allows **one private app** (public apps are unlimited).
+- Streamlit authenticates by adding a **read-only deploy key** to the repository. GitHub requires
+  **admin** permission on a repo to add a deploy key, and it emails the repo admins when one appears.
+- `BurningShadows` is owned by `Jenish3119`. Write access is not admin access, so whoever deploys
+  either needs admin on that repo or needs the owner to do it.
+
+**The simple fix is to make the repository public.** Judges need to read the code anyway, it removes
+the deploy-key permission problem, it removes the one-private-app limit, and it makes the GitHub
+link on the landing page work for anyone who follows it.
+
+### Three things to know about the hosted console
+
+- **It sleeps after about 12 hours without traffic**, and waking it takes 30–60 seconds.
+  **Open it five minutes before you present.** This is the single most likely thing to go wrong on
+  the day.
+- **Memory is roughly 1 GB.** Measured locally, the console holds about 147 MB resident with the
+  engine calibrated and cached, so there is a wide margin — but avoid opening six browser tabs
+  against it during a demo, because each session holds its own state.
 - **The audit ledger starts empty.** `data/audit.db` is gitignored, so it does not travel with the
   repository. Run one check in the Decision lab and the chain appears. For a demo this is better
   than a pre-populated ledger — the record is created in front of the audience.
