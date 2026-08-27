@@ -24,7 +24,7 @@ Weight this accordingly. **A result that flips when its authors correct their ow
 
 ### Against FIFO, the pre-registered comparator
 
-The shipped rule dominates FIFO at every budget. At the 10% budget it breaches 48 SLAs against FIFO's 149 while serving 1.59x the expected loss from the same 166 reviews, and sheds 1 of the top-decile cases against FIFO's 21.
+The shipped rule dominates FIFO at every budget. At the 10% budget it breaches 62 SLAs against FIFO's 149 while serving 1.51x the expected loss from the same 166 reviews, and sheds 1 of the top-decile cases against FIFO's 16.
 
 `deadline` — ordering by SLA alone — is **worse than FIFO** at 6 of 6 budgets. Serving every tight-SLA case first clusters them into a burst that the desk cannot clear, so they breach together. That is a useful warning about the obvious design: deadline-first scheduling is actively harmful on an oversubscribed queue.
 
@@ -34,25 +34,25 @@ Pre-registration 3 said that if an ablation beats the full rule it becomes the h
 
 This survived the model correction. It was true under the batch queue and it is true with arrival times, which is the only reason to believe it. **The deadline term should come out**, and the code comment claiming it prevents tight-SLA starvation is wrong: it causes the clustering that produces breaches.
 
-The one thing the deadline term does buy is route fairness — it sheds 98 `finops-agent` cases against `density`'s 147, so removing it concentrates dropped cases on the highest-consequence route. That is a real argument for keeping some route-awareness. It is not an argument for the rule we shipped, and it is not the argument the code made.
+The one thing the deadline term does buy is route fairness — it sheds 33 `finops-agent` cases against `density`'s 83, so removing it concentrates dropped cases on the highest-consequence route. That is a real argument for keeping some route-awareness. It is not an argument for the rule we shipped, and it is not the argument the code made.
 
 ### Where we still lose
 
-The seeded random null breaches fewer SLAs than the shipped rule at 3 of 6 budgets — the tightest one. It serves far less value (2,424,377 against 3,725,259) and drops 19 top-decile cases against our 1, so it is not a better rule. But a shuffle beating us on any axis is worth saying out loud.
+The seeded random null breaches fewer SLAs than the shipped rule at 3 of 6 budgets — the tightest one. It serves far less value (3,052,984 against 3,526,082) and drops 9 top-decile cases against our 1, so it is not a better rule. But a shuffle beating us on any axis is worth saying out loud.
 
 And ordering is still the smaller lever. Keeping up with arrivals needs 7.0 reviewers against the 2 configured. **No serving rule substitutes for that**, and it remains the number worth putting in front of a buyer.
 
-## Budget 10% — 316 cases raised
+## Budget 10% — 251 cases raised
 
-Queue 1.9x oversubscribed. Reviewers needed just to keep up with arrivals: 3.8.
+Queue 1.5x oversubscribed. Reviewers needed just to keep up with arrivals: 3.0.
 
 | Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 150 | 48 | 3,725,259 | 1,063,213 | 1 | 98 | 194.0 |
-| fifo (null) | 166 | 150 | 149 | 2,341,070 | 2,447,402 | 21 | 123 | 231.0 |
-| random (null) | 166 | 150 | 38 | 2,424,377 | 2,364,095 | 19 | 120 | 177.3 |
-| density (ablation) | 166 | 150 | 27 | 4,308,020 | 480,452 | 1 | 147 | 83.7 |
-| deadline (ablation) | 166 | 150 | 160 | 2,248,256 | 2,540,216 | 20 | 98 | 183.3 |
+| deadline_density (ours) | 166 | 85 | 62 | 3,526,082 | 893,833 | 1 | 33 | 376.3 |
+| fifo (null) | 166 | 85 | 149 | 2,341,070 | 2,078,846 | 16 | 58 | 231.0 |
+| random (null) | 166 | 85 | 48 | 3,052,984 | 1,366,931 | 9 | 65 | 431.3 |
+| density (ablation) | 166 | 85 | 31 | 4,121,161 | 298,755 | 1 | 83 | 356.0 |
+| deadline (ablation) | 166 | 85 | 160 | 2,343,519 | 2,076,396 | 14 | 33 | 176.3 |
 
 ## Budget 25% — 335 cases raised
 

@@ -11,14 +11,14 @@ so the two policies are compared at matched budget, not at matched spend.
 
 | Budget | Allocator spend | Baseline spend | Allocator averted | Baseline averted | Averted delta | Allocator ROI | Baseline ROI |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | 663.62 | 270.00 | 5,325,300 | 5,224,700 | +1.9% | 8,025 | 19,351 |
+| 10% | 481.44 | 270.00 | 5,078,500 | 5,224,700 | -2.8% | 10,549 | 19,351 |
 | 25% | 1,098.58 | 270.00 | 5,414,000 | 5,224,700 | +3.6% | 4,928 | 19,351 |
-| 40% | 1,927.18 | 1,926.40 | 5,459,100 | 5,276,400 | +3.5% | 2,833 | 2,739 |
+| 40% | 1,920.00 | 1,920.00 | 5,459,100 | 5,276,400 | +3.5% | 2,843 | 2,748 |
 | 60% | 2,815.86 | 2,812.80 | 5,472,800 | 5,384,900 | +1.6% | 1,944 | 1,914 |
 | 80% | 3,839.64 | 3,836.80 | 5,484,300 | 5,464,200 | +0.4% | 1,428 | 1,424 |
 | 100% | 4,800.00 | 4,800.00 | 5,484,300 | 5,476,400 | +0.1% | 1,143 | 1,141 |
 
-Allocator averts more loss at 6 of 6 budgets and achieves better assurance ROI at 4 of 6.
+Allocator averts more loss at 5 of 6 budgets and achieves better assurance ROI at 4 of 6.
 
 ## Total cost of assurance: the pre-registered comparison
 
@@ -32,7 +32,7 @@ could block. Both distortions were real and they pointed in opposite directions.
 
 | Budget | Policy | Compute | Attention | Total | Averted | ROI on compute | ROI on total | Cases | Shed |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | allocator | 663.62 | 19,920 | 20,584 | 5,325,300 | 8,025 | 258.7 | 316 | 150 |
+| 10% | allocator | 481.44 | 19,920 | 20,401 | 5,078,500 | 10,549 | 248.9 | 251 | 85 |
 | 10% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,224,700 | 19,351 | 258.8 | 306 | 140 |
 | 10% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
 | 10% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
@@ -40,8 +40,8 @@ could block. Both distortions were real and they pointed in opposite directions.
 | 25% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,224,700 | 19,351 | 258.8 | 306 | 140 |
 | 25% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
 | 25% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
-| 40% | allocator | 1,927.18 | 19,920 | 21,847 | 5,459,100 | 2,833 | 249.9 | 355 | 189 |
-| 40% | fixed_rate | 1,926.40 | 19,920 | 21,846 | 5,276,400 | 2,739 | 241.5 | 228 | 62 |
+| 40% | allocator | 1,920.00 | 19,920 | 21,840 | 5,459,100 | 2,843 | 250.0 | 355 | 189 |
+| 40% | fixed_rate | 1,920.00 | 19,920 | 21,840 | 5,276,400 | 2,748 | 241.6 | 227 | 61 |
 | 40% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
 | 40% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
 | 60% | allocator | 2,815.86 | 19,920 | 22,736 | 5,472,800 | 1,944 | 240.7 | 418 | 252 |
@@ -63,7 +63,7 @@ The endpoint was ROI on total cost at the 10% and 25% budgets, with success requ
 
 | Budget | Baseline/allocator on compute | Baseline/allocator on total |
 |---:|---:|---:|
-| 10% | 2.41x | 1.000x |
+| 10% | 1.83x | 1.040x |
 | 25% | 3.93x | 1.005x |
 
 **Result: partial success, and the reason matters more than the number.** The allocator does not beat the tuned baseline on total cost at either row, so the primary endpoint fails. The pre-registered partial-success bar — the ratio falling to 1.5x or below at both rows — is met, and comfortably.
@@ -85,9 +85,9 @@ capacity is budgeted separately and the queue reports what it could not absorb.
 
 | Budget | Compute | Attention | Total | Attention share | Cases raised | Shed |
 |---:|---:|---:|---:|---:|---:|---:|
-| 10% | 663.62 | 25,200.00 | 25,863.62 | 97.4% | 316 | 47.5% |
+| 10% | 481.44 | 49,080.00 | 49,561.44 | 99.0% | 251 | 33.9% |
 | 25% | 1,098.58 | 25,200.00 | 26,298.58 | 95.8% | 335 | 50.4% |
-| 40% | 1,927.18 | 25,200.00 | 27,127.18 | 92.9% | 355 | 53.2% |
+| 40% | 1,920.00 | 25,440.00 | 27,360.00 | 93.0% | 355 | 53.2% |
 | 60% | 2,815.86 | 25,200.00 | 28,015.86 | 89.9% | 418 | 60.3% |
 | 80% | 3,839.64 | 24,720.00 | 28,559.64 | 86.6% | 495 | 66.5% |
 | 100% | 4,800.00 | 24,480.00 | 29,280.00 | 83.6% | 580 | 71.4% |
@@ -96,9 +96,9 @@ Raising the compute budget raises the number of cases needing a person, so buyin
 
 ## Shadow price at the end of each run
 
-- budget 10%: lambda 544.898
+- budget 10%: lambda 495.290
 - budget 25%: lambda 157.403
-- budget 40%: lambda 93.155
+- budget 40%: lambda 93.145
 - budget 60%: lambda 15.553
 - budget 80%: lambda 4.069
 - budget 100%: lambda 0.000

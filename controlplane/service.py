@@ -26,6 +26,9 @@ from controlplane.models import (
 from controlplane.policy import PolicyStore
 from controlplane.risk import IsotonicCalibrator, combine_signals, infer_evidence_regime
 
+# Large enough to price out every discretionary tier, finite so the arithmetic stays real.
+_PRICE_OUT_EVERYTHING = 1e12
+
 
 @dataclass(frozen=True)
 class RuntimePaths:
@@ -188,6 +191,40 @@ class AssessmentEngine:
         if self.ledger is not None:
             self.ledger.append(trace)
         return trace
+
+    def floor_spend_inr(self, interactions: list[Interaction]) -> float:
+        """What the conformal floor alone obliges over these rows, at any budget.
+
+        This is the assurance bill the guarantee sends whether or not the budget can pay
+        it, so it is the *minimum feasible budget*: below it the floor and the budget are
+        in direct conflict and the floor wins. Reported rather than enforced, because
+        which of the two gives is an operator's decision, not ours.
+
+        Priced at an effectively infinite shadow price so every economic check is priced
+        out and only the conformal override survives.
+        """
+        # Costing the floor is a question, not a decision, so it must not enter the audit
+        # chain. Detach the ledger for the duration rather than letting an estimate write
+        # records that no served request corresponds to.
+        ledger, self.ledger = self.ledger, None
+        try:
+            return sum(
+                self.assess(item, shadow_price=_PRICE_OUT_EVERYTHING, mandatory_only=True)
+                .assurance_spend_inr
+                for item in interactions
+            )
+        finally:
+            self.ledger = ledger
+
+    def floor_rate_inr(self, interactions: list[Interaction]) -> float:
+        """Per-row floor cost, for sizing a `BudgetGovernor` reservation.
+
+        Estimate this on calibration rows, never on the rows being served: a reservation
+        informed by the traffic it is rationing is not a prediction.
+        """
+        if not interactions:
+            raise ValueError("floor_rate_inr needs at least one interaction")
+        return self.floor_spend_inr(interactions) / len(interactions)
 
     def _threshold(self, route: str) -> float:
         if route not in self.conformal_thresholds:

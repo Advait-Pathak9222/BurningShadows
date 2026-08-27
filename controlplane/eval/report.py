@@ -8,7 +8,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from controlplane.economics import BudgetController, decide_verdict
+from controlplane.economics import BudgetController, BudgetGovernor, decide_verdict
 from controlplane.economics.allocator import expected_loss_inr
 from controlplane.eval.baselines import Candidate, check_all, fixed_rate
 from controlplane.eval.metrics import (
@@ -55,6 +55,8 @@ class AllocatorRun:
     ledger: LedgerStore | None = None
     review: dict[str, float] = field(default_factory=dict)
     records: list[ReviewRecord] = field(default_factory=list)
+    rows_mandatory_only: int = 0
+    budget_feasible: bool = True
 
 
 def build_report(
@@ -81,7 +83,18 @@ def build_report(
             test, figure_dir / "reliability_by_route.png", scores
         ),
     }
-    frame = pd.DataFrame(_evaluate_budgets(root, engine, test, detail, bundles))
+    # Sized on calibration, never on the rows being rationed. See BudgetGovernor.
+    floor_rate = engine.floor_rate_inr(calibration)
+    detail["floor"] = {
+        "rate_inr_per_row": floor_rate,
+        "test_floor_spend_inr": engine.floor_spend_inr(test),
+        "minimum_feasible_budget_fraction": (
+            engine.floor_spend_inr(test) / _full_check_spend(engine, test)
+        ),
+    }
+    frame = pd.DataFrame(
+        _evaluate_budgets(root, engine, test, detail, bundles, floor_rate)
+    )
     frame.to_csv(report_dir / "evaluation.csv", index=False)
     detail["metrics"] = frame.to_dict(orient="records")
     (report_dir / "evaluation.json").write_text(
@@ -100,6 +113,7 @@ def _evaluate_budgets(
     test: list[Interaction],
     detail: dict[str, Any],
     bundles: dict[str, DetectionBundle],
+    floor_rate: float,
 ) -> list[dict[str, float | str]]:
     scores = {key: bundle.harm.maximum() for key, bundle in bundles.items()}
     latency = {key: bundle.latency_ms for key, bundle in bundles.items()}
@@ -116,7 +130,7 @@ def _evaluate_budgets(
     for fraction in BUDGET_FRACTIONS:
         budget = full_spend * fraction
         record = fraction == BUDGET_FRACTIONS[-1]
-        run = _run_allocator(root, engine, test, budget, fraction, record)
+        run = _run_allocator(root, engine, test, budget, fraction, record, floor_rate)
         if record:
             audit[f"{fraction:.2f}"] = _audit_coverage(test, run)
             if run.ledger is not None:
@@ -162,6 +176,13 @@ def _evaluate_budgets(
         detail.setdefault("shadow_price", {})[f"{fraction:.2f}"] = run.final_shadow_price
         detail.setdefault("review", {})[f"{fraction:.2f}"] = run.review
         detail.setdefault("compute_spend", {})[f"{fraction:.2f}"] = run.spend_inr
+        detail.setdefault("budget_adherence", {})[f"{fraction:.2f}"] = {
+            "budget_inr": budget,
+            "spend_inr": run.spend_inr,
+            "spend_over_budget": run.spend_inr / budget if budget else float("inf"),
+            "rows_mandatory_only": run.rows_mandatory_only,
+            "feasible": run.budget_feasible,
+        }
         pooled_records.extend(run.records)
         detail.setdefault("escaped_by_route", {})[f"{fraction:.2f}"] = escaped_harm_by_route(
             run.rows
@@ -337,26 +358,52 @@ def _run_allocator(
     budget: float,
     fraction: float,
     record: bool,
+    floor_rate: float,
 ) -> AllocatorRun:
-    """Stream the test set through the shipped allocator with the budget controller live."""
+    """Stream the test set through the shipped allocator under a governed budget.
+
+    The shadow price is a soft constraint and cannot bound spend on its own; the governor
+    is what makes the budget a budget. Without it this loop spent 3.75x its budget at the
+    tightest setting while the baseline it is compared against was held to the budget
+    exactly, so the comparison was not at matched spend.
+    """
     controller = BudgetController(
         budget_rate_inr=max(budget / len(test), 1e-9),
         learning_rate=engine.cost_model.controller_learning_rate,
+    )
+    governor = BudgetGovernor(
+        budget_inr=budget, rows_expected=len(test), floor_rate_inr=floor_rate
     )
     ledger = _fresh_ledger(root, fraction) if record else None
     rows: list[EvaluationRow] = []
     traces: list[DecisionTrace] = []
     running = 0.0
+    shed = 0
     for position, interaction in enumerate(test, start=1):
-        trace = engine.assess(interaction, shadow_price=controller.shadow_price)
+        exhausted = governor.mandatory_only()
+        shed += exhausted
+        trace = engine.assess(
+            interaction, shadow_price=controller.shadow_price, mandatory_only=exhausted
+        )
         if ledger is not None:
             ledger.append(trace)
         running += trace.assurance_spend_inr
+        governor.commit(trace.assurance_spend_inr)
         controller.update(running / position)
         traces.append(trace)
         rows.append(_allocator_row(engine, interaction, trace))
     review, records = _run_review(engine, test, traces, ledger)
-    return AllocatorRun(rows, traces, running, controller.shadow_price, ledger, review, records)
+    return AllocatorRun(
+        rows,
+        traces,
+        running,
+        controller.shadow_price,
+        ledger,
+        review,
+        records,
+        rows_mandatory_only=shed,
+        budget_feasible=governor.feasible,
+    )
 
 
 def _run_review(

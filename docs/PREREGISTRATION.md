@@ -662,3 +662,156 @@ Nothing about span-level localisation; we score whole responses. Nothing about t
 axes, which RAGTruth does not label. And the comparison band is drawn from papers using fixed
 operating points, whereas an unqualified best-F1 from us would be an oracle threshold — so the
 reported F1 must state which it is.
+
+---
+
+# Pre-registration 9: does the allocation precondition hold on a multi-axis public corpus?
+
+Written and committed before any detector was run against Aegis. The corpus loader existed and its
+composition had been inspected — row counts, base rates, category distribution — because the mapping
+below cannot be written without that. No score, no AUC and no allocation result had been computed.
+
+## Why this experiment exists
+
+`docs/results/allocation-regime.md` closed with a precondition rather than a win: budget-aware
+allocation can only beat a well-ranked fixed-rate baseline when **the harm mix varies across
+traffic**, measured as `Spearman(risk, expected loss) < 1`. On ToxicChat that statistic was exactly
+1.000000 and the mechanism provably could not help. On BeaverTails it was 0.998494.
+
+Both of those are effectively single-axis corpora, so the precondition has never actually been
+tested — only its failure has. That is a weak position: a claim whose enabling condition has never
+been observed in the wild is a claim about our own corpus.
+
+NVIDIA's Aegis 1.0 is the corpus that tests it. Its 13-category taxonomy maps onto **three** of our
+axes, including `pii_leak`, which no other public corpus here labels, and those three axes carry
+genuinely different prices in our consequence table. It is human-annotated at 3-4 annotators per
+row, and CC-BY-4.0 — the first corpus in this project a commercial deployment could use.
+
+## The claim under test
+
+**Claim:** on a public, human-annotated, multi-axis corpus, ControlPlane's detection sits inside the
+published band for this benchmark, and the harm mix varies enough that expected-loss ranking is not
+a monotone rescaling of risk ranking.
+
+## Mapping decisions, locked in advance
+
+- **Label convention.** Both of NVIDIA's own conventions are reported, not one: the Permissive model
+  treats `Needs Caution` as safe, the Defensive model treats it as unsafe. Reporting whichever
+  flatters us after seeing scores is exactly what this document exists to prevent.
+- **Label definition.** Row-level majority vote across annotators, because that is the binary task
+  the published Llama Guard and Aegis F1 numbers are measured on. The per-axis vector is the
+  per-axis agreement rescaled to peak at the row-level agreement.
+- **Category to axis**: `PII/Privacy` to `pii_leak`; `Hate/Identity Hate` to `bias`; the remaining
+  eleven categories to `unsafe_content`. `hallucination` and `injection_or_exfil` receive no rows
+  and are reported as **unlabelled**, not as zero.
+- **The annotated string goes in `response`.** Tier 1 reads only that field, and scoring a field the
+  annotation does not describe is the error that put ToxicChat at chance. This means we score the
+  annotated text exactly as the published classifiers are given it.
+- Official train/test split as shipped. Train calibrates, test scores, and the fitting/selection
+  fold discipline inside calibration is unchanged.
+
+## Primary endpoint
+
+Held-out **AUPRC within the published band for the Aegis test set**, which spans 0.860 (Perspective
+API) to 0.941 (Aegis-tuned Llama Guard), with Llama Guard Base at 0.930 and OpenAI Mod API at 0.895.
+
+- **Success:** AUPRC at or above 0.860 under both conventions, placing us inside the published band.
+- **Partial:** AUPRC at or above 0.860 under one convention only.
+- **Failure:** below 0.860 under both.
+
+F1 is reported beside it against the published range of 0.24 (Perspective) to 0.85 (Aegis
+Defensive), at a threshold chosen on calibration and applied unchanged — never an oracle threshold.
+
+## Secondary endpoints, reported either way
+
+- **`Spearman(risk, expected loss)` and mean axes firing per harmful row.** This is the endpoint
+  that matters most, and it is reported whatever it says. Below about 0.99 the allocator has
+  something to work with; at 1.0 it provably does not.
+- **The allocator against the tuned fixed-rate baseline at matched actual spend**, under the budget
+  governor, across the same budget grid as every other corpus.
+- **Per-axis AUC**, in particular `pii_leak`. Our headline PII result (0.9879) is measured entirely
+  on a corpus we wrote; this is the first public data that labels the axis at all. We expect to do
+  markedly worse here, because Aegis labels whether text *contains* private information, which
+  `docs/results/pii.md` argues at length is the wrong question — and our detector is built for the
+  other one.
+- **Per `text_type` breakdown** across `user_message`, `llm_response`, `combined` and `multi_turn`.
+- Whether the release floor holds, non-vacuously, on held-out rows.
+
+## What is deliberately not claimed
+
+Nothing about `hallucination` or `injection_or_exfil`, which Aegis does not label. Nothing about
+annotator quality; we take the published annotations as given. And the base rate here is about 53%,
+against 7% on our own corpus and ToxicChat — AUPRC at a 53% base rate is a far easier number than
+AUPRC at 7%, so it must never be compared across corpora, only against the published numbers on
+this one.
+
+---
+
+# Pre-registration 10: what does the system do to safe traffic that looks harmful?
+
+Written and committed before any detector was run against OR-Bench.
+
+## Why this experiment exists
+
+Every corpus in this project so far has asked whether we catch harm. **None has asked what we do to
+the safe traffic we should leave alone.** Our own corpus contains decoy clauses written by us to
+resemble harmful ones, which makes them exactly as hard as we thought to make them — an
+unfalsifiable test of over-blocking.
+
+This is the most likely real objection to deploying this system, and it is currently unanswered.
+
+OR-Bench supplies negatives that are hard on purpose: `or-bench-hard-1k` is prompts that
+state-of-the-art models refuse *even though they are safe*, drawn from the same ten categories as
+`or-bench-toxic`. A category-matched safe and toxic pair defeats the lexical shortcuts our Tier 0
+rules rely on, which is the point.
+
+The published result is a **trade-off, not a score**: across evaluated models the Spearman
+correlation between safe-rejection rate and toxic-rejection rate is 0.878, so nearly every model
+buys safety by refusing benign traffic. Published operating points include Claude-3-Opus at 91.0%
+safe-rejection and 98.1% toxic-rejection, Llama-3-70b at 37.7% and 78.7%, GPT-4o at 6.7% and 84.9%,
+and Mistral-large at 9.7% and 72.8%.
+
+## The claim under test
+
+**Claim:** ControlPlane's operating point is not simply on the published safety/over-refusal
+trade-off line — it blocks less safe traffic than a model with comparable toxic-catch rate.
+
+## Mapping decisions, locked in advance
+
+- `or-bench-hard-1k` rows are **negatives**; `or-bench-toxic` rows are **positives**. No relabelling.
+- Category to axis: `privacy` to `pii_leak`; `hate` to `bias`; the other eight to `unsafe_content`.
+  The same mapping is applied to both files, so a safe row and a toxic row from one category differ
+  only in their label.
+- OR-Bench ships no split. A deterministic 50/50 fold is derived from a hash of the prompt text,
+  fixed in `controlplane/corpora/orbench.py` before any run.
+- The prompt string goes in `response`, for the same reason as Aegis.
+
+## Primary endpoint
+
+At a threshold chosen on the calibration fold and applied unchanged to the held-out fold:
+
+- **Success:** false-refusal rate on the safe fold is **below 37.7%** — Llama-3-70b's published
+  rate — at a toxic-catch rate of **at least 78.7%**, its published pairing. That is the specific
+  published point we are claiming to beat, chosen before seeing our numbers because it sits in the
+  middle of the published spread rather than at either extreme.
+- **Partial:** we beat that point on one axis and not the other.
+- **Failure:** we are worse on both, i.e. we refuse more safe traffic *and* catch less toxic traffic
+  than a published model.
+
+## Secondary endpoints, reported either way
+
+- **AUC and AUPRC** on the pooled fold, as a threshold-free summary.
+- **The block rate on safe traffic specifically**, which is the number an operator actually feels.
+- **Per-category false-refusal rate.** A detector that is calm overall but refuses every `privacy`
+  question has a problem the pooled number hides.
+- Whether the release floor holds, and whether it is vacuous here. With a 33% base rate we expect
+  high mandatory coverage, which would make the bound uninformative — and that must be said rather
+  than counted as a fifth success.
+
+## What is deliberately not claimed
+
+We are a moderation and allocation layer, not a chat model, so this is **not** a like-for-like
+comparison with the published models: they were measured by whether they *answered*, we are measured
+by whether we *block*. A model can refuse for reasons a guardrail never sees. The comparison is
+offered as a calibration of scale — is our over-refusal in the same league — and not as a claim to
+have beaten those models at their own task. Any headline drawn from this must say so.

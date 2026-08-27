@@ -18,7 +18,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from controlplane.economics import BudgetController
+from controlplane.economics import BudgetController, BudgetGovernor
 from controlplane.models import Interaction, ReviewCase, ReviewOutcome
 from controlplane.review import ReviewQueue, case_from_trace
 from controlplane.service import AssessmentEngine
@@ -33,15 +33,19 @@ HIGH_VALUE_QUANTILE = 0.90
 
 def run_attention(root: Path, interactions: list[Interaction]) -> dict[str, Any]:
     engine = AssessmentEngine(root)
-    engine.calibrate([item for item in interactions if item.split == "calibration"])
+    calibration = [item for item in interactions if item.split == "calibration"]
+    engine.calibrate(calibration)
     test = [item for item in interactions if item.split == "test"]
+    # The queue is only comparable with the report if both stream the same allocator, and
+    # the report's is now budget-governed. Sized on calibration, as it is there.
+    floor_rate = engine.floor_rate_inr(calibration)
     economics = engine.cost_model.review
     minutes = economics.capacity_minutes_per_hour * (len(test) / INTERACTIONS_PER_HOUR)
     full_spend = _full_check_spend(engine, test)
 
     budgets: list[dict[str, Any]] = []
     for fraction in BUDGET_FRACTIONS:
-        cases = _raise_cases(engine, test, full_spend * fraction)
+        cases = _raise_cases(engine, test, full_spend * fraction, floor_rate)
         cutoff = _quantile([case.expected_loss_inr for case in cases], HIGH_VALUE_QUANTILE)
         results = {
             name: _serve(cases, economics, minutes, name, cutoff) for name in STRATEGIES
@@ -69,20 +73,28 @@ def run_attention(root: Path, interactions: list[Interaction]) -> dict[str, Any]
 
 
 def _raise_cases(
-    engine: AssessmentEngine, test: list[Interaction], budget: float
+    engine: AssessmentEngine, test: list[Interaction], budget: float, floor_rate: float
 ) -> list[ReviewCase]:
     """Stream the allocator exactly as the report does, and collect what it escalates."""
     controller = BudgetController(
         budget_rate_inr=max(budget / len(test), 1e-9),
         learning_rate=engine.cost_model.controller_learning_rate,
     )
+    governor = BudgetGovernor(
+        budget_inr=budget, rows_expected=len(test), floor_rate_inr=floor_rate
+    )
     economics = engine.cost_model.review
     cases: list[ReviewCase] = []
     running = 0.0
     window_minutes = len(test) / INTERACTIONS_PER_HOUR * 60.0
     for position, item in enumerate(test, start=1):
-        trace = engine.assess(item, shadow_price=controller.shadow_price)
+        trace = engine.assess(
+            item,
+            shadow_price=controller.shadow_price,
+            mandatory_only=governor.mandatory_only(),
+        )
         running += trace.assurance_spend_inr
+        governor.commit(trace.assurance_spend_inr)
         controller.update(running / position)
         policy = engine.policy_store.resolve(item.route, item.jurisdiction)
         arrived = (position - 1) / len(test) * window_minutes if test else 0.0
