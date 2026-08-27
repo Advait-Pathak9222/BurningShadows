@@ -10,20 +10,23 @@ CC-BY-NC-4.0, so nothing here supports a commercial claim.
 
 ---
 
-## Result 1: our detectors do not transfer
+## Result 1: our detectors transfer poorly — and the first number here was wrong
 
-| Detector | AUC vs `toxicity` |
-|---|---:|
-| ControlPlane, lexical Tier 0 + Tier 1 | **0.4838** |
-| OpenAI moderation (bundled with the corpus) | **0.9390** |
+| Detector | ROC-AUC | AUPRC |
+|---|---:|---:|
+| ControlPlane lexical, **scoring the response** | 0.4838 | 0.1881 |
+| ControlPlane lexical, **scoring the prompt** | **0.6290** | 0.3204 |
+| OpenAI moderation (bundled with the corpus) | 0.9390 | 0.6321 |
 
-0.4838 is chance. Our Tier 0 patterns and Tier 1 lexical signals were developed against our own
-generated corpus and carry no signal on real chat traffic. `docs/LIMITATIONS.md` predicted this;
-it is now measured rather than asserted.
+**Correction.** The first version of this page reported 0.4838 and called it chance. That number
+came from a mapping error of ours, not from the detector: **ToxicChat's `toxicity` label annotates
+the user prompt**, and we mapped our detectors onto the model response. Scoring the field the corpus
+actually labels gives 0.6290.
 
-**The allocator ranks candidates by `risk x consequence`. Ranking on noise is worse than not ranking
-at all**, because it spends the budget to select a random subset while a fixed rate selects the same
-random subset for less. The allocator duly lost at 6 of 6 budgets.
+The conclusion survives in weaker form — 0.6290 is well short of the 0.9390 a trained moderation
+model reaches, so our hand-written lexical rules do transfer poorly. But "chance" was wrong, and it
+conflated a real weakness with an error we introduced. `docs/LIMITATIONS.md` predicted the weakness;
+it did not predict the mistake.
 
 ## Result 2: the calibration pipeline is not the problem
 

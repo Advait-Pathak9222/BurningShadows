@@ -101,8 +101,9 @@ endpoints failed, and the reason is worth more than a pass would have been.**
 
 | | Result |
 |---|---|
-| Our lexical detectors on real traffic | **AUC 0.4838** — chance |
+| Our lexical detectors on real traffic | **AUC 0.6290** — weak, well short of a trained model |
 | The same pipeline given a competent detector | **AUC 0.9377**, against the bundled OpenAI moderation score's 0.9390 |
+| That pipeline against published guard models | **AUPRC 0.6623** on ToxicChat, against Llama Guard's published 0.626 |
 | Allocation against a tuned fixed-rate policy | Won **1 of 6** budgets, against a pre-registered bar of 5 of 6 |
 
 The cause is that **ToxicChat exercises only one harm axis.** It labels toxicity and jailbreak, and
