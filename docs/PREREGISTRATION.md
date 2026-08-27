@@ -447,3 +447,64 @@ The result is written into the README beside the synthetic-corpus numbers, with 
 named. If the allocator does not beat a tuned fixed-rate policy on real traffic, that is the single
 most important finding this project could produce, and burying it would make every other number here
 worthless. The synthetic corpus stays as the reproducible offline default either way.
+
+---
+
+# Pre-registration 6: is the allocator broken, or is the detector?
+
+**Status: locked after Pre-registration 5 returned a failed primary endpoint, before this ran.**
+
+## Why this experiment exists
+
+Pre-registration 5 failed. On real traffic the allocator averted less loss than a tuned fixed-rate
+policy at every budget, and the diagnosis is visible in the secondary endpoint: our calibrated risk
+score reached **AUC 0.4838**, which is chance. The allocator ranks candidates by
+`risk x consequence`. Ranking on noise is not merely unhelpful — it is worse than a fixed rate,
+because it spends the budget on a random subset while a fixed rate spends less for the same random
+subset.
+
+That failure is consistent with two different explanations, and they have opposite implications:
+
+1. **The allocation mechanism does not work on real traffic.** Fatal to the project.
+2. **The mechanism was starved of signal by a lexical detector that does not transfer.** A detector
+   problem, which the architecture already claims is swappable.
+
+These are distinguishable. The corpus ships OpenAI moderation scores, which reach **AUC 0.9390** on
+the same held-out rows. Substituting them isolates the question.
+
+## The claim under test
+
+**Claim:** given a competent risk signal, budget-aware allocation beats a tuned fixed-rate policy at
+matched spend on the same real traffic where it lost with our own detectors.
+
+## What changes, and what must not
+
+Exactly one thing changes: `AssessmentEngine.tier1` is replaced with an adapter returning the
+corpus's bundled OpenAI moderation score on the `unsafe_content` axis. Everything else — isotonic
+calibration, the fitting/selection fold split, Learn-Then-Test, the shadow-price controller, the
+allocator, the cost model, alpha and delta — is untouched and re-fitted by the same code path.
+
+The scores are precomputed in the CSV, so this run makes **no network call** and the offline promise
+is intact. This is not a claim that we built a better detector. It is a claim about what the
+allocator does when a competent one is plugged into the adapter the architecture already exposes.
+
+## Primary endpoint
+
+At matched assurance spend on the held-out test split, the allocator averts more expected loss than
+the best tuned fixed-rate policy at **at least 5 of 6** budgets.
+
+Failure: fewer than 5 of 6. If it fails here too, explanation (1) above is the surviving one, the
+allocation mechanism is the problem rather than the detector, and that is what gets written down.
+
+## Secondary endpoints, reported either way
+
+- The per-route release floor: whether the certified bound still holds on held-out rows, and whether
+  it binds at all. Under our own detectors at `alpha = 0.15` it did not bind, because the corpus base
+  rate of 7.12% already sits below the tolerance.
+- Coverage and mandatory-coverage rates, which say whether the floor or the budget is driving checks.
+- The same run under both annotation conditions, as in Pre-registration 5.
+
+## What this cannot claim
+
+Nothing about ControlPlane's detection quality — the detection is OpenAI's. Nothing commercial;
+the corpus is CC-BY-NC-4.0. And nothing about the four harm axes ToxicChat does not label.

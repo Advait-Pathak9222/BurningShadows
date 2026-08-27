@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import comb
+from math import exp, lgamma, log, log1p
 
 
 @dataclass(frozen=True)
@@ -30,15 +30,40 @@ def binomial_upper_bound(escaped_harms: int, released: int, delta: float) -> flo
     high = 1.0
     for _ in range(60):
         probability = (low + high) / 2.0
-        tail = sum(
-            comb(released, count) * probability**count * (1.0 - probability) ** (released - count)
-            for count in range(escaped_harms + 1)
-        )
+        tail = _binomial_tail(escaped_harms, released, probability)
         if tail > delta:
             low = probability
         else:
             high = probability
     return high
+
+
+def _binomial_tail(successes: int, trials: int, probability: float) -> float:
+    """P(X <= successes) for X ~ Binomial(trials, probability), summed in log space.
+
+    The direct form multiplies `comb(trials, count)` by the probability terms. That
+    combination is an exact Python int, and past roughly a thousand trials it exceeds the
+    float range and raises OverflowError before the small probability factors can bring it
+    back down. Only surfaced when the bound was fitted on a corpus with thousands of
+    released rows on a single route; the shipped corpus peaks at 475.
+    """
+    if probability <= 0.0:
+        return 1.0
+    if probability >= 1.0:
+        return 1.0 if successes >= trials else 0.0
+    log_probability = log(probability)
+    log_complement = log1p(-probability)
+    total = 0.0
+    for count in range(successes + 1):
+        log_term = (
+            lgamma(trials + 1)
+            - lgamma(count + 1)
+            - lgamma(trials - count + 1)
+            + count * log_probability
+            + (trials - count) * log_complement
+        )
+        total += exp(log_term)
+    return total
 
 
 def learn_then_test(

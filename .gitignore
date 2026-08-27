@@ -17,3 +17,6 @@ mlruns/
 *.db-shm
 .vercel/
 build/
+
+# Downloaded evaluation corpora (fetched on demand, ~16MB)
+data/external/
