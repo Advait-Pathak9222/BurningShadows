@@ -359,3 +359,91 @@ reader can see what was and was not achievable, and the honest conclusion is wri
 that offline lexical detectors cannot separate authorised from unauthorised disclosure, and
 that this axis needs either a real judge or the policy context the gateway already has and
 the detector does not see.
+
+---
+
+# Pre-registration 5: does the allocator hold up on real user traffic?
+
+**Status: locked before the first run against this corpus.**
+
+## The claim under test
+
+Every number in this project comes from a corpus we generated. The mechanism could be sound and the
+evidence still worthless if the generator quietly built a world the allocator was good at. This
+tests the allocator on traffic nobody on this team wrote.
+
+**Claim:** on held-out real user–assistant traffic, budget-aware allocation averts more expected
+loss than a tuned fixed-rate policy at matched spend, and the per-route release floor still holds.
+
+## The corpus, and why this one
+
+`lmsys/toxic-chat`, split `0124` — 10,165 real user prompts from the Vicuna online demo with model
+responses, human toxicity labels and a separate jailbreak label. CC-BY-NC-4.0.
+
+It was chosen for one property above all others: **a 7.18% harm base rate**. Balanced adversarial
+benchmarks (HarmBench, AdvBench and similar) sit near 50% harm, and on those almost every row clears
+the expected-loss threshold, the allocator degenerates to `check_all`, and the experiment cannot
+distinguish a working allocator from a broken one. A realistic base rate is the binding requirement,
+not corpus size or name recognition.
+
+Annotation provenance is mixed and this is recorded now rather than discovered later: 5,654 rows
+were human-annotated, and 4,511 were auto-filtered as non-toxic by Perspective API below a score of
+10^-1.43 without human review. Those labels come from a detector, not a person.
+
+## Mapping decisions, locked in advance
+
+These are modelling choices, not findings. They are fixed here so they cannot be tuned after seeing
+a result.
+
+| Decision | Locked value | Why |
+|---|---|---|
+| Route | `support-assistant`, jurisdiction `eu` | ToxicChat is single-domain general chat. Inventing three routes would fabricate structure the data does not carry. |
+| `toxicity` maps to | `unsafe_content` (consequence ₹7,000) | Closest axis by definition |
+| `jailbreaking` maps to | `injection_or_exfil` (consequence ₹15,000) | Matches the adversarial-intent axis |
+| Unlabelled axes | `hallucination`, `pii_leak`, `bias` carry no ground truth | ToxicChat labels two of our five axes. Calibration will drive these toward zero because no row is positive; that is correct behaviour given the labels, and it is **not** evidence those harms are absent. |
+| Calibration / test | ToxicChat's own `train` split calibrates, `test` split is held out | Their split, not ours |
+| Fitting / selection folds | The existing hash-of-id split inside `calibrate()` | Same discipline as the synthetic corpus. Fitting and selecting on the same rows previously made the bound roughly 9x optimistic. |
+| α, δ | 0.15 / 0.10, unchanged from `config/policies/eu.yaml` | Reusing shipped policy, not a corpus-specific tuning |
+
+**`jailbreaking` is a strict subset of `toxicity` in this corpus** — zero rows are jailbreak-but-not-
+toxic. The two axes are therefore nested, not independent, and no claim about axis independence may
+be drawn from this run.
+
+## Primary endpoint
+
+**Allocation, not detection.** At matched assurance spend on the held-out test split, the allocator
+averts more expected loss than the best tuned fixed-rate policy at **at least 5 of 6** budgets, and
+the observed unchecked-harm rate stays at or below α = 0.15 on the released rows.
+
+Partial success: more loss averted at 4 of 6 budgets with the floor holding.
+
+Failure: anything else. A floor breach is a failure regardless of the allocation result.
+
+## Secondary endpoints, reported either way
+
+- **AUC of our calibrated score against `toxicity`**, reported beside the OpenAI moderation baseline
+  already bundled in the corpus. **We expect to lose this comparison.** Our Tier 0 and Tier 1 are
+  lexical stubs developed against our own corpus; OpenAI's endpoint is a trained moderation model.
+  Losing it does not bear on the primary endpoint, because the primary endpoint is about how to
+  spend a budget, not about who has the better detector.
+- **The OpenAI moderation baseline at its own default threshold**, so the reader can see the
+  operating point and not just the ranking.
+- **Both annotation conditions**: all 10,165 rows at a 7.18% base rate, and the 5,654 human-annotated
+  rows at 13.19%. Reporting only the more favourable one would be exactly the selection this
+  document exists to prevent.
+- **Coverage and abstention rates**, which on unfamiliar traffic are the honest signal of whether
+  the evidence regime is doing anything.
+
+## What is deliberately not claimed
+
+- Nothing about `hallucination`, `pii_leak` or `bias` performance. ToxicChat does not label them.
+- Nothing about the reviewer-queue result. ToxicChat carries no arrival times or SLAs.
+- Nothing about effect gating. There are no tool calls in this corpus.
+- No commercial claim. CC-BY-NC-4.0 forbids it.
+
+## What happens on failure
+
+The result is written into the README beside the synthetic-corpus numbers, with the failing endpoint
+named. If the allocator does not beat a tuned fixed-rate policy on real traffic, that is the single
+most important finding this project could produce, and burying it would make every other number here
+worthless. The synthetic corpus stays as the reproducible offline default either way.
