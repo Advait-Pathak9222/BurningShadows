@@ -24,7 +24,7 @@ Weight this accordingly. **A result that flips when its authors correct their ow
 
 ### Against FIFO, the pre-registered comparator
 
-The shipped rule dominates FIFO at every budget. At the 10% budget it breaches 49 SLAs against FIFO's 148 while serving 1.57x the expected loss from the same 166 reviews, and sheds 1 of the top-decile cases against FIFO's 22.
+The shipped rule dominates FIFO at every budget. At the 10% budget it breaches 48 SLAs against FIFO's 149 while serving 1.59x the expected loss from the same 166 reviews, and sheds 1 of the top-decile cases against FIFO's 21.
 
 `deadline` — ordering by SLA alone — is **worse than FIFO** at 6 of 6 budgets. Serving every tight-SLA case first clusters them into a burst that the desk cannot clear, so they breach together. That is a useful warning about the obvious design: deadline-first scheduling is actively harmful on an oversubscribed queue.
 
@@ -34,85 +34,85 @@ Pre-registration 3 said that if an ablation beats the full rule it becomes the h
 
 This survived the model correction. It was true under the batch queue and it is true with arrival times, which is the only reason to believe it. **The deadline term should come out**, and the code comment claiming it prevents tight-SLA starvation is wrong: it causes the clustering that produces breaches.
 
-The one thing the deadline term does buy is route fairness — it sheds 76 `finops-agent` cases against `density`'s 127, so removing it concentrates dropped cases on the highest-consequence route. That is a real argument for keeping some route-awareness. It is not an argument for the rule we shipped, and it is not the argument the code made.
+The one thing the deadline term does buy is route fairness — it sheds 98 `finops-agent` cases against `density`'s 147, so removing it concentrates dropped cases on the highest-consequence route. That is a real argument for keeping some route-awareness. It is not an argument for the rule we shipped, and it is not the argument the code made.
 
 ### Where we still lose
 
-The seeded random null breaches fewer SLAs than the shipped rule at 4 of 6 budgets — the tightest one. It serves far less value (2,309,114 against 3,584,692) and drops 21 top-decile cases against our 1, so it is not a better rule. But a shuffle beating us on any axis is worth saying out loud.
+The seeded random null breaches fewer SLAs than the shipped rule at 3 of 6 budgets — the tightest one. It serves far less value (2,424,377 against 3,725,259) and drops 19 top-decile cases against our 1, so it is not a better rule. But a shuffle beating us on any axis is worth saying out loud.
 
-And ordering is still the smaller lever. Keeping up with arrivals needs 5.4 reviewers against the 2 configured. **No serving rule substitutes for that**, and it remains the number worth putting in front of a buyer.
+And ordering is still the smaller lever. Keeping up with arrivals needs 7.0 reviewers against the 2 configured. **No serving rule substitutes for that**, and it remains the number worth putting in front of a buyer.
 
-## Budget 10% — 295 cases raised
+## Budget 10% — 316 cases raised
 
-Queue 1.8x oversubscribed. Reviewers needed just to keep up with arrivals: 3.5.
-
-| Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 129 | 49 | 3,584,692 | 869,104 | 1 | 76 | 178.7 |
-| fifo (null) | 166 | 129 | 148 | 2,279,871 | 2,173,925 | 22 | 103 | 210.0 |
-| random (null) | 166 | 129 | 33 | 2,309,114 | 2,144,682 | 21 | 101 | 109.7 |
-| density (ablation) | 166 | 129 | 28 | 4,258,434 | 195,362 | 1 | 127 | 104.7 |
-| deadline (ablation) | 166 | 129 | 160 | 2,258,118 | 2,195,678 | 18 | 76 | 145.7 |
-
-## Budget 25% — 308 cases raised
-
-Queue 1.8x oversubscribed. Reviewers needed just to keep up with arrivals: 3.7.
+Queue 1.9x oversubscribed. Reviewers needed just to keep up with arrivals: 3.8.
 
 | Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 142 | 52 | 4,128,506 | 1,000,887 | 1 | 86 | 194.7 |
-| fifo (null) | 166 | 142 | 147 | 2,458,955 | 2,670,438 | 18 | 116 | 217.7 |
-| random (null) | 166 | 142 | 35 | 2,434,234 | 2,695,159 | 16 | 112 | 109.7 |
-| density (ablation) | 166 | 142 | 26 | 4,817,808 | 311,585 | 1 | 136 | 185.3 |
-| deadline (ablation) | 166 | 142 | 160 | 2,477,663 | 2,651,730 | 14 | 86 | 154.0 |
+| deadline_density (ours) | 166 | 150 | 48 | 3,725,259 | 1,063,213 | 1 | 98 | 194.0 |
+| fifo (null) | 166 | 150 | 149 | 2,341,070 | 2,447,402 | 21 | 123 | 231.0 |
+| random (null) | 166 | 150 | 38 | 2,424,377 | 2,364,095 | 19 | 120 | 177.3 |
+| density (ablation) | 166 | 150 | 27 | 4,308,020 | 480,452 | 1 | 147 | 83.7 |
+| deadline (ablation) | 166 | 150 | 160 | 2,248,256 | 2,540,216 | 20 | 98 | 183.3 |
 
-## Budget 40% — 340 cases raised
+## Budget 25% — 335 cases raised
 
-Queue 2.0x oversubscribed. Reviewers needed just to keep up with arrivals: 4.1.
-
-| Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 174 | 32 | 5,968,169 | 1,282,070 | 1 | 105 | 183.0 |
-| fifo (null) | 166 | 174 | 149 | 3,234,289 | 4,015,950 | 20 | 139 | 249.0 |
-| random (null) | 166 | 174 | 36 | 3,159,227 | 4,091,012 | 20 | 136 | 209.3 |
-| density (ablation) | 166 | 174 | 20 | 6,575,183 | 675,057 | 1 | 147 | 186.7 |
-| deadline (ablation) | 166 | 174 | 160 | 3,359,935 | 3,890,304 | 18 | 105 | 182.0 |
-
-## Budget 60% — 410 cases raised
-
-Queue 2.5x oversubscribed. Reviewers needed just to keep up with arrivals: 4.9.
+Queue 2.0x oversubscribed. Reviewers needed just to keep up with arrivals: 4.0.
 
 | Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 244 | 32 | 6,213,746 | 2,478,836 | 2 | 107 | 169.7 |
-| fifo (null) | 166 | 244 | 150 | 3,208,183 | 5,484,399 | 45 | 154 | 278.3 |
-| random (null) | 166 | 244 | 35 | 3,233,649 | 5,458,934 | 49 | 161 | 143.7 |
-| density (ablation) | 166 | 244 | 15 | 6,872,515 | 1,820,068 | 2 | 158 | 115.0 |
-| deadline (ablation) | 166 | 244 | 160 | 3,508,812 | 5,183,770 | 34 | 107 | 184.3 |
+| deadline_density (ours) | 166 | 169 | 44 | 4,832,867 | 1,238,964 | 2 | 113 | 274.7 |
+| fifo (null) | 166 | 169 | 150 | 3,006,391 | 3,065,441 | 31 | 141 | 252.3 |
+| random (null) | 166 | 169 | 39 | 2,690,831 | 3,381,000 | 34 | 137 | 177.3 |
+| density (ablation) | 166 | 169 | 23 | 5,454,431 | 617,400 | 2 | 163 | 178.3 |
+| deadline (ablation) | 166 | 169 | 160 | 2,943,767 | 3,128,064 | 27 | 113 | 200.0 |
 
-## Budget 80% — 453 cases raised
+## Budget 40% — 355 cases raised
 
-Queue 2.7x oversubscribed. Reviewers needed just to keep up with arrivals: 5.4.
-
-| Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 287 | 32 | 6,213,746 | 3,191,916 | 2 | 107 | 169.7 |
-| fifo (null) | 166 | 287 | 148 | 3,021,806 | 6,383,856 | 50 | 172 | 318.7 |
-| random (null) | 166 | 287 | 29 | 3,325,231 | 6,080,431 | 50 | 173 | 124.0 |
-| density (ablation) | 166 | 287 | 21 | 6,895,743 | 2,509,919 | 2 | 158 | 115.0 |
-| deadline (ablation) | 166 | 287 | 160 | 3,508,812 | 5,896,850 | 34 | 107 | 184.3 |
-
-## Budget 100% — 453 cases raised
-
-Queue 2.7x oversubscribed. Reviewers needed just to keep up with arrivals: 5.4.
+Queue 2.1x oversubscribed. Reviewers needed just to keep up with arrivals: 4.3.
 
 | Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| deadline_density (ours) | 166 | 287 | 32 | 6,213,746 | 3,191,916 | 2 | 107 | 169.7 |
-| fifo (null) | 166 | 287 | 148 | 3,021,806 | 6,383,856 | 50 | 172 | 318.7 |
-| random (null) | 166 | 287 | 29 | 3,325,231 | 6,080,431 | 50 | 173 | 124.0 |
-| density (ablation) | 166 | 287 | 21 | 6,895,743 | 2,509,919 | 2 | 158 | 115.0 |
-| deadline (ablation) | 166 | 287 | 160 | 3,508,812 | 5,896,850 | 34 | 107 | 184.3 |
+| deadline_density (ours) | 166 | 189 | 31 | 6,476,260 | 1,346,761 | 1 | 131 | 176.7 |
+| fifo (null) | 166 | 189 | 151 | 3,228,818 | 4,594,204 | 24 | 159 | 262.0 |
+| random (null) | 166 | 189 | 39 | 3,295,002 | 4,528,020 | 21 | 154 | 162.7 |
+| density (ablation) | 166 | 189 | 22 | 6,912,048 | 910,973 | 1 | 165 | 160.0 |
+| deadline (ablation) | 166 | 189 | 160 | 3,453,676 | 4,369,346 | 19 | 131 | 212.0 |
+
+## Budget 60% — 418 cases raised
+
+Queue 2.5x oversubscribed. Reviewers needed just to keep up with arrivals: 5.0.
+
+| Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| deadline_density (ours) | 166 | 252 | 27 | 7,171,001 | 2,475,464 | 2 | 141 | 61.3 |
+| fifo (null) | 166 | 252 | 153 | 3,538,745 | 6,107,719 | 46 | 182 | 294.0 |
+| random (null) | 166 | 252 | 37 | 3,490,215 | 6,156,250 | 48 | 180 | 143.7 |
+| density (ablation) | 166 | 252 | 18 | 7,550,177 | 2,096,288 | 2 | 176 | 134.0 |
+| deadline (ablation) | 166 | 252 | 160 | 3,782,176 | 5,864,289 | 37 | 141 | 219.0 |
+
+## Budget 80% — 495 cases raised
+
+Queue 3.0x oversubscribed. Reviewers needed just to keep up with arrivals: 5.9.
+
+| Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| deadline_density (ours) | 166 | 329 | 27 | 7,171,001 | 3,663,968 | 2 | 141 | 61.3 |
+| fifo (null) | 166 | 329 | 151 | 3,305,492 | 7,529,477 | 51 | 202 | 328.0 |
+| random (null) | 166 | 329 | 28 | 3,530,486 | 7,304,483 | 51 | 203 | 154.0 |
+| density (ablation) | 166 | 329 | 20 | 7,569,402 | 3,265,567 | 2 | 176 | 84.3 |
+| deadline (ablation) | 166 | 329 | 160 | 3,782,176 | 7,052,794 | 37 | 141 | 219.0 |
+
+## Budget 100% — 580 cases raised
+
+Queue 3.5x oversubscribed. Reviewers needed just to keep up with arrivals: 7.0.
+
+| Rule | Served | Shed | SLA breaches | Value served | Value shed | High-value shed | finops shed | p99 wait |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| deadline_density (ours) | 166 | 414 | 28 | 7,176,217 | 4,283,236 | 2 | 142 | 64.0 |
+| fifo (null) | 166 | 414 | 136 | 3,075,270 | 8,384,182 | 53 | 218 | 355.7 |
+| random (null) | 166 | 414 | 25 | 3,021,916 | 8,437,536 | 55 | 224 | 126.3 |
+| density (ablation) | 166 | 414 | 23 | 7,572,978 | 3,886,474 | 2 | 177 | 84.3 |
+| deadline (ablation) | 166 | 414 | 160 | 3,787,611 | 7,671,841 | 37 | 142 | 220.0 |
 
 ## What this does not claim
 

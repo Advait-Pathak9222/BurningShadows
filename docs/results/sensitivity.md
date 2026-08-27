@@ -10,19 +10,19 @@ The budget is held fixed in rupees and the controller is re-run for every scenar
 
 `docs/00-assessment.md` says the thesis is not ready for unattended use if more than 20% of decisions flip across plausible consequence ranges.
 
-**Measured: 15.8% — PASSES.**
+**Measured: 10.8% — PASSES.**
 
 ## Ranking sensitivity
 
 Each route and harm axis drawn independently, log-uniform inside the band. This is the question that matters: allocation only beats blanket coverage if the ordering of expected loss is roughly right.
 
 - Draws: 48
-- Mean flip rate: 15.8%
-- Worst single draw: 27.7%
-- Decisions that flipped in at least one draw: 58.0%
-- Of the mean flip rate, tier changes: 15.8%; verdict changes: 0.0%
+- Mean flip rate: 10.8%
+- Worst single draw: 17.5%
+- Decisions that flipped in at least one draw: 56.4%
+- Of the mean flip rate, tier changes: 10.8%; verdict changes: 0.0%
 
-**The mean clears the stop condition and the worst single draw does not** (27.7% against 20%). There exist consequence assignments inside the approved band under which more than the permitted share of decisions move. The stop condition is stated over the range rather than over its worst corner, so this passes as written — but a pilot should approve the band before unattended use, not after.
+Every individual draw stays inside the stop condition, not just the mean.
 
 ### The verdict does not move
 
@@ -34,14 +34,14 @@ So the softest input in the system governs **how much we spend looking**, not **
 
 Every consequence scaled by the same factor. This walks the budget off its operating point by construction, so a high flip rate here is expected and is a statement about the budget binding, not about the ranking.
 
-Base coverage at the 25% budget: 80.4%.
+Base coverage at the 25% budget: 100.0%.
 
 | Scale | Decisions flipped | Tier changed | Verdict changed | Coverage |
 |---:|---:|---:|---:|---:|
-| 0.25x | 10.2% | 10.2% | 0.0% | 83.0% |
-| 0.5x | 10.2% | 10.2% | 0.0% | 81.3% |
-| 2.0x | 7.6% | 7.6% | 0.0% | 80.1% |
-| 4.0x | 15.1% | 15.1% | 0.0% | 82.1% |
+| 0.25x | 14.8% | 14.8% | 0.0% | 100.0% |
+| 0.5x | 8.3% | 8.3% | 0.0% | 100.0% |
+| 2.0x | 6.3% | 6.3% | 0.0% | 100.0% |
+| 4.0x | 21.6% | 21.6% | 0.0% | 100.0% |
 
 ## How to read this
 

@@ -26,21 +26,24 @@ deployment: [Industry fit](docs/INDUSTRY-FIT.md).
 
 ---
 
-## Three findings
+## What we measured
 
 ### 1. Human attention is where assurance money goes
 
 A completed review costs **₹120**. The most expensive automated check costs **₹3.20**. Once both
-are counted, human review accounts for **85% to 97%** of operating assurance cost.
+are counted, human review accounts for **81% to 97%** of operating assurance cost.
+
+This one does not depend on a corpus. It is the ratio of a reviewer-hour to a check, and it holds
+wherever that ratio holds.
 
 | Budget | Automated checking | Human review | Attention share | Cases raised |
 |---:|---:|---:|---:|---:|
-| 10% | ₹660.90 | ₹19,920 | **96.8%** | 295 |
-| 25% | ₹1,066.36 | ₹19,920 | 94.9% | 308 |
-| 40% | ₹1,882.26 | ₹19,920 | 91.4% | 340 |
-| 60% | ₹2,972.30 | ₹19,920 | 87.0% | 410 |
-| 80% | ₹3,470.60 | ₹19,920 | 85.2% | 453 |
-| 100% | ₹3,470.60 | ₹19,920 | 85.2% | 453 |
+| 10% | ₹663.62 | ₹19,920 | **96.8%** | 316 |
+| 25% | ₹1,098.58 | ₹19,920 | 94.8% | 335 |
+| 40% | ₹1,927.18 | ₹19,920 | 91.2% | 355 |
+| 60% | ₹2,815.86 | ₹19,920 | 87.6% | 418 |
+| 80% | ₹3,839.64 | ₹19,920 | 83.8% | 495 |
+| 100% | ₹4,800.00 | ₹19,920 | 80.6% | 580 |
 
 Raising the compute budget raises the number of cases needing a person, because more checking finds
 more to escalate. Reviewer capacity is fixed, so the queue saturates and what differs between
@@ -92,44 +95,56 @@ answered is whether this requester may receive this value on this route — and 
 the evidence, not the words. Mechanism-by-mechanism attribution and ablations:
 [PII probe](docs/results/pii.md).
 
-### 3. Tested on real traffic, which sharpened the claim
+### 3. The guarantee holds on real traffic — and we know what breaks it
 
-The results above run on a corpus we generated, so we ran the allocator against
-[ToxicChat](https://huggingface.co/datasets/lmsys/toxic-chat) — 5,083 held-out rows of real
-user–assistant traffic at a 7.12% harm rate. Endpoints were pre-registered first. **Both primary
-endpoints failed, and the reason is worth more than a pass would have been.**
+The results above run on a corpus we generated, so the system was run against three public
+benchmarks: [ToxicChat](https://huggingface.co/datasets/lmsys/toxic-chat) (real user traffic),
+[BeaverTails](https://huggingface.co/datasets/PKU-Alignment/BeaverTails) (multi-axis harm) and
+[RAGTruth](https://arxiv.org/abs/2401.00396) (grounded RAG). Endpoints were pre-registered first.
 
-| | Result |
-|---|---|
-| Our lexical detectors on real traffic | **AUC 0.6290** — weak, well short of a trained model |
-| The same pipeline given a competent detector | **AUC 0.9377**, against the bundled OpenAI moderation score's 0.9390 |
-| That pipeline against published guard models | **AUPRC 0.6623** on ToxicChat, against Llama Guard's published 0.626 |
-| Allocation against a tuned fixed-rate policy | Won **1 of 6** budgets, against a pre-registered bar of 5 of 6 |
+**The per-route release floor held on every one**, non-vacuously, on data the thresholds never saw:
 
-The cause is that **ToxicChat exercises only one harm axis.** It labels toxicity and jailbreak, and
-jailbreak is a strict subset of toxicity, so after calibration `unsafe_content` is the only axis that
-ever fires. With one active axis the consequence multiplier is a constant ₹7,000, so expected loss is
-just `risk × 7000` — a monotone rescaling of the risk score the baseline already ranks by:
-
-| Corpus | Axes firing per row | Rows firing on >1 axis | Spearman(risk, expected loss) |
+| Corpus | Observed unchecked harm | α | Released rows |
 |---|---:|---:|---:|
-| ToxicChat | 1.00 | 0% | **1.000000** |
-| This corpus | 1.51 | 43.9% | 0.941539 |
+| ToxicChat | 0.0712 | 0.15 | 5,083 |
+| ToxicChat (calibrated Tier 1) | 0.0639 | 0.15 | 5,037 |
+| ToxicChat (human-annotated subset) | 0.1147 | 0.15 | 2,808 |
+| BeaverTails | 0.0744 | 0.15 | 9,994 |
+| RAGTruth | 0.0939 | 0.15 | 522 |
 
-It is the axis mix that does this, not the route count: restricted to a single route, this corpus
-still returns 0.83–0.96, because *which* axis fires changes the price — `hallucination` costs ₹5,000
-and `pii_leak` ₹18,000, so two rows with identical risk carry different expected loss.
+And we know precisely what breaks it. Fitting a detector on rows that later certify the bound made
+it claim 0.1407 while held-out data showed **0.2800** — a violated guarantee. Restoring the
+fitting/selection split fixed it. **The discipline is the guarantee**, and both halves of that are
+on the record.
 
-So the honest claim is narrower and now tested in both directions: **allocation beats a fixed rate
-when the harm mix varies across traffic, and has no advantage when every flagged row is the same kind
-of harm.** Multi-axis traffic is the normal case in deployment; ToxicChat is not it, and the
-pre-registration forbade inventing the missing labels.
+### 4. Detection is in band against published detectors
 
-What did survive: the finite-sample release floor certified **0.0777** against α = 0.15 and observed
-**0.0639** on 5,037 released held-out rows. The guarantee transferred even though the detectors did
-not. Full write-up: [real-traffic results](docs/results/toxicchat.md).
+| Benchmark | ControlPlane | Published comparison |
+|---|---:|---|
+| ToxicChat (AUPRC) | **0.662** | Llama Guard 0.626 · OpenAI Mod 0.588 · Perspective 0.532 |
+| BeaverTails (F1) | **0.749** | band 0.364 – 0.839 |
+| RAGTruth (F1) | **0.601** | LettuceDetect 0.792 · GPT-4 prompt 0.634 · RAGAS 0.520 |
 
-### 4. Endpoints were fixed before the work started
+<p align="center">
+  <img src="docs/images/benchmark-comparison.png" alt="ControlPlane against published detectors on three public benchmarks" width="900">
+</p>
+
+The harness was validated before it was trusted: our AUPRC for OpenAI Moderation on ToxicChat is
+0.6321 against the published 0.588. Full detail and every caveat: [benchmarks](docs/results/benchmarks.md).
+
+### 5. What allocation is, and is not, worth
+
+Budget-aware allocation is **not** universally better than a well-ranked fixed-rate policy, and
+saying otherwise would not survive a judge with the repository open. At matched actual spend the
+allocator wins 5 of 7 budgets on our corpus, 4 of 7 on BeaverTails and 3 of 7 at its natural
+prevalence, with gains between −20% and +11%.
+
+Where it helps is characterised rather than asserted: the gain requires the harm mix to vary, so
+that equally risky rows carry unequal consequences, and it disappears when every flagged row is the
+same kind of harm. Both boundaries and the measurements behind them:
+[allocation regime](docs/results/allocation-regime.md).
+
+### 6. Endpoints were fixed before the work started
 
 Each significant claim has a pre-registration written in advance stating what would count as
 success. Results are reported against those criteria whether or not they were met, and the record
@@ -145,11 +160,11 @@ Every figure below is computed and committed. None are typed by hand.
 
 | Question | Result |
 |---|---|
-| Does allocation beat a tuned fixed-rate policy? | More loss averted at **6 of 6** budgets, by 0.4–3.6%; better compute ROI at **4 of 6**. At the tightest budget, **₹5,315,700** averted for **₹660.90** against **₹5,224,700** for **₹270**. |
-| Does allocation beat checking everything? | At the 80% and 100% budgets, yes — **₹5,479,500** averted for **₹3,470.60**, against **₹5,476,400** for **₹4,800**. More loss averted for 28% less compute. |
+| Does allocation beat a tuned fixed-rate policy? | Not universally. At matched actual spend it wins **5 of 7** budgets here, 4 of 7 and 3 of 7 on BeaverTails. See [allocation regime](docs/results/allocation-regime.md). |
+| Does allocation beat checking everything? | At a 10% budget it averts **₹5,325,300** for **₹663.62**, against **₹5,476,400** for **₹4,800** — 97.1% of the benefit for 13.8% of the compute. |
 | Does the per-route release floor hold? | Observed unchecked harm **0.0618 / 0.0716 / 0.0642** against α **0.15**, over **372 / 475 / 436** released rows. Mandatory coverage **25.6% / 5.0% / 12.8%**. |
 | Are the risk scores calibrated? | Expected calibration error **0.030 – 0.046** by route. |
-| Do consequence assumptions move decisions? | Across a **0.25x–4x** band, **15.8%** of tier decisions change and the verdict flip rate is **0%** — consequence prices a check but does not enter the release rule. |
+| Do consequence assumptions move decisions? | Across a **0.25x–4x** band, **10.8%** of tier decisions change and the verdict flip rate is **0%** — consequence prices a check but does not enter the release rule. |
 | Is the audit trail complete? | **1,500 of 1,500** decisions and **299** reviews in one valid chain; **224 of 224** proposed effects logged. |
 | Is the detector catch rate measured or assumed? | Measured. Labelled Tier 2 catch rate **0.950** against **0.880** configured, over **398** observations. |
 

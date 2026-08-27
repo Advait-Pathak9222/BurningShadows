@@ -61,8 +61,8 @@ Three things in that table are uncomfortable and all three are the point of runn
 
 | Detector | AUC | Precision | Recall | F1 | Flagged | FP | FN | Latency |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| controlplane Tier 0 | 0.9879 | 1.0000 | 0.7660 | 0.8675 | 72 | 0 | 22 | 0.10 ms |
-| presidio | 0.5825 | 0.0747 | 0.8298 | 0.1371 | 1044 | 966 | 16 | 23.82 ms |
+| controlplane Tier 0 | 0.9879 | 1.0000 | 0.7660 | 0.8675 | 72 | 0 | 22 | 0.09 ms |
+| presidio | 0.5825 | 0.0747 | 0.8298 | 0.1371 | 1044 | 966 | 16 | 22.54 ms |
 
 Presidio has the higher recall — 0.83 against 0.77 — and flags 70% of all traffic to get it. This is not a fair fight and it should not be read as one: Presidio is being asked whether text contains personal data, which it answers well, and then scored against a label that asks whether a disclosure was authorised. **That gap is the finding.** A best-in-class recogniser cannot answer the question the business is actually asking, because the answer is not in the text.
 

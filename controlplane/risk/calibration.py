@@ -14,10 +14,22 @@ class IsotonicCalibrator:
     def fit(cls, scores: list[float], labels: list[bool]) -> IsotonicCalibrator:
         if len(scores) != len(labels) or not scores:
             raise ValueError("scores and labels must be non-empty and equally sized")
-        pairs = sorted(zip(scores, labels, strict=True), key=lambda pair: pair[0])
+        # Tied scores must enter as ONE block. Feeding them in one row at a time leaves
+        # equal-x blocks that pool-adjacent-violators will not merge — a run of negatives
+        # (mean 0) followed by positives (mean 1) is not a violation — and `predict` then
+        # returns the first block whose upper bound covers the score, which is the
+        # zero-probability one. Any detector emitting discrete or repeated scores had its
+        # signal destroyed: a synthetic detector with raw AUC 0.9893 calibrated to 0.5000.
+        totals: dict[float, list[float]] = {}
+        for score, label in zip(scores, labels, strict=True):
+            bucket = totals.setdefault(score, [0.0, 0.0])
+            bucket[0] += float(label)
+            bucket[1] += 1.0
+
         blocks: list[list[float]] = []
-        for score, label in pairs:
-            blocks.append([score, score, float(label), 1.0])
+        for score in sorted(totals):
+            positives, count = totals[score]
+            blocks.append([score, score, positives, count])
             while len(blocks) >= 2 and _mean(blocks[-2]) > _mean(blocks[-1]):
                 right = blocks.pop()
                 left = blocks.pop()

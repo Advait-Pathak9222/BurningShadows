@@ -55,15 +55,27 @@ built detector, and the gap to LettuceDetect is 19 F1 points.
 
 ---
 
-## The control that makes the number mean something
+## The control, and what it is actually worth
 
-Running the same fitted detector with the context withheld gives **AUC 0.5000** — exactly chance.
+Running the fitted detector with the context withheld gives **AUC 0.5000** — exactly 0.5000.
 
-That is the result that distinguishes a grounding signal from a text-style signal. A detector that
-still scored 0.65 without the source would be reading fluency, length or topic, not support. This
-one collapses completely, which is what it should do.
+**That is not evidence.** `GroundingTier1.run` contains an explicit
+`if not interaction.context_documents: score = 0.0`, so a constant is returned and the AUC is 0.5 by
+construction. An earlier version of this page presented it as "the control that makes the number
+mean something". It is a tautology, and an exactly-round number should have prompted that check
+immediately.
 
----
+The control that does carry information is the **hand-written rules**, which have no such early
+return on the scoring path and were never designed around this corpus:
+
+| Hand-written Tier 0 + Tier 1 | AUC |
+|---|---:|
+| Context withheld | 0.5005 |
+| Context supplied | **0.6198** |
+
+Same detector, same responses, same labels; the only change is whether the source passages are
+present. That 0.12 lift is measured rather than asserted, and it is the evidence that the mechanism
+reads support rather than style.
 
 ## Where it does not work, which the pooled number hides
 
@@ -106,7 +118,8 @@ real work here rather than passing trivially, because the 34.93% base rate sits 
 ## What this changes
 
 - The `hallucination` axis moves from **0.5215 (untested)** to **0.7099 (measured, in band)**.
-- The grounding mechanism is demonstrated to be a grounding mechanism, by a control that collapses
-  to exactly 0.5000 without the source.
+- The grounding mechanism is shown to read support rather than style, by the hand-written rules
+  moving 0.5005 -> 0.6198 on the same rows when the source passages are supplied. The fitted
+  detector's 0.5000 without context is a hard-coded return and proves nothing.
 - One task type is not solved at all, and that is now on the record rather than averaged away.
 - This is the third corpus, and the first with a permissive licence.

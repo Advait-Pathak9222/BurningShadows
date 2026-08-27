@@ -1,48 +1,48 @@
 {
-  "base_coverage": 0.804,
+  "base_coverage": 1.0,
   "budget_fraction": 0.25,
   "budget_inr": 1199.9999999999661,
   "draws": 48.0,
-  "flip_rate": 0.15777777777777777,
+  "flip_rate": 0.10816666666666667,
   "high_multiplier": 4.0,
   "interactions": 1500.0,
   "level": [
     {
-      "coverage": 0.83,
-      "flip_rate": 0.102,
+      "coverage": 1.0,
+      "flip_rate": 0.148,
       "scale": 0.25,
-      "tier_flip_rate": 0.102,
+      "tier_flip_rate": 0.148,
       "verdict_flip_rate": 0.0
     },
     {
-      "coverage": 0.8133333333333334,
-      "flip_rate": 0.102,
+      "coverage": 1.0,
+      "flip_rate": 0.08333333333333333,
       "scale": 0.5,
-      "tier_flip_rate": 0.102,
+      "tier_flip_rate": 0.08333333333333333,
       "verdict_flip_rate": 0.0
     },
     {
-      "coverage": 0.8006666666666666,
-      "flip_rate": 0.076,
+      "coverage": 1.0,
+      "flip_rate": 0.06266666666666666,
       "scale": 2.0,
-      "tier_flip_rate": 0.076,
+      "tier_flip_rate": 0.06266666666666666,
       "verdict_flip_rate": 0.0
     },
     {
-      "coverage": 0.8213333333333334,
-      "flip_rate": 0.15066666666666667,
+      "coverage": 1.0,
+      "flip_rate": 0.216,
       "scale": 4.0,
-      "tier_flip_rate": 0.15066666666666667,
+      "tier_flip_rate": 0.216,
       "verdict_flip_rate": 0.0
     }
   ],
-  "level_worst_flip_rate": 0.15066666666666667,
+  "level_worst_flip_rate": 0.216,
   "low_multiplier": 0.25,
-  "ranking_ever_flip_rate": 0.58,
-  "ranking_mean_flip_rate": 0.15777777777777777,
-  "ranking_tier_flip_rate": 0.15777777777777777,
+  "ranking_ever_flip_rate": 0.564,
+  "ranking_mean_flip_rate": 0.10816666666666667,
+  "ranking_tier_flip_rate": 0.10816666666666667,
   "ranking_verdict_flip_rate": 0.0,
-  "ranking_worst_exceeds_stop": true,
-  "ranking_worst_flip_rate": 0.27666666666666667,
+  "ranking_worst_exceeds_stop": false,
+  "ranking_worst_flip_rate": 0.17466666666666666,
   "stop_condition": 0.2
 }

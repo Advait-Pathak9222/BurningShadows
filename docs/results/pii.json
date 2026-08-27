@@ -137,7 +137,7 @@
     "false_negative": 16.0,
     "false_positive": 966.0,
     "flagged": 1044.0,
-    "mean_latency_ms": 23.820707333429407,
+    "mean_latency_ms": 22.542009931212913,
     "precision": 0.07471264367816093,
     "recall": 0.8297872340425532,
     "true_positive": 78.0
@@ -149,7 +149,7 @@
       "false_negative": 16.0,
       "false_positive": 966.0,
       "flagged": 1044.0,
-      "mean_latency_ms": 23.820707333429407,
+      "mean_latency_ms": 22.542009931212913,
       "precision": 0.07471264367816093,
       "recall": 0.8297872340425532,
       "true_positive": 78.0
@@ -160,7 +160,7 @@
       "false_negative": 66.0,
       "false_positive": 309.0,
       "flagged": 337.0,
-      "mean_latency_ms": 23.820707333429407,
+      "mean_latency_ms": 22.542009931212913,
       "precision": 0.0830860534124629,
       "recall": 0.2978723404255319,
       "true_positive": 28.0
@@ -171,7 +171,7 @@
       "false_negative": 66.0,
       "false_positive": 309.0,
       "flagged": 337.0,
-      "mean_latency_ms": 23.820707333429407,
+      "mean_latency_ms": 22.542009931212913,
       "precision": 0.0830860534124629,
       "recall": 0.2978723404255319,
       "true_positive": 28.0
@@ -185,7 +185,7 @@
     "false_negative": 22.0,
     "false_positive": 0.0,
     "flagged": 72.0,
-    "mean_latency_ms": 0.0995837349134187,
+    "mean_latency_ms": 0.09120526645953457,
     "precision": 1.0,
     "recall": 0.7659574468085106,
     "true_positive": 72.0
