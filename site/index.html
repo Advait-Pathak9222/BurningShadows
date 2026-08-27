@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ControlPlane — budget-aware assurance for AI assistants</title>
+<meta name="description" content="ControlPlane treats responsible AI as an allocation problem: it prices the damage of every answer being wrong and buys checking only where it pays.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<style>
+  :root{
+    --purple:#A100FF; --purple-dark:#7500BA; --ink:#1F1730; --muted:#5C5470;
+    --line:#E7DCF5; --bg:#FFFFFF; --soft:#F8F4FE; --good:#0F7B4F; --warn:#B45309;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+       color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  /* ---- nav ---- */
+  nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);
+      backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:28px;height:60px}
+  .brand{font-weight:700;letter-spacing:-.02em;font-size:17px;margin-right:auto;display:flex;gap:9px;align-items:center}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--purple);flex:none}
+  nav a{color:var(--muted);text-decoration:none;font-size:14.5px;font-weight:500}
+  nav a:hover{color:var(--purple)}
+  .navlinks{display:flex;gap:24px}
+  @media(max-width:760px){.navlinks{display:none}}
+
+  /* ---- hero ---- */
+  header{padding:76px 0 56px;background:
+    radial-gradient(900px 380px at 12% -10%,#F3E6FF 0%,transparent 62%),
+    radial-gradient(700px 320px at 92% 0%,#EDF6FF 0%,transparent 60%)}
+  .tag{display:inline-block;font-size:12.5px;font-weight:600;letter-spacing:.08em;
+       text-transform:uppercase;color:var(--purple-dark);background:#F3E6FF;
+       border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:22px}
+  h1{font-size:clamp(34px,5.2vw,54px);line-height:1.08;letter-spacing:-.033em;margin:0 0 20px;font-weight:750}
+  .lede{font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:70ch;margin:0 0 14px}
+  .lede strong{color:var(--ink);font-weight:650}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:13px 22px;border-radius:10px;
+       font-weight:600;font-size:15px;text-decoration:none;border:1px solid transparent;transition:.16s}
+  .btn-primary{background:var(--purple);color:#fff}
+  .btn-primary:hover{background:var(--purple-dark);transform:translateY(-1px)}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--purple);color:var(--purple)}
+
+  /* ---- stat strip ---- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+         border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:44px 0 0}
+  .stat{background:#fff;padding:22px 20px}
+  .stat b{display:block;font-size:clamp(22px,3vw,30px);letter-spacing:-.025em;line-height:1.15;color:var(--purple-dark)}
+  .stat span{display:block;font-size:13px;color:var(--muted);margin-top:5px;line-height:1.45}
+  @media(max-width:820px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---- sections ---- */
+  section{padding:66px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--purple);margin:0 0 10px}
+  h2{font-size:clamp(25px,3.4vw,34px);letter-spacing:-.028em;margin:0 0 16px;font-weight:700;line-height:1.2}
+  h3{font-size:19px;letter-spacing:-.015em;margin:34px 0 12px;font-weight:650}
+  p{max-width:74ch}
+  .muted{color:var(--muted)}
+  .small{font-size:14px}
+
+  /* ---- tables ---- */
+  .tw{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+  th,td{padding:11px 15px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:var(--soft);font-weight:650;font-size:12.5px;letter-spacing:.03em;
+     text-transform:uppercase;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.hi td{background:#FBF6FF;font-weight:650}
+  .win{color:var(--good);font-weight:650}
+
+  figure{margin:26px 0}
+  figure img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:12px;background:#fff}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:10px;text-align:center}
+
+  .card{border:1px solid var(--line);border-radius:12px;padding:20px 22px;background:var(--soft);margin:22px 0}
+  .card p:last-child{margin-bottom:0}
+  pre{background:var(--ink);color:#EDE6FA;padding:16px 18px;border-radius:10px;overflow-x:auto;
+      font:13.5px/1.65 var(--mono);margin:18px 0}
+  code{font-family:var(--mono);font-size:.92em;background:var(--soft);padding:2px 6px;border-radius:5px}
+  pre code{background:none;padding:0;color:inherit}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  ul{max-width:74ch}li{margin:7px 0}
+
+  footer{border-top:1px solid var(--line);padding:40px 0 60px;color:var(--muted);font-size:14px}
+  footer a{color:var(--purple);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="brand"><span class="dot"></span>ControlPlane</div>
+  <div class="navlinks">
+    <a href="#problem">Problem</a>
+    <a href="#findings">Findings</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#evidence">Evidence</a>
+    <a href="#run">Run it</a>
+  </div>
+</div></nav>
+
+<header><div class="wrap">
+  <span class="tag">Accenture Innovation Challenge 2026 · Responsible AI</span>
+  <h1>Checking every AI answer costs more<br>than the AI itself.</h1>
+  <p class="lede">So most teams check a random sample — spending the same effort on
+  <em>“what are your opening hours”</em> as on a payment instruction.</p>
+  <p class="lede"><strong>ControlPlane treats this as an allocation problem, not a detection problem.</strong>
+  It estimates what the damage would be if each answer were wrong, and buys checking only where the
+  damage prevented is worth more than the check costs — under a per-route safety floor the budget
+  cannot override.</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://controlplane-ai.streamlit.app" target="_blank" rel="noopener">
+      Open the live console →</a>
+    <a class="btn btn-ghost" href="https://github.com/Jenish3119/BurningShadows" target="_blank" rel="noopener">
+      View the repository</a>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>85–97%</b><span>of assurance cost is human review, not compute</span></div>
+    <div class="stat"><b>0.9879</b><span>AUC on disclosure detection, against 0.5881 for pattern rules</span></div>
+    <div class="stat"><b>1.57×</b><span>more expected loss served from the same 166 reviews</span></div>
+    <div class="stat"><b>1,500/1,500</b><span>decisions in one verified hash chain</span></div>
+  </div>
+</div></header>
+
+<section id="problem"><div class="wrap">
+  <p class="eyebrow">The problem</p>
+  <h2>Assurance is a budget, and nobody is spending it deliberately</h2>
+  <p>An enterprise assistant answers millions of questions. A thorough check — an LLM judge, a
+  retrieval cross-check, a human reviewer — costs real money per answer. Nobody can afford to run it
+  on everything, so the standard practice is to sample: check 5% at random, or check everything on a
+  keyword list.</p>
+  <p>Both are blunt. Random sampling ignores that a wrong refund policy costs ₹500 and a wrong
+  payment instruction costs ₹500,000. Keyword lists fire on the word “transfer” whether it appears
+  in a funds movement or in “transfer your call to a colleague”.</p>
+  <div class="card">
+    <p><strong>The reframe:</strong> stop asking <em>“is this answer harmful?”</em> and start asking
+    <em>“is checking this answer worth what it costs?”</em> The first is a detection problem with no
+    budget attached. The second is an allocation problem with a known objective — and allocation
+    problems have optimal solutions.</p>
+  </div>
+  <p>ControlPlane prices every candidate check against the loss it is expected to prevent:</p>
+  <pre><code>expected loss = calibrated risk × consequence
+check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost</code></pre>
+  <p class="small muted">The shadow price is the dual variable of the budget constraint — it rises
+  when the budget tightens, making every check harder to justify. The per-route release floor sits
+  underneath and is not subject to it: some checks are mandatory regardless of what they cost.</p>
+</div></section>
+
+<section id="findings"><div class="wrap">
+  <p class="eyebrow">What we measured</p>
+  <h2>Three findings</h2>
+
+  <h3>1. Human attention is where the money actually goes</h3>
+  <p>A completed review costs <strong>₹120</strong>. The most expensive automated check costs
+  <strong>₹3.20</strong> — a 37× gap. Once both are counted, human review is 85% to 97% of operating
+  assurance cost, and the compute budget everyone argues about is a rounding error.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Budget</th><th class="n">Automated checking</th><th class="n">Human review</th>
+      <th class="n">Attention share</th><th class="n">Cases raised</th></tr></thead>
+    <tbody>
+      <tr><td>10%</td><td class="n">₹660.90</td><td class="n">₹19,920</td><td class="n"><strong>96.8%</strong></td><td class="n">295</td></tr>
+      <tr><td>25%</td><td class="n">₹1,066.36</td><td class="n">₹19,920</td><td class="n">94.9%</td><td class="n">308</td></tr>
+      <tr><td>40%</td><td class="n">₹1,882.26</td><td class="n">₹19,920</td><td class="n">91.4%</td><td class="n">340</td></tr>
+      <tr><td>60%</td><td class="n">₹2,972.30</td><td class="n">₹19,920</td><td class="n">87.0%</td><td class="n">410</td></tr>
+      <tr><td>80%</td><td class="n">₹3,470.60</td><td class="n">₹19,920</td><td class="n">85.2%</td><td class="n">453</td></tr>
+      <tr><td>100%</td><td class="n">₹3,470.60</td><td class="n">₹19,920</td><td class="n">85.2%</td><td class="n">453</td></tr>
+    </tbody>
+  </table></div>
+  <p>Raising the compute budget <em>raises</em> the number of cases needing a person, because more
+  checking finds more to escalate. Reviewer capacity is fixed, so the queue saturates — and what
+  differs between policies is which cases get served first. That makes serving order worth measuring.</p>
+  <p>At fixed reviewer capacity, on identical cases, from the same <strong>166</strong> completed
+  reviews:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Serving rule</th><th class="n">SLA breaches</th><th class="n">Expected loss served</th>
+      <th class="n">High-value cases shed</th></tr></thead>
+    <tbody>
+      <tr class="hi"><td>deadline_density <span class="muted">(shipped)</span></td><td class="n">49</td><td class="n">₹3,584,692</td><td class="n">1</td></tr>
+      <tr><td>fifo <span class="muted">(baseline)</span></td><td class="n">148</td><td class="n">₹2,279,871</td><td class="n">22</td></tr>
+      <tr><td>random <span class="muted">(baseline)</span></td><td class="n">33</td><td class="n">₹2,309,114</td><td class="n">21</td></tr>
+      <tr><td>density <span class="muted">(ablation)</span></td><td class="n">28</td><td class="n"><span class="win">₹4,258,434</span></td><td class="n">1</td></tr>
+      <tr><td>deadline <span class="muted">(ablation)</span></td><td class="n">160</td><td class="n">₹2,258,118</td><td class="n">18</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">The <code>density</code> ablation — our shipped rule with its deadline term
+  removed — beats the shipped rule on both axes. We report it as the stronger rule rather than
+  burying it. Keeping up with arrivals needs 5.4 reviewers against the 2 the scenario staffs, which
+  is the larger lever.</p>
+
+  <h3>2. Authorisation matters more than recognition</h3>
+  <p>Our pattern-matching PII detector scored <strong>0.5881 AUC</strong> — barely above chance.
+  Measuring the ceiling explained why: a <em>perfect</em> shape-only detector reaches
+  <strong>0.5869</strong> on this corpus. Pattern matching had nothing left to give.</p>
+  <div class="grid2">
+    <div class="tw"><table>
+      <thead><tr><th></th><th class="n">Harmful</th><th class="n">Permitted</th></tr></thead>
+      <tbody>
+        <tr><td>Contains PII-shaped text</td><td class="n">37</td><td class="n"><strong>309</strong></td></tr>
+        <tr><td>No pattern to match</td><td class="n"><strong>57</strong></td><td class="n">1,097</td></tr>
+      </tbody>
+    </table></div>
+    <div>
+      <p class="small">309 held-out rows carry a real identifier inside a <em>permitted</em>
+      disclosure — a support agent reading a customer their own work address. And 57 genuine leaks
+      contain no recognisable pattern at all. A shape detector must get both wrong.</p>
+    </div>
+  </div>
+  <p>Scoring <strong>whether a disclosure is grounded in the authorised source</strong>, rather than
+  whether it looks like personal data, changes the result:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Detector</th><th class="n">AUC</th><th class="n">Precision</th><th class="n">Recall</th><th class="n">Rows flagged</th></tr></thead>
+    <tbody>
+      <tr><td>Pattern rules</td><td class="n">0.5881</td><td class="n">0.11</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>Perfect shape-only detector <span class="muted">(ceiling)</span></td><td class="n">0.5869</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>Microsoft Presidio</td><td class="n">0.5825</td><td class="n">0.0747</td><td class="n">high</td><td class="n">1,044 of 1,500</td></tr>
+      <tr class="hi"><td>ControlPlane</td><td class="n"><span class="win">0.9879</span></td><td class="n">1.000</td><td class="n">0.766</td><td class="n">72</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Presidio answers “does this text contain personal data” accurately. The
+  question a business needs answered is whether <em>this requester</em> may receive <em>this value</em>
+  on <em>this route</em> — and that answer lives in the evidence, not in the words.</p>
+
+  <h3>3. The endpoints were fixed before the work started</h3>
+  <p>Every significant claim has a pre-registration written in advance stating what would count as
+  success. Results are reported against those criteria whether or not they were met — including a
+  queue-model defect that was recorded before it was corrected, and an ablation that beats our own
+  shipped rule.</p>
+</div></section>
+
+<section id="architecture"><div class="wrap">
+  <p class="eyebrow">How it works</p>
+  <h2>Architecture</h2>
+  <p>The gateway uses only the request, the response, the supplied context, and any proposed tool
+  calls. It needs no model weights, hidden states, or log probabilities — so it sits in front of any
+  model, including one you do not control. Text may stream while verification runs; actions that
+  change something wait behind a separate gate.</p>
+  <figure>
+    <img src="assets/architecture.png" alt="ControlPlane architecture across four planes: admit, observe, decide, act and prove">
+    <figcaption>Four planes: admit, observe, decide, act &amp; prove.</figcaption>
+  </figure>
+  <div class="tw"><table>
+    <thead><tr><th>Plane</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Admit</strong></td><td style="white-space:normal">A per-route token bucket and bounded lanes decide whether there is capacity. If not, the request is refused before the model generates anything.</td></tr>
+      <tr><td><strong>Observe</strong></td><td style="white-space:normal">Tier 0 rules and Tier 1 signals score the answer on five harm axes. Isotonic calibration turns scores into probabilities, and the evidence regime records what can be checked at all.</td></tr>
+      <tr><td><strong>Decide</strong></td><td style="white-space:normal">The release floor marks what must be checked. The allocator prices each remaining tier against the budget's shadow price. Tier 2 runs only when selected, and the decision is recomputed with its signal.</td></tr>
+      <tr><td><strong>Act &amp; prove</strong></td><td style="white-space:normal">A verdict of allow, annotate, abstain, hold or block covers the text. Proposed effects are permitted, held or denied independently. Everything is appended to the hash chain.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>One request, end to end</h3>
+  <p>Held-out row <code>cp-02477</code>: a finance-route request carrying a <code>transfer_funds</code>
+  call, where the model echoes back an attempt to exfiltrate a secret the source says must never be
+  repeated.</p>
+  <figure>
+    <img src="assets/traced-request.png" alt="A single request traced through all nine decision stages">
+    <figcaption>Nine stages, each recomputable from the record it wrote.</figcaption>
+  </figure>
+</div></section>
+
+<section id="evidence"><div class="wrap">
+  <p class="eyebrow">Reproducible</p>
+  <h2>Evidence at a glance</h2>
+  <p>Every figure below is computed and committed. None are typed by hand.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Question</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td style="white-space:normal">Does allocation beat a tuned fixed-rate policy?</td>
+        <td style="white-space:normal">More loss averted at <strong>6 of 6</strong> budgets, by 0.4–3.6%; better compute ROI at 4 of 6. At the tightest budget, ₹5,315,700 averted for ₹660.90 against ₹5,224,700 for ₹270.</td></tr>
+      <tr><td style="white-space:normal">Does allocation beat checking everything?</td>
+        <td style="white-space:normal">At the 80% and 100% budgets, yes — <strong>₹5,479,500</strong> averted for ₹3,470.60 against ₹5,476,400 for ₹4,800. More loss averted for <span class="win">28% less compute</span>.</td></tr>
+      <tr><td style="white-space:normal">Does the per-route release floor hold?</td>
+        <td style="white-space:normal">Observed unchecked harm 0.0618 / 0.0716 / 0.0642 against α = 0.15, over 372 / 475 / 436 released rows.</td></tr>
+      <tr><td style="white-space:normal">Are the risk scores calibrated?</td>
+        <td style="white-space:normal">Expected calibration error <strong>0.030 – 0.046</strong> by route.</td></tr>
+      <tr><td style="white-space:normal">Do consequence assumptions move decisions?</td>
+        <td style="white-space:normal">Across a 0.25×–4× band, 15.8% of tier decisions change and the verdict flip rate is <strong>0%</strong> — consequence prices a check but does not enter the release rule.</td></tr>
+      <tr><td style="white-space:normal">Is the audit trail complete?</td>
+        <td style="white-space:normal"><strong>1,500 of 1,500</strong> decisions and 299 reviews in one valid chain; 224 of 224 proposed effects logged.</td></tr>
+      <tr><td style="white-space:normal">Is the detector catch rate measured or assumed?</td>
+        <td style="white-space:normal">Measured. Labelled Tier 2 catch rate 0.950 against 0.880 configured, over 398 observations.</td></tr>
+    </tbody>
+  </table></div>
+  <figure>
+    <img src="assets/baselines.png" alt="Allocation policies and reviewer-queue serving rules compared across budgets">
+    <figcaption>Allocation policies and reviewer-queue serving rules, compared across six budgets.</figcaption>
+  </figure>
+</div></section>
+
+<section id="run"><div class="wrap">
+  <p class="eyebrow">Try it</p>
+  <h2>Run it yourself</h2>
+  <p>Python 3.11 or newer. The default path needs no API key, no network call, no model download and
+  no GPU — so the committed evidence tests the decision system rather than a vendor's model quality.</p>
+  <pre><code>git clone https://github.com/Jenish3119/BurningShadows.git
+cd BurningShadows
+make install
+make demo        # ~18s: builds the corpus, calibrates, runs scenarios, verifies the chain
+make console     # opens the inspection console at http://localhost:8501</code></pre>
+  <figure>
+    <img src="assets/console.png" alt="The ControlPlane assurance console">
+    <figcaption>The assurance console — five views over the same committed evidence.</figcaption>
+  </figure>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://controlplane-ai.streamlit.app" target="_blank" rel="noopener">Open the live console →</a>
+    <a class="btn btn-ghost" href="https://github.com/Jenish3119/BurningShadows" target="_blank" rel="noopener">Read the code</a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <p><strong>ControlPlane</strong> · Team BurningShadows · Accenture Innovation Challenge 2026,
+  Problem Track 1 — Responsible AI Checker.</p>
+  <p class="small">Loss and cost figures are arithmetic over synthetic traffic and
+  scenario-configured consequences; they describe this implementation and its assumptions. Every
+  assumed input is listed with its status and source in the assumptions register, and the evaluation
+  boundary is documented in
+  <a href="https://github.com/Jenish3119/BurningShadows/blob/main/docs/LIMITATIONS.md" target="_blank" rel="noopener">Limitations</a>.</p>
+</div></footer>
+
+</body>
+</html>

@@ -13,6 +13,14 @@ it can be re-derived from its own arithmetic.
 It runs offline against a seeded provider and lexical detector stubs, so the committed evidence
 tests the decision system rather than production model quality. No API key, no network call, no GPU.
 
+> **Offline is a property of the evidence, not of the product.** In production the gateway sits in
+> front of a model API, and Tier 2 is designed to be an LLM-judge call. Freezing detector quality is
+> what makes the measured gain attributable to allocation rather than to a vendor's model — and it
+> means anyone can reproduce these numbers exactly.
+
+**Hosted:** [live console](https://controlplane-ai.streamlit.app) ·
+[project page](https://controlplane.vercel.app) — see [Deployment](docs/DEPLOYMENT.md).
+
 ---
 
 ## Three findings
@@ -169,6 +177,9 @@ make console     # opens the inspection console at http://localhost:8501
   <img src="docs/images/console.png" alt="The ControlPlane assurance console" width="880">
 </p>
 
+The console has five views over the same committed evidence. What each one shows, where its numbers
+come from, and what to look at first: [console guide](docs/CONSOLE.md).
+
 Run the full quality gate with `make check` (ruff, mypy and 124 tests). Every result above can be
 regenerated:
 
@@ -211,6 +222,8 @@ MLflow run per policy and budget to `./mlruns`.
 | `config/` | Versioned policies, economics, runtime limits |
 | `data/` | Seeded synthetic calibration and held-out traffic |
 | `docs/results/` | Machine-readable results and their written interpretations |
+| `console/` | The Streamlit inspection console — see [the console guide](docs/CONSOLE.md) |
+| `site/` | The static project page deployed to Vercel |
 | `tests/` | Invariants, failure behaviour, reproducibility, regression coverage |
 
 **Worth reading first:** [`allocator.py`](controlplane/economics/allocator.py) holds the decision in
