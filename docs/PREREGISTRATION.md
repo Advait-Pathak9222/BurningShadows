@@ -508,3 +508,91 @@ allocation mechanism is the problem rather than the detector, and that is what g
 
 Nothing about ControlPlane's detection quality — the detection is OpenAI's. Nothing commercial;
 the corpus is CC-BY-NC-4.0. And nothing about the four harm axes ToxicChat does not label.
+
+---
+
+# Pre-registration 7: does a varied harm mix restore the allocator's advantage?
+
+**Status: locked before the first run against this corpus.**
+
+## The claim under test
+
+Pre-registrations 5 and 6 failed, and the diagnosis was that ToxicChat exercises a single harm axis:
+with one active axis the consequence multiplier is constant, `risk x consequence` collapses to a
+rescaling of `risk`, and the allocator sorts the same list as the baseline. `Spearman(risk, expected
+loss) = 1.000000` exactly.
+
+**Claim:** on real traffic labelled across several harm axes, so that equally risky rows carry
+unequal consequences, budget-aware allocation beats a tuned fixed-rate policy at matched spend.
+
+This is the condition the mechanism actually requires. If it fails here, the allocation idea does not
+work on real data and that is the project's headline finding.
+
+## The corpus
+
+BeaverTails `round0/330k`, CC-BY-NC-4.0. 333,963 QA pairs labelled across 14 harm categories, 30.4%
+of rows carrying more than one category.
+
+**Two defects in the shipped corpus are recorded here before use.**
+
+1. **The official train/test split leaks.** 99.91% of test prompts also appear in train (99.68% in
+   the 30k release). Exact `(prompt, response)` pairs do not repeat, but prompts do, and the
+   conformal bound claims validity on held-out data. We therefore **discard the official split** and
+   construct our own by hashing the *prompt*, so every response to a given prompt lands in the same
+   fold: 70% calibration, 30% test, verified prompt-disjoint.
+2. **The natural harm rate is 55.69%**, which is the balanced-adversarial trap documented in
+   `docs/EVIDENCE-PLAN.md`. At that prevalence nearly every row clears the expected-loss threshold,
+   the allocator degenerates to `check_all`, and the comparison cannot distinguish a working
+   allocator from a broken one. We therefore **correct prevalence to 7%** — matching ToxicChat and
+   plausible production traffic — by keeping every safe row and deterministically subsampling unsafe
+   rows on a hash of the row. Prevalence correction is applied identically to both folds.
+
+## Mapping decisions, locked in advance
+
+| Our axis | BeaverTails categories |
+|---|---|
+| `pii_leak` | `privacy_violation` |
+| `bias` | `discrimination,stereotype,injustice`; `hate_speech,offensive_language`; `controversial_topics,politics` |
+| `hallucination` | `misinformation_regarding_ethics,laws_and_safety` |
+| `unsafe_content` | `violence,aiding_and_abetting,incitement`; `self_harm`; `drug_abuse,weapons,banned_substance`; `terrorism,organized_crime`; `child_abuse`; `animal_abuse`; `sexually_explicit,adult_content`; `non_violent_unethical_behavior`; `financial_crime,property_crime,theft` |
+| `injection_or_exfil` | **unlabelled** — no category corresponds |
+
+Route stays `support-assistant` / `eu`. Pre-registration 6 established that route count is not what
+drives the collapse, so a single route is not a threat to this experiment. The four mapped axes carry
+consequences of ₹18,000, ₹9,000, ₹5,000 and ₹7,000 respectively, which is the variation under test.
+
+## The detector
+
+Our hand-written lexical detectors scored AUC 0.4838 on real traffic. Allocation on a noise signal is
+untestable, so Tier 1 is replaced by a **per-axis multinomial Naive Bayes bag-of-words scorer fitted
+on the calibration fold only**, in numpy, with no new dependency and no network call.
+
+This is deliberately a modest detector. The claim under test is about allocation, not detection, and
+a weak-but-real per-axis signal is exactly what the allocator is supposed to arbitrate. Fitting
+touches the calibration fold only; the test fold is never seen during fitting, and the existing
+fitting/selection sub-split inside `calibrate()` is preserved.
+
+## Primary endpoint
+
+At matched assurance spend on the held-out test fold, the allocator averts more expected loss than
+the best tuned fixed-rate policy at **at least 5 of 6** budgets.
+
+## The diagnostic that decides whether the run means anything
+
+**`Spearman(risk score, expected loss)` must be below 0.99 on the test fold.** If it is not, the harm
+mix has again collapsed to one effective axis, the experiment is void by the same mechanism as
+Pre-registration 6, and no conclusion about allocation may be drawn from it either way. This is
+checked and reported before the primary endpoint.
+
+## Secondary endpoints, reported either way
+
+- Per-axis AUC of the fitted detector, so a reader can see whether the signal is real.
+- The share of test rows firing on more than one axis, post-correction.
+- Whether the conformal bound holds on the held-out fold, and whether it binds.
+- The result at the natural 55.69% prevalence as well, to show what the trap looks like.
+
+## What happens on failure
+
+If the allocator loses here, with a varied harm mix and a working detector on real data, then the
+central claim of the project does not survive contact with reality and the README says so in those
+words. The synthetic-corpus result would then stand only as a statement about a corpus we generated.
