@@ -596,3 +596,69 @@ checked and reported before the primary endpoint.
 If the allocator loses here, with a varied harm mix and a working detector on real data, then the
 central claim of the project does not survive contact with reality and the README says so in those
 words. The synthetic-corpus result would then stand only as a statement about a corpus we generated.
+
+---
+
+# Pre-registration 8: can the hallucination axis be made to work on real grounded traffic?
+
+**Status: locked after development on the calibration split, before the test split was read.**
+
+## Why this exists
+
+The `hallucination` axis scored **AUC 0.5215** on BeaverTails — no signal. The cause is structural,
+not statistical: `tier0_rules.py` returns early when `context_documents` is empty, and
+`tier1_models.py` is gated the same way. ToxicChat and BeaverTails both carry no retrieved context,
+so **the grounding mechanism was disabled on every row of both corpora**. It was never tested.
+
+RAGTruth is the corpus that tests it: 17,790 responses from six LLMs over retrieved passages, with
+span-level annotations split into *evident conflict* (contradicts the context) and *baseless
+information* (unsupported by it). The official split is prompt-disjoint — 0 overlap on
+`(query, context)` — so unlike BeaverTails it can be used as shipped.
+
+## The claim under test
+
+**Claim:** given the source passages the mechanism was designed to use, ControlPlane's grounding
+signal detects hallucination on real RAG traffic at a level comparable to published detectors.
+
+## What is being added
+
+A fitted grounding scorer replacing Tier 1 on the `hallucination` axis, using only features derived
+from the response against its own retrieved context:
+
+- unsupported content-token ratio, and its type-level variant
+- IDF-weighted unsupported mass, IDF estimated from contexts alone
+- unsupported-numeral ratio, and a capped unsupported-numeral count
+
+Logistic regression, numpy, no new dependency, no network call. Fitted on the calibration split only.
+
+**Response length is deliberately excluded.** On the calibration split it reaches 0.6548 by itself
+and lifts the model from 0.7515 to 0.7714. It is a shortcut — a long grounded answer is not
+hallucinated — and including it would buy 0.02 of AUC by learning a property of the corpus rather
+than of grounding. Recorded here so the omission cannot later look like an oversight.
+
+## Primary endpoint
+
+Held-out response-level **AUC ≥ 0.70** on the RAGTruth test split, and **F1 within the published
+band** for response-level detection on this benchmark, which spans 52.0% (RAGAS Faithfulness) to
+79.22% (LettuceDetect large).
+
+Success: AUC ≥ 0.70 and F1 ≥ 0.52, placing us inside the published band.
+Partial: AUC ≥ 0.70 with F1 below 0.52.
+Failure: AUC below 0.70.
+
+## Secondary endpoints, reported either way
+
+- The same detector with context withheld, which should collapse to chance. If it does not, the
+  score is not measuring grounding.
+- Per-task-type AUC across `QA`, `Summary` and `Data2txt`. A detector that works on only one is a
+  narrower result than a single pooled number implies.
+- Per-annotation-type performance on *evident conflict* against *baseless information*. Contradiction
+  and unsupported-addition are different problems and we expect to be better at the first.
+- Whether the release floor holds on this corpus.
+
+## What is not claimed
+
+Nothing about span-level localisation; we score whole responses. Nothing about the other four harm
+axes, which RAGTruth does not label. And the comparison band is drawn from papers using fixed
+operating points, whereas an unqualified best-F1 from us would be an oracle threshold — so the
+reported F1 must state which it is.
