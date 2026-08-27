@@ -72,6 +72,9 @@ class CorpusStats:
     axis_rates: dict[str, float]
     text_type_counts: dict[str, int]
     mean_axes_per_harmful_row: float
+    # Test rows whose text also appears in train, counted before any filtering.
+    rows_overlapping_train: int = 0
+    text_disjoint: bool = False
 
 
 def _cache_path(cache_dir: Path, split: str) -> Path:
@@ -92,9 +95,17 @@ def ensure_downloaded(cache_dir: Path, split: str) -> Path:
     return path
 
 
-def _interaction_id(raw_id: str, split: str) -> str:
-    """Stable across machines: the fitting/selection fold split hashes this."""
-    digest = hashlib.sha256(f"aegis:{split}:{raw_id}".encode()).hexdigest()[:12]
+def _interaction_id(text: str, split: str) -> str:
+    """Derived from the **text**, not the `id` column, and deliberately so.
+
+    Aegis ships 336 duplicate ids in train and 3 in test -- separate annotation rounds over
+    the same item, sometimes disagreeing. The fitting/selection fold split hashes this value,
+    so keying on text guarantees that two copies of one string land in the same fold. Keying
+    on the row id instead would put identical text on both sides of the split that certifies
+    the conformal bound, which is precisely the discipline whose loss pushed a certified
+    0.1407 to a measured 0.2800 on ToxicChat.
+    """
+    digest = hashlib.sha256(f"aegis:{split}:{text}".encode()).hexdigest()[:12]
     return f"ae-{split}-{digest}"
 
 
@@ -159,11 +170,16 @@ def _axis_scores(annotations: list[set[str]], *, caution_is_harm: bool) -> dict[
     return {axis: value / peak * agreement for axis, value in scores.items()}
 
 
+def _training_texts(cache_dir: Path) -> set[str]:
+    return set(pd.read_parquet(ensure_downloaded(cache_dir, "train"))["text"].astype(str))
+
+
 def load(
     cache_dir: Path,
     split: Literal["train", "test"],
     *,
     caution_is_harm: bool = False,
+    text_disjoint: bool = False,
 ) -> tuple[list[Interaction], CorpusStats]:
     """Load one Aegis split as interactions, plus what it contains.
 
@@ -171,8 +187,21 @@ def load(
     Permissive model treats `Needs Caution` as safe, the Defensive model treats it as unsafe.
     Both are reported, because picking whichever flatters us after seeing the scores is the
     thing pre-registration exists to prevent.
+
+    `text_disjoint` drops test rows whose text also appears in train. **The shipped split
+    is not text-disjoint**: 131 of 1,199 test rows (10.93%) repeat a training string, so a
+    calibrator fitted on train has already seen a tenth of the test set. This was found by
+    a corpus integrity check before any score was computed, which is the only reason it can
+    be reported as a condition rather than as a correction. Pre-registration 9 locked the
+    shipped split, so that is the primary number and this is reported beside it.
     """
     frame = pd.read_parquet(ensure_downloaded(cache_dir, split))
+    overlap_rows = 0
+    if split == "test":
+        seen = frame["text"].astype(str).isin(_training_texts(cache_dir))
+        overlap_rows = int(seen.sum())
+        if text_disjoint:
+            frame = frame[~seen]
     engine_split: Literal["calibration", "test", "scenario"] = (
         "calibration" if split == "train" else "test"
     )
@@ -191,7 +220,7 @@ def load(
             axis_totals[axis] += 1.0
         interactions.append(
             Interaction(
-                interaction_id=_interaction_id(str(row["id"]), split),
+                interaction_id=_interaction_id(str(row["text"]), split),
                 split=engine_split,
                 route=ROUTE,
                 jurisdiction=JURISDICTION,
@@ -224,5 +253,21 @@ def load(
             str(key): int(value) for key, value in frame["text_type"].value_counts().items()
         },
         mean_axes_per_harmful_row=axes_on_harmful / harmful if harmful else 0.0,
+        rows_overlapping_train=overlap_rows,
+        text_disjoint=text_disjoint,
     )
     return interactions, stats
+
+
+def text_types(cache_dir: Path, split: Literal["train", "test"]) -> dict[str, str]:
+    """Interaction id to Aegis `text_type`, for the per-group breakdown.
+
+    Our detectors were built for model responses. Aegis mixes user messages, responses,
+    combined pairs and multi-turn transcripts, and a pooled score would hide it if we only
+    worked on one of them.
+    """
+    frame = pd.read_parquet(ensure_downloaded(cache_dir, split))
+    return {
+        _interaction_id(str(row["text"]), split): str(row["text_type"])
+        for _, row in frame.iterrows()
+    }

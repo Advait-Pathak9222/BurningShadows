@@ -60,6 +60,31 @@ known_design_choices:
   - calibration and test are split i.i.d. within each route to preserve the exchangeability
     the conformal bound depends on
   - a novel exfiltration pattern appears only in the back third of the stream
+external_corpora_used:
+  # Downloaded on first use, cached under data/external/, never committed. `make demo`
+  # does not touch the network; only `make toxicchat` and `make benchmarks` do.
+  - name: lmsys/toxic-chat (split 0124)
+    licence: CC-BY-NC-4.0
+    prereg: Pre-registration 5 and 6
+    url: https://huggingface.co/datasets/lmsys/toxic-chat
+  - name: PKU-Alignment/BeaverTails (round0 330k)
+    licence: CC-BY-NC-4.0
+    prereg: Pre-registration 7
+    url: https://huggingface.co/datasets/PKU-Alignment/BeaverTails
+  - name: RAGTruth (wandb/RAGTruth-processed)
+    licence: MIT
+    prereg: Pre-registration 8
+    url: https://arxiv.org/abs/2401.00396
+  - name: nvidia/Aegis-AI-Content-Safety-Dataset-1.0
+    licence: CC-BY-4.0
+    prereg: Pre-registration 9
+    url: https://huggingface.co/datasets/nvidia/Aegis-AI-Content-Safety-Dataset-1.0
+    known_defect: 131 of 1199 test rows repeat a training string; reported both ways
+  - name: bench-llms/or-bench
+    licence: CC-BY-4.0
+    prereg: Pre-registration 10
+    url: https://huggingface.co/datasets/bench-llms/or-bench
+
 external_sources_not_vendored:
   - name: LLM-AggreFact
     reason: gated evaluation dataset; do not train or redistribute

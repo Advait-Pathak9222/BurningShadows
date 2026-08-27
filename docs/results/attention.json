@@ -3,360 +3,360 @@
     {
       "budget_fraction": 0.1,
       "capacity_minutes": 1000.0000000000001,
-      "cases_raised": 251.0,
-      "high_value_cutoff_inr": 52864.5574342874,
-      "oversubscription": 1.5059999999999998,
-      "reviewers_for_throughput": 3.0119999999999996,
+      "cases_raised": 246.0,
+      "high_value_cutoff_inr": 53988.212583257926,
+      "oversubscription": 1.4759999999999998,
+      "reviewers_for_throughput": 2.9519999999999995,
       "strategies": {
         "deadline": {
           "breached": 160.0,
-          "finops_shed": 33.0,
-          "high_value_shed": 14.0,
-          "p99_wait_minutes": 176.33333333333331,
+          "finops_shed": 31.0,
+          "high_value_shed": 13.0,
+          "p99_wait_minutes": 167.99999999999994,
           "served": 166.0,
-          "shed": 85.0,
-          "value_served_inr": 2343519.1596075776,
-          "value_shed_inr": 2076396.1291474756
+          "shed": 80.0,
+          "value_served_inr": 2266731.4806096335,
+          "value_shed_inr": 1892263.1383749025
         },
         "deadline_density": {
-          "breached": 62.0,
-          "finops_shed": 33.0,
+          "breached": 63.0,
+          "finops_shed": 31.0,
           "high_value_shed": 1.0,
-          "p99_wait_minutes": 376.33333333333337,
+          "p99_wait_minutes": 347.0,
           "served": 166.0,
-          "shed": 85.0,
-          "value_served_inr": 3526081.9210961726,
-          "value_shed_inr": 893833.3676588805
+          "shed": 80.0,
+          "value_served_inr": 3348580.0776218986,
+          "value_shed_inr": 810414.5413626374
         },
         "density": {
-          "breached": 31.0,
-          "finops_shed": 83.0,
+          "breached": 35.0,
+          "finops_shed": 78.0,
           "high_value_shed": 1.0,
-          "p99_wait_minutes": 356.0,
+          "p99_wait_minutes": 309.66666666666663,
           "served": 166.0,
-          "shed": 85.0,
-          "value_served_inr": 4121160.5836817673,
-          "value_shed_inr": 298754.7050732857
+          "shed": 80.0,
+          "value_served_inr": 3875966.017537985,
+          "value_shed_inr": 283028.6014465514
         },
         "fifo": {
           "breached": 149.0,
-          "finops_shed": 58.0,
+          "finops_shed": 55.0,
           "high_value_shed": 16.0,
-          "p99_wait_minutes": 231.0,
+          "p99_wait_minutes": 218.99999999999994,
           "served": 166.0,
-          "shed": 85.0,
-          "value_served_inr": 2341069.5728765535,
-          "value_shed_inr": 2078845.7158784997
+          "shed": 80.0,
+          "value_served_inr": 2129318.9647115,
+          "value_shed_inr": 2029675.6542730362
         },
         "random": {
-          "breached": 48.0,
-          "finops_shed": 65.0,
+          "breached": 47.0,
+          "finops_shed": 62.0,
           "high_value_shed": 9.0,
-          "p99_wait_minutes": 431.3333333333333,
+          "p99_wait_minutes": 404.0,
           "served": 166.0,
-          "shed": 85.0,
-          "value_served_inr": 3052983.9329294073,
-          "value_shed_inr": 1366931.3558256456
+          "shed": 80.0,
+          "value_served_inr": 2816476.0112578897,
+          "value_shed_inr": 1342518.6077266464
         }
       }
     },
     {
       "budget_fraction": 0.25,
       "capacity_minutes": 1000.0000000000001,
-      "cases_raised": 335.0,
+      "cases_raised": 327.0,
       "high_value_cutoff_inr": 52606.62092635089,
-      "oversubscription": 2.01,
-      "reviewers_for_throughput": 4.02,
+      "oversubscription": 1.9619999999999997,
+      "reviewers_for_throughput": 3.9239999999999995,
       "strategies": {
         "deadline": {
           "breached": 160.0,
-          "finops_shed": 113.0,
+          "finops_shed": 108.0,
           "high_value_shed": 27.0,
-          "p99_wait_minutes": 199.99999999999994,
+          "p99_wait_minutes": 192.0,
           "served": 166.0,
-          "shed": 169.0,
-          "value_served_inr": 2943767.326026823,
-          "value_shed_inr": 3128064.1138537377
+          "shed": 161.0,
+          "value_served_inr": 2834722.297667016,
+          "value_shed_inr": 2845867.7706505405
         },
         "deadline_density": {
-          "breached": 44.0,
-          "finops_shed": 113.0,
+          "breached": 48.0,
+          "finops_shed": 108.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 274.66666666666663,
+          "p99_wait_minutes": 225.33333333333337,
           "served": 166.0,
-          "shed": 169.0,
-          "value_served_inr": 4832867.116036802,
-          "value_shed_inr": 1238964.3238437597
+          "shed": 161.0,
+          "value_served_inr": 4550005.786094048,
+          "value_shed_inr": 1130584.2822235087
         },
         "density": {
           "breached": 23.0,
-          "finops_shed": 163.0,
+          "finops_shed": 155.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 178.33333333333331,
+          "p99_wait_minutes": 136.66666666666669,
           "served": 166.0,
-          "shed": 169.0,
-          "value_served_inr": 5454431.202231055,
-          "value_shed_inr": 617400.2376495057
+          "shed": 161.0,
+          "value_served_inr": 5089525.518579308,
+          "value_shed_inr": 591064.5497382481
         },
         "fifo": {
-          "breached": 150.0,
-          "finops_shed": 141.0,
-          "high_value_shed": 31.0,
-          "p99_wait_minutes": 252.3333333333333,
+          "breached": 148.0,
+          "finops_shed": 134.0,
+          "high_value_shed": 29.0,
+          "p99_wait_minutes": 241.66666666666663,
           "served": 166.0,
-          "shed": 169.0,
-          "value_served_inr": 3006390.521521399,
-          "value_shed_inr": 3065440.9183591623
+          "shed": 161.0,
+          "value_served_inr": 2913098.504349789,
+          "value_shed_inr": 2767491.563967767
         },
         "random": {
-          "breached": 39.0,
-          "finops_shed": 137.0,
-          "high_value_shed": 34.0,
+          "breached": 38.0,
+          "finops_shed": 131.0,
+          "high_value_shed": 32.0,
           "p99_wait_minutes": 177.33333333333331,
           "served": 166.0,
-          "shed": 169.0,
-          "value_served_inr": 2690831.426273421,
-          "value_shed_inr": 3381000.0136071397
+          "shed": 161.0,
+          "value_served_inr": 2584099.742726006,
+          "value_shed_inr": 3096490.3255915507
         }
       }
     },
     {
       "budget_fraction": 0.4,
       "capacity_minutes": 1000.0000000000001,
-      "cases_raised": 355.0,
-      "high_value_cutoff_inr": 52864.5574342874,
-      "oversubscription": 2.13,
-      "reviewers_for_throughput": 4.26,
+      "cases_raised": 344.0,
+      "high_value_cutoff_inr": 52850.26928470371,
+      "oversubscription": 2.0639999999999996,
+      "reviewers_for_throughput": 4.127999999999999,
       "strategies": {
         "deadline": {
           "breached": 160.0,
-          "finops_shed": 131.0,
+          "finops_shed": 124.0,
           "high_value_shed": 19.0,
-          "p99_wait_minutes": 211.99999999999994,
+          "p99_wait_minutes": 206.66666666666657,
           "served": 166.0,
-          "shed": 189.0,
-          "value_served_inr": 3453675.8601519037,
-          "value_shed_inr": 4369345.634195106
+          "shed": 178.0,
+          "value_served_inr": 3430558.0019012834,
+          "value_shed_inr": 3914358.3154138513
         },
         "deadline_density": {
-          "breached": 31.0,
-          "finops_shed": 131.0,
+          "breached": 33.0,
+          "finops_shed": 124.0,
           "high_value_shed": 1.0,
-          "p99_wait_minutes": 176.66666666666669,
+          "p99_wait_minutes": 147.99999999999997,
           "served": 166.0,
-          "shed": 189.0,
-          "value_served_inr": 6476260.250567663,
-          "value_shed_inr": 1346761.2437793468
+          "shed": 178.0,
+          "value_served_inr": 6128603.208946143,
+          "value_shed_inr": 1216313.1083689907
         },
         "density": {
-          "breached": 22.0,
-          "finops_shed": 165.0,
+          "breached": 21.0,
+          "finops_shed": 159.0,
           "high_value_shed": 1.0,
-          "p99_wait_minutes": 160.0,
+          "p99_wait_minutes": 109.33333333333331,
           "served": 166.0,
-          "shed": 189.0,
-          "value_served_inr": 6912048.191118799,
-          "value_shed_inr": 910973.303228211
+          "shed": 178.0,
+          "value_served_inr": 6553053.531026397,
+          "value_shed_inr": 791862.7862887374
         },
         "fifo": {
           "breached": 151.0,
-          "finops_shed": 159.0,
-          "high_value_shed": 24.0,
-          "p99_wait_minutes": 261.99999999999994,
+          "finops_shed": 151.0,
+          "high_value_shed": 22.0,
+          "p99_wait_minutes": 255.66666666666663,
           "served": 166.0,
-          "shed": 189.0,
-          "value_served_inr": 3228817.9022310916,
-          "value_shed_inr": 4594203.592115918
+          "shed": 178.0,
+          "value_served_inr": 3231882.940535663,
+          "value_shed_inr": 4113033.376779471
         },
         "random": {
-          "breached": 39.0,
-          "finops_shed": 154.0,
-          "high_value_shed": 21.0,
-          "p99_wait_minutes": 162.66666666666669,
+          "breached": 36.0,
+          "finops_shed": 146.0,
+          "high_value_shed": 19.0,
+          "p99_wait_minutes": 165.33333333333331,
           "served": 166.0,
-          "shed": 189.0,
-          "value_served_inr": 3295001.735030509,
-          "value_shed_inr": 4528019.759316501
+          "shed": 178.0,
+          "value_served_inr": 3195740.5461081397,
+          "value_shed_inr": 4149175.7712069945
         }
       }
     },
     {
       "budget_fraction": 0.6,
       "capacity_minutes": 1000.0000000000001,
-      "cases_raised": 418.0,
+      "cases_raised": 406.0,
       "high_value_cutoff_inr": 52606.62092635089,
-      "oversubscription": 2.5079999999999996,
-      "reviewers_for_throughput": 5.015999999999999,
+      "oversubscription": 2.436,
+      "reviewers_for_throughput": 4.872,
       "strategies": {
         "deadline": {
           "breached": 160.0,
-          "finops_shed": 141.0,
-          "high_value_shed": 37.0,
-          "p99_wait_minutes": 218.99999999999994,
+          "finops_shed": 134.0,
+          "high_value_shed": 35.0,
+          "p99_wait_minutes": 213.33333333333331,
           "served": 166.0,
-          "shed": 252.0,
-          "value_served_inr": 3782175.613653734,
-          "value_shed_inr": 5864288.988334588
+          "shed": 240.0,
+          "value_served_inr": 3720817.06258629,
+          "value_shed_inr": 5442143.011949542
         },
         "deadline_density": {
-          "breached": 27.0,
-          "finops_shed": 141.0,
+          "breached": 30.0,
+          "finops_shed": 134.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 61.333333333333286,
+          "p99_wait_minutes": 49.00000000000003,
           "served": 166.0,
-          "shed": 252.0,
-          "value_served_inr": 7171000.938882672,
-          "value_shed_inr": 2475463.66310565
+          "shed": 240.0,
+          "value_served_inr": 6876745.11665033,
+          "value_shed_inr": 2286214.957885503
         },
         "density": {
-          "breached": 18.0,
-          "finops_shed": 176.0,
+          "breached": 19.0,
+          "finops_shed": 172.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 134.0,
+          "p99_wait_minutes": 212.66666666666663,
           "served": 166.0,
-          "shed": 252.0,
-          "value_served_inr": 7550177.039482876,
-          "value_shed_inr": 2096287.5625054464
+          "shed": 240.0,
+          "value_served_inr": 7308943.7025147695,
+          "value_shed_inr": 1854016.3720210625
         },
         "fifo": {
           "breached": 153.0,
-          "finops_shed": 182.0,
-          "high_value_shed": 46.0,
-          "p99_wait_minutes": 293.99999999999994,
+          "finops_shed": 174.0,
+          "high_value_shed": 44.0,
+          "p99_wait_minutes": 284.66666666666663,
           "served": 166.0,
-          "shed": 252.0,
-          "value_served_inr": 3538745.4078054936,
-          "value_shed_inr": 6107719.194182828
+          "shed": 240.0,
+          "value_served_inr": 3447494.3478387627,
+          "value_shed_inr": 5715465.72669707
         },
         "random": {
-          "breached": 37.0,
-          "finops_shed": 180.0,
-          "high_value_shed": 48.0,
+          "breached": 40.0,
+          "finops_shed": 173.0,
+          "high_value_shed": 46.0,
           "p99_wait_minutes": 143.66666666666663,
           "served": 166.0,
-          "shed": 252.0,
-          "value_served_inr": 3490214.537765835,
-          "value_shed_inr": 6156250.064222488
+          "shed": 240.0,
+          "value_served_inr": 3435844.4606945217,
+          "value_shed_inr": 5727115.613841311
         }
       }
     },
     {
       "budget_fraction": 0.8,
       "capacity_minutes": 1000.0000000000001,
-      "cases_raised": 495.0,
+      "cases_raised": 484.0,
       "high_value_cutoff_inr": 52606.62092635089,
-      "oversubscription": 2.9699999999999998,
-      "reviewers_for_throughput": 5.9399999999999995,
+      "oversubscription": 2.9039999999999995,
+      "reviewers_for_throughput": 5.807999999999999,
       "strategies": {
         "deadline": {
           "breached": 160.0,
-          "finops_shed": 141.0,
-          "high_value_shed": 37.0,
-          "p99_wait_minutes": 218.99999999999994,
+          "finops_shed": 134.0,
+          "high_value_shed": 35.0,
+          "p99_wait_minutes": 213.33333333333331,
           "served": 166.0,
-          "shed": 329.0,
-          "value_served_inr": 3782175.613653734,
-          "value_shed_inr": 7052793.686944558
+          "shed": 318.0,
+          "value_served_inr": 3720817.06258629,
+          "value_shed_inr": 6583959.667108761
         },
         "deadline_density": {
-          "breached": 27.0,
-          "finops_shed": 141.0,
+          "breached": 30.0,
+          "finops_shed": 134.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 61.333333333333286,
+          "p99_wait_minutes": 49.00000000000003,
           "served": 166.0,
-          "shed": 329.0,
-          "value_served_inr": 7171000.938882672,
-          "value_shed_inr": 3663968.36171562
+          "shed": 318.0,
+          "value_served_inr": 6876745.11665033,
+          "value_shed_inr": 3428031.613044721
         },
         "density": {
-          "breached": 20.0,
-          "finops_shed": 176.0,
+          "breached": 16.0,
+          "finops_shed": 174.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 84.3333333333333,
+          "p99_wait_minutes": 65.66666666666667,
           "served": 166.0,
-          "shed": 329.0,
-          "value_served_inr": 7569402.256371031,
-          "value_shed_inr": 3265567.0442272616
+          "shed": 318.0,
+          "value_served_inr": 7332979.717866279,
+          "value_shed_inr": 2971797.011828772
         },
         "fifo": {
-          "breached": 151.0,
-          "finops_shed": 202.0,
-          "high_value_shed": 51.0,
-          "p99_wait_minutes": 328.0,
+          "breached": 149.0,
+          "finops_shed": 195.0,
+          "high_value_shed": 50.0,
+          "p99_wait_minutes": 321.99999999999994,
           "served": 166.0,
-          "shed": 329.0,
-          "value_served_inr": 3305492.4763629423,
-          "value_shed_inr": 7529476.82423535
+          "shed": 318.0,
+          "value_served_inr": 3122497.2204380883,
+          "value_shed_inr": 7182279.509256963
         },
         "random": {
           "breached": 28.0,
-          "finops_shed": 203.0,
-          "high_value_shed": 51.0,
+          "finops_shed": 199.0,
+          "high_value_shed": 50.0,
           "p99_wait_minutes": 153.99999999999994,
           "served": 166.0,
-          "shed": 329.0,
-          "value_served_inr": 3530486.2302103657,
-          "value_shed_inr": 7304483.070387927
+          "shed": 318.0,
+          "value_served_inr": 3398688.606334012,
+          "value_shed_inr": 6906088.123361039
         }
       }
     },
     {
       "budget_fraction": 1.0,
       "capacity_minutes": 1000.0000000000001,
-      "cases_raised": 580.0,
+      "cases_raised": 569.0,
       "high_value_cutoff_inr": 52606.62092635089,
-      "oversubscription": 3.4799999999999995,
-      "reviewers_for_throughput": 6.959999999999999,
+      "oversubscription": 3.4139999999999997,
+      "reviewers_for_throughput": 6.827999999999999,
       "strategies": {
         "deadline": {
           "breached": 160.0,
-          "finops_shed": 142.0,
-          "high_value_shed": 37.0,
-          "p99_wait_minutes": 220.0,
+          "finops_shed": 135.0,
+          "high_value_shed": 35.0,
+          "p99_wait_minutes": 214.33333333333337,
           "served": 166.0,
-          "shed": 414.0,
-          "value_served_inr": 3787611.1305083837,
-          "value_shed_inr": 7671841.027028233
+          "shed": 403.0,
+          "value_served_inr": 3726252.5794409397,
+          "value_shed_inr": 7202957.612894227
         },
         "deadline_density": {
-          "breached": 28.0,
-          "finops_shed": 142.0,
+          "breached": 32.0,
+          "finops_shed": 135.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 64.0,
+          "p99_wait_minutes": 57.333333333333336,
           "served": 166.0,
-          "shed": 414.0,
-          "value_served_inr": 7176216.613815687,
-          "value_shed_inr": 4283235.54372093
+          "shed": 403.0,
+          "value_served_inr": 6881700.900001101,
+          "value_shed_inr": 4047509.292334066
         },
         "density": {
-          "breached": 23.0,
-          "finops_shed": 177.0,
+          "breached": 18.0,
+          "finops_shed": 175.0,
           "high_value_shed": 2.0,
-          "p99_wait_minutes": 84.3333333333333,
+          "p99_wait_minutes": 101.00000000000003,
           "served": 166.0,
-          "shed": 414.0,
-          "value_served_inr": 7572978.34387195,
-          "value_shed_inr": 3886473.8136646664
+          "shed": 403.0,
+          "value_served_inr": 7335920.140134301,
+          "value_shed_inr": 3593290.052200866
         },
         "fifo": {
-          "breached": 136.0,
-          "finops_shed": 218.0,
-          "high_value_shed": 53.0,
-          "p99_wait_minutes": 355.6666666666667,
+          "breached": 135.0,
+          "finops_shed": 210.0,
+          "high_value_shed": 50.0,
+          "p99_wait_minutes": 351.33333333333337,
           "served": 166.0,
-          "shed": 414.0,
-          "value_served_inr": 3075270.277295243,
-          "value_shed_inr": 8384181.880241374
+          "shed": 403.0,
+          "value_served_inr": 2998320.0042625247,
+          "value_shed_inr": 7930890.188072642
         },
         "random": {
-          "breached": 25.0,
-          "finops_shed": 224.0,
-          "high_value_shed": 55.0,
-          "p99_wait_minutes": 126.33333333333331,
+          "breached": 26.0,
+          "finops_shed": 219.0,
+          "high_value_shed": 54.0,
+          "p99_wait_minutes": 124.00000000000001,
           "served": 166.0,
-          "shed": 414.0,
-          "value_served_inr": 3021916.4100606055,
-          "value_shed_inr": 8437535.747476012
+          "shed": 403.0,
+          "value_served_inr": 2903930.7323679975,
+          "value_shed_inr": 8025279.459967169
         }
       }
     }

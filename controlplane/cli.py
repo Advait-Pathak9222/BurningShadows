@@ -32,6 +32,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "judge-probe",
             "loadtest",
             "toxicchat",
+            "benchmarks",
             "clean",
         ),
     )
@@ -88,6 +89,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         report_path = write_report(ROOT, ROOT / "data" / "external")
         print(f"Wrote {report_path.relative_to(ROOT)}.")
+        return 0
+    if args.command == "benchmarks":
+        from controlplane.eval.external_probes import write_reports
+
+        for path in write_reports(ROOT, ROOT / "data" / "external"):
+            print(f"Wrote {path.relative_to(ROOT)}.")
         return 0
     if args.command == "loadtest":
         report_path = run_loadtest(ROOT)

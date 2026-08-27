@@ -34,15 +34,48 @@ class IsotonicCalibrator:
                 right = blocks.pop()
                 left = blocks.pop()
                 blocks.append([left[0], right[1], left[2] + right[2], left[3] + right[3]])
+        # Two knots per block -- its lower and upper bound, both carrying the block mean --
+        # so that `predict` stays flat inside a block and ramps between blocks.
+        knots: list[tuple[float, float]] = []
+        for block in blocks:
+            mean = _mean(block)
+            knots.append((block[0], mean))
+            if block[1] > block[0]:
+                knots.append((block[1], mean))
         return cls(
-            upper_bounds=tuple(block[1] for block in blocks),
-            probabilities=tuple(_mean(block) for block in blocks),
+            upper_bounds=tuple(point[0] for point in knots),
+            probabilities=tuple(point[1] for point in knots),
         )
 
     def predict(self, score: float) -> float:
-        for upper, probability in zip(self.upper_bounds, self.probabilities, strict=True):
-            if score <= upper:
-                return probability
+        """Piecewise-linear between block boundaries, not piecewise-constant.
+
+        Returning the block mean for everything inside a block throws away the ordering the
+        detector produced. It matters because most blocks are singletons whose mean is
+        exactly 0.0 or 1.0 -- with 95 positives in a 331-row fitting fold, isotonic
+        regression has nothing else to say -- so a piecewise-constant map collapsed 977
+        OR-Bench rows onto **five** distinct scores. Ranking AUC fell 0.8053 to 0.7819, and,
+        worse, the operating point stopped being tunable at all: the false-positive rate
+        jumped from 0.195 straight to 1.000 with nothing in between, because there was no
+        threshold that could sit inside the gap.
+
+        Interpolating between knots keeps every guarantee that matters -- the map is still
+        monotone, still bounded by the fitted extremes, and still exactly the block mean at
+        each block boundary -- while preserving the order of scores the calibration data
+        could not itself separate.
+        """
+        bounds = self.upper_bounds
+        if score <= bounds[0]:
+            return self.probabilities[0]
+        if score >= bounds[-1]:
+            return self.probabilities[-1]
+        for index in range(1, len(bounds)):
+            if score <= bounds[index]:
+                left, right = bounds[index - 1], bounds[index]
+                low, high = self.probabilities[index - 1], self.probabilities[index]
+                if right <= left:
+                    return high
+                return low + (high - low) * (score - left) / (right - left)
         return self.probabilities[-1]
 
 

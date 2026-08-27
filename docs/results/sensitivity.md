@@ -10,17 +10,17 @@ The budget is held fixed in rupees and the controller is re-run for every scenar
 
 `docs/00-assessment.md` says the thesis is not ready for unattended use if more than 20% of decisions flip across plausible consequence ranges.
 
-**Measured: 10.8% — PASSES.**
+**Measured: 10.9% — PASSES.**
 
 ## Ranking sensitivity
 
 Each route and harm axis drawn independently, log-uniform inside the band. This is the question that matters: allocation only beats blanket coverage if the ordering of expected loss is roughly right.
 
 - Draws: 48
-- Mean flip rate: 10.8%
+- Mean flip rate: 10.9%
 - Worst single draw: 17.5%
-- Decisions that flipped in at least one draw: 56.4%
-- Of the mean flip rate, tier changes: 10.8%; verdict changes: 0.0%
+- Decisions that flipped in at least one draw: 56.7%
+- Of the mean flip rate, tier changes: 10.9%; verdict changes: 0.0%
 
 Every individual draw stays inside the stop condition, not just the mean.
 
@@ -38,10 +38,10 @@ Base coverage at the 25% budget: 100.0%.
 
 | Scale | Decisions flipped | Tier changed | Verdict changed | Coverage |
 |---:|---:|---:|---:|---:|
-| 0.25x | 14.8% | 14.8% | 0.0% | 100.0% |
+| 0.25x | 14.7% | 14.7% | 0.0% | 100.0% |
 | 0.5x | 8.3% | 8.3% | 0.0% | 100.0% |
 | 2.0x | 6.3% | 6.3% | 0.0% | 100.0% |
-| 4.0x | 21.6% | 21.6% | 0.0% | 100.0% |
+| 4.0x | 21.4% | 21.4% | 0.0% | 100.0% |
 
 ## How to read this
 

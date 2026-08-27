@@ -159,3 +159,19 @@ def load(cache_dir: Path, split: str) -> tuple[list[Interaction], CorpusStats]:
         category_counts=dict(sorted(categories.items())),
     )
     return interactions, stats
+
+
+def categories(cache_dir: Path, split: str) -> dict[str, str]:
+    """Interaction id to OR-Bench category, for the per-category false-refusal table.
+
+    A detector that is calm overall but refuses every `privacy` question has a problem the
+    pooled number hides. Pre-registration 10 asks for this breakdown either way.
+    """
+    out: dict[str, str] = {}
+    for part in ("safe", "toxic"):
+        frame = pd.read_csv(BytesIO(ensure_downloaded(cache_dir, part).read_bytes()))
+        for row in frame.itertuples(index=False):
+            text = str(row.prompt)
+            if _fold(text) == split:
+                out[_interaction_id(text, part)] = str(row.category)
+    return out

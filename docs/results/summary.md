@@ -11,12 +11,12 @@ so the two policies are compared at matched budget, not at matched spend.
 
 | Budget | Allocator spend | Baseline spend | Allocator averted | Baseline averted | Averted delta | Allocator ROI | Baseline ROI |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | 481.44 | 270.00 | 5,078,500 | 5,224,700 | -2.8% | 10,549 | 19,351 |
-| 25% | 1,098.58 | 270.00 | 5,414,000 | 5,224,700 | +3.6% | 4,928 | 19,351 |
-| 40% | 1,920.00 | 1,920.00 | 5,459,100 | 5,276,400 | +3.5% | 2,843 | 2,748 |
-| 60% | 2,815.86 | 2,812.80 | 5,472,800 | 5,384,900 | +1.6% | 1,944 | 1,914 |
-| 80% | 3,839.64 | 3,836.80 | 5,484,300 | 5,464,200 | +0.4% | 1,428 | 1,424 |
-| 100% | 4,800.00 | 4,800.00 | 5,484,300 | 5,476,400 | +0.1% | 1,143 | 1,141 |
+| 10% | 480.98 | 270.00 | 5,078,000 | 5,199,700 | -2.3% | 10,558 | 19,258 |
+| 25% | 1,098.58 | 270.00 | 5,407,000 | 5,199,700 | +4.0% | 4,922 | 19,258 |
+| 40% | 1,920.18 | 1,920.00 | 5,452,100 | 5,269,400 | +3.5% | 2,839 | 2,744 |
+| 60% | 2,812.84 | 2,812.80 | 5,465,800 | 5,377,900 | +1.6% | 1,943 | 1,912 |
+| 80% | 3,839.64 | 3,836.80 | 5,477,300 | 5,457,200 | +0.4% | 1,427 | 1,422 |
+| 100% | 4,800.00 | 4,800.00 | 5,477,300 | 5,469,400 | +0.1% | 1,141 | 1,139 |
 
 Allocator averts more loss at 5 of 6 budgets and achieves better assurance ROI at 4 of 6.
 
@@ -32,30 +32,30 @@ could block. Both distortions were real and they pointed in opposite directions.
 
 | Budget | Policy | Compute | Attention | Total | Averted | ROI on compute | ROI on total | Cases | Shed |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 10% | allocator | 481.44 | 19,920 | 20,401 | 5,078,500 | 10,549 | 248.9 | 251 | 85 |
-| 10% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,224,700 | 19,351 | 258.8 | 306 | 140 |
-| 10% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 10% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
-| 25% | allocator | 1,098.58 | 19,920 | 21,019 | 5,414,000 | 4,928 | 257.6 | 335 | 169 |
-| 25% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,224,700 | 19,351 | 258.8 | 306 | 140 |
-| 25% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 25% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
-| 40% | allocator | 1,920.00 | 19,920 | 21,840 | 5,459,100 | 2,843 | 250.0 | 355 | 189 |
-| 40% | fixed_rate | 1,920.00 | 19,920 | 21,840 | 5,276,400 | 2,748 | 241.6 | 227 | 61 |
-| 40% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 40% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
-| 60% | allocator | 2,815.86 | 19,920 | 22,736 | 5,472,800 | 1,944 | 240.7 | 418 | 252 |
-| 60% | fixed_rate | 2,812.80 | 19,920 | 22,733 | 5,384,900 | 1,914 | 236.9 | 306 | 140 |
-| 60% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 60% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
-| 80% | allocator | 3,839.64 | 19,920 | 23,760 | 5,484,300 | 1,428 | 230.8 | 495 | 329 |
-| 80% | fixed_rate | 3,836.80 | 19,920 | 23,757 | 5,464,200 | 1,424 | 230.0 | 306 | 140 |
-| 80% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 80% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
-| 100% | allocator | 4,800.00 | 19,920 | 24,720 | 5,484,300 | 1,143 | 221.9 | 580 | 414 |
-| 100% | fixed_rate | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 100% | check_all | 4,800.00 | 19,920 | 24,720 | 5,476,400 | 1,141 | 221.5 | 306 | 140 |
-| 100% | check_none | 0.00 | 10,800 | 10,800 | 3,249,800 | 0 | 300.9 | 91 | 1 |
+| 10% | allocator | 480.98 | 19,920 | 20,401 | 5,078,000 | 10,558 | 248.9 | 246 | 80 |
+| 10% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,199,700 | 19,258 | 257.5 | 303 | 137 |
+| 10% | check_all | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 10% | check_none | 0.00 | 10,440 | 10,440 | 3,184,800 | 0 | 305.1 | 88 | 1 |
+| 25% | allocator | 1,098.58 | 19,920 | 21,019 | 5,407,000 | 4,922 | 257.2 | 327 | 161 |
+| 25% | fixed_rate | 270.00 | 19,920 | 20,190 | 5,199,700 | 19,258 | 257.5 | 303 | 137 |
+| 25% | check_all | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 25% | check_none | 0.00 | 10,440 | 10,440 | 3,184,800 | 0 | 305.1 | 88 | 1 |
+| 40% | allocator | 1,920.18 | 19,920 | 21,840 | 5,452,100 | 2,839 | 249.6 | 344 | 178 |
+| 40% | fixed_rate | 1,920.00 | 19,920 | 21,840 | 5,269,400 | 2,744 | 241.3 | 225 | 59 |
+| 40% | check_all | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 40% | check_none | 0.00 | 10,440 | 10,440 | 3,184,800 | 0 | 305.1 | 88 | 1 |
+| 60% | allocator | 2,812.84 | 19,920 | 22,733 | 5,465,800 | 1,943 | 240.4 | 406 | 240 |
+| 60% | fixed_rate | 2,812.80 | 19,920 | 22,733 | 5,377,900 | 1,912 | 236.6 | 303 | 137 |
+| 60% | check_all | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 60% | check_none | 0.00 | 10,440 | 10,440 | 3,184,800 | 0 | 305.1 | 88 | 1 |
+| 80% | allocator | 3,839.64 | 19,920 | 23,760 | 5,477,300 | 1,427 | 230.5 | 484 | 318 |
+| 80% | fixed_rate | 3,836.80 | 19,920 | 23,757 | 5,457,200 | 1,422 | 229.7 | 303 | 137 |
+| 80% | check_all | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 80% | check_none | 0.00 | 10,440 | 10,440 | 3,184,800 | 0 | 305.1 | 88 | 1 |
+| 100% | allocator | 4,800.00 | 19,920 | 24,720 | 5,477,300 | 1,141 | 221.6 | 569 | 403 |
+| 100% | fixed_rate | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 100% | check_all | 4,800.00 | 19,920 | 24,720 | 5,469,400 | 1,139 | 221.3 | 303 | 137 |
+| 100% | check_none | 0.00 | 10,440 | 10,440 | 3,184,800 | 0 | 305.1 | 88 | 1 |
 
 ### Against the pre-registered endpoint
 
@@ -63,8 +63,8 @@ The endpoint was ROI on total cost at the 10% and 25% budgets, with success requ
 
 | Budget | Baseline/allocator on compute | Baseline/allocator on total |
 |---:|---:|---:|
-| 10% | 1.83x | 1.040x |
-| 25% | 3.93x | 1.005x |
+| 10% | 1.82x | 1.035x |
+| 25% | 3.91x | 1.001x |
 
 **Result: partial success, and the reason matters more than the number.** The allocator does not beat the tuned baseline on total cost at either row, so the primary endpoint fails. The pre-registered partial-success bar — the ratio falling to 1.5x or below at both rows — is met, and comfortably.
 
@@ -85,35 +85,35 @@ capacity is budgeted separately and the queue reports what it could not absorb.
 
 | Budget | Compute | Attention | Total | Attention share | Cases raised | Shed |
 |---:|---:|---:|---:|---:|---:|---:|
-| 10% | 481.44 | 49,080.00 | 49,561.44 | 99.0% | 251 | 33.9% |
-| 25% | 1,098.58 | 25,200.00 | 26,298.58 | 95.8% | 335 | 50.4% |
-| 40% | 1,920.00 | 25,440.00 | 27,360.00 | 93.0% | 355 | 53.2% |
-| 60% | 2,815.86 | 25,200.00 | 28,015.86 | 89.9% | 418 | 60.3% |
-| 80% | 3,839.64 | 24,720.00 | 28,559.64 | 86.6% | 495 | 66.5% |
-| 100% | 4,800.00 | 24,480.00 | 29,280.00 | 83.6% | 580 | 71.4% |
+| 10% | 480.98 | 48,120.00 | 48,600.98 | 99.0% | 246 | 32.5% |
+| 25% | 1,098.58 | 25,320.00 | 26,418.58 | 95.8% | 327 | 49.2% |
+| 40% | 1,920.18 | 25,440.00 | 27,360.18 | 93.0% | 344 | 51.7% |
+| 60% | 2,812.84 | 25,320.00 | 28,132.84 | 90.0% | 406 | 59.1% |
+| 80% | 3,839.64 | 24,720.00 | 28,559.64 | 86.6% | 484 | 65.7% |
+| 100% | 4,800.00 | 24,600.00 | 29,400.00 | 83.7% | 569 | 70.8% |
 
 Raising the compute budget raises the number of cases needing a person, so buying more automated checking increases the human bill rather than reducing it.
 
 ## Shadow price at the end of each run
 
-- budget 10%: lambda 495.290
+- budget 10%: lambda 488.747
 - budget 25%: lambda 157.403
-- budget 40%: lambda 93.145
-- budget 60%: lambda 15.553
-- budget 80%: lambda 4.069
+- budget 40%: lambda 92.839
+- budget 60%: lambda 15.492
+- budget 80%: lambda 3.848
 - budget 100%: lambda 0.000
 
 ## Conformal bound on held-out traffic
 
-- `finops-agent`: observed 0.0544 against alpha 0.15 on 331 released rows, 33.8% checked under the floor (holds)
+- `finops-agent`: observed 0.0560 against alpha 0.15 on 339 released rows, 32.2% checked under the floor (holds)
 - `internal-kb`: observed 0.0714 against alpha 0.15 on 476 released rows, 4.8% checked under the floor (holds)
-- `support-assistant`: observed 0.0642 against alpha 0.15 on 436 released rows, 12.8% checked under the floor (holds)
+- `support-assistant`: observed 0.0529 against alpha 0.15 on 397 released rows, 20.6% checked under the floor (holds)
 
 ## Audit
 
 - hash chain valid: True
 - decisions recorded: 1500 of 1500
-- reviews recorded in the same chain: 204
-- chain length: 1704 records
+- reviews recorded in the same chain: 205
+- chain length: 1705 records
 - effects logged: 224 of 224 proposed (coverage 1.0000)
 

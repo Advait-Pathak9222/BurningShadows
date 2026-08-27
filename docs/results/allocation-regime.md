@@ -18,6 +18,13 @@ spending **28x its budget** and being credited with the extra loss it averted.
 Every "win" reported at a tight budget was that artifact. The comparison below gives the baseline
 exactly what the allocator actually spent.
 
+**This has since been fixed at the source rather than only in the comparison.** `BudgetGovernor`
+reserves the conformal floor's own expected cost, so discretionary spending stops before it eats
+the reservation and the allocator degrades to mandatory-only instead of overspending. Spend now
+lands at **1.00x-1.03x of budget** across the whole grid, against up to 3.75x before, and no
+conformally-forced row goes unchecked at any budget tested. The remaining case is a budget set
+*below* the floor cost, which is reported as infeasible rather than silently breached.
+
 ### 2. Every budget ever tested was in the regime where allocation cannot help
 
 The budget grid was defined as a fraction of full **Tier 2** coverage. Blanket **Tier 1** coverage
@@ -47,7 +54,8 @@ Allocator against the best tuned fixed-rate policy, both spending the same rupee
 | **wins** | **5 of 7** | **4 of 7** | **3 of 7** |
 
 Gains span −20% to +11%. There is no budget at which allocation is reliably better across all three,
-and no corpus on which it wins everywhere.
+and no corpus on which it wins everywhere. Aegis (1 of 7) and OR-Bench (3 of 7) were added later
+under the budget governor and are reported in [aegis.md](aegis.md) and [orbench.md](orbench.md).
 
 ---
 
@@ -69,10 +77,32 @@ expected loss.
 | ToxicChat | 1.00 | 0% | **1.000000** |
 | BeaverTails 7% | 1.06 | 16.8% | 0.998494 |
 | Synthetic | 1.51 | 43.9% | 0.941539 |
+| **Aegis, permissive** | 1.09 | — | 0.909260 |
+| **Aegis, defensive** | 1.09 | — | **0.815965** |
 
 **Below about 0.99 the mechanism has something to work with; at 1.0 it provably cannot.** That number
 is computable on any corpus before running an allocation experiment, and it should be, because two
 of our pre-registrations were spent discovering it the slow way.
+
+### The precondition is necessary, and it is not sufficient
+
+Aegis is the first **public** corpus on which condition 1 actually holds — Spearman 0.816, well
+clear of the degenerate end. If the harm mix were the only thing standing between the allocator and
+a win, this is where the win would appear.
+
+It does not. On Aegis the allocator wins **1 of 7** budgets, with gains between -1.14% and +0.10%.
+
+The reason is the second condition, and it is arithmetic. Blanket Tier 1 on Aegis costs 216 INR
+against 3,837 INR for full Tier 2 — the boundary at **5.6250%**, identical to every other corpus
+because it is `0.18 / 3.20` and nothing else. Below that boundary the conformal floor already obliges
+215.82 INR, so **the floor is blanket coverage** and there is nothing left to allocate. Above it,
+blanket Tier 1 is affordable and no selective policy beats blanket coverage.
+
+OR-Bench says the same thing at a different scale: boundary 5.6250%, floor 175.86 INR against a
+blanket Tier 1 cost of 176 INR, allocator wins 3 of 7 with gains of at most +1.16%.
+
+So the honest statement of the mechanism's value needs **both** conditions, and on every public
+corpus tested so far at least one of them fails.
 
 ---
 
