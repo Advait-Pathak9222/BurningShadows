@@ -335,7 +335,7 @@ It needs no model weights, hidden states, or log probabilities. Text may stream 
 runs; actions that change something wait behind a separate gate.
 
 <p align="center">
-  <img src="docs/images/architecture.png" alt="ControlPlane architecture: admit, observe, decide, act and prove" width="880">
+  <img src="docs/images/architecture.png" alt="ControlPlane architecture across four planes: admit, observe, decide, and act and prove" width="1000">
 </p>
 
 | Plane | What it does |
@@ -358,10 +358,14 @@ Held-out row `cp-02477`: a finance-route request carrying a `transfer_funds` cal
 echoes back an attempt to exfiltrate a secret the source says must never be repeated.
 
 <p align="center">
-  <img src="docs/images/traced-request.png" alt="A single request traced through all nine decision stages" width="820">
+  <img src="docs/images/traced-request.png" alt="One held-out request traced through all nine decision stages" width="900">
 </p>
 
 Component contracts and the full request sequence: [architecture notes](docs/ARCHITECTURE.md).
+Both diagrams are hand-authored SVG and regenerate from their own source, so a figure cannot drift
+away from the system it describes: [architecture.html](docs/images/architecture.html) and
+[traced-request.html](docs/images/traced-request.html), rendered with
+`chrome --headless --screenshot`.
 
 ---
 

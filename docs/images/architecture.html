@@ -1,0 +1,205 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#ffffff;}
+  svg{display:block;}
+  .t{font-family:"Graphik","Segoe UI",Arial,sans-serif;}
+</style></head><body>
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1490" viewBox="0 0 1900 1490" class="t">
+  <defs>
+    <marker id="ar" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M1 1 L11 6 L1 11 z" fill="#6E6478"/>
+    </marker>
+    <marker id="arp" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M1 1 L11 6 L1 11 z" fill="#A100FF"/>
+    </marker>
+    <marker id="arf" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M1 1 L11 6 L1 11 z" fill="#C36A00"/>
+    </marker>
+  </defs>
+
+  <rect width="1900" height="1490" fill="#ffffff"/>
+
+  <!-- ===== TITLE ===== -->
+  <text x="122" y="46" font-size="34" font-weight="700" fill="#1A1422">ControlPlane</text>
+  <text x="392" y="46" font-size="26" fill="#554D60">One gateway in front of any model. Four planes, one priced decision per request.</text>
+  <rect x="122" y="58" width="1756" height="3" fill="#A100FF"/>
+
+  <!-- ================= BAND 1  ADMIT ================= -->
+  <rect x="24" y="84" width="74" height="266" rx="8" fill="#F4EEFF" stroke="#DECDFF"/>
+  <text transform="translate(70,217) rotate(-90)" text-anchor="middle" font-size="23" font-weight="700" fill="#7500C0" letter-spacing="2">ADMIT</text>
+  <rect x="116" y="84" width="1762" height="266" rx="12" fill="none" stroke="#B9A8CC" stroke-width="2" stroke-dasharray="9 7"/>
+
+  <!-- shield glyph -->
+  <g transform="translate(150,118)" stroke="#A100FF" stroke-width="2.4" fill="none" stroke-linejoin="round">
+    <path d="M16 2 L30 8 v11 c0 9 -6 15 -14 18 c-8 -3 -14 -9 -14 -18 V8 z"/>
+    <path d="M9 19 l5 5 l9 -11" stroke-width="2.8"/>
+  </g>
+  <text x="196" y="140" font-size="21" font-weight="600" fill="#554D60" letter-spacing="1.4">CAPACITY AND POLICY ARE SETTLED BEFORE A SINGLE TOKEN IS SPENT</text>
+
+  <rect x="150" y="162" width="360" height="82" rx="10" fill="#FFFFFF" stroke="#1A1422" stroke-width="2.4"/>
+  <text x="330" y="196" text-anchor="middle" font-size="23" font-weight="700" fill="#1A1422">A request arrives</text>
+  <text x="330" y="223" text-anchor="middle" font-size="20" fill="#554D60">with the route it belongs to</text>
+
+  <rect x="570" y="162" width="360" height="82" rx="10" fill="#F4EEFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="750" y="196" text-anchor="middle" font-size="22" fill="#1A1422">A token bucket and</text>
+  <text x="750" y="223" text-anchor="middle" font-size="22" fill="#1A1422">bounded lanes admit it</text>
+
+  <rect x="990" y="162" width="360" height="82" rx="10" fill="#F4EEFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="1170" y="196" text-anchor="middle" font-size="22" fill="#1A1422">Policy is resolved from</text>
+  <text x="1170" y="223" text-anchor="middle" font-size="22" fill="#1A1422">route and country</text>
+
+  <rect x="1410" y="162" width="360" height="82" rx="10" fill="#F4EEFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="1590" y="196" text-anchor="middle" font-size="22" fill="#1A1422">The prompt is scanned</text>
+  <text x="1590" y="223" text-anchor="middle" font-size="22" fill="#1A1422">before the model runs</text>
+
+  <line x1="512" y1="203" x2="566" y2="203" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <line x1="932" y1="203" x2="986" y2="203" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <line x1="1352" y1="203" x2="1406" y2="203" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+
+  <rect x="570" y="272" width="360" height="56" rx="8" fill="#FFF4E8" stroke="#E2A15A" stroke-width="1.8"/>
+  <text x="750" y="306" text-anchor="middle" font-size="20" fill="#8A5200">Turned away before it costs anything</text>
+  <line x1="750" y1="246" x2="750" y2="268" stroke="#C36A00" stroke-width="2.2" marker-end="url(#arf)"/>
+
+  <rect x="1410" y="272" width="360" height="56" rx="8" fill="#FFF4E8" stroke="#E2A15A" stroke-width="1.8"/>
+  <text x="1590" y="306" text-anchor="middle" font-size="20" fill="#8A5200">Stopped before the model is called</text>
+  <line x1="1590" y1="246" x2="1590" y2="268" stroke="#C36A00" stroke-width="2.2" marker-end="url(#arf)"/>
+
+  <!-- ================= BAND 2  OBSERVE ================= -->
+  <rect x="24" y="376" width="74" height="288" rx="8" fill="#F4EEFF" stroke="#DECDFF"/>
+  <text transform="translate(70,520) rotate(-90)" text-anchor="middle" font-size="23" font-weight="700" fill="#7500C0" letter-spacing="2">OBSERVE</text>
+  <rect x="116" y="376" width="1762" height="288" rx="12" fill="none" stroke="#B9A8CC" stroke-width="2" stroke-dasharray="9 7"/>
+
+  <!-- gauge glyph -->
+  <g transform="translate(150,410)" stroke="#A100FF" stroke-width="2.4" fill="none" stroke-linecap="round">
+    <path d="M2 26 a15 15 0 0 1 30 0"/>
+    <line x1="17" y1="26" x2="27" y2="15"/>
+    <circle cx="17" cy="26" r="2.6" fill="#A100FF" stroke="none"/>
+  </g>
+  <text x="196" y="432" font-size="21" font-weight="600" fill="#554D60" letter-spacing="1.4">CHEAP SIGNALS RUN FIRST AND A CALIBRATOR TURNS THEM INTO A PROBABILITY</text>
+
+  <rect x="150" y="454" width="360" height="82" rx="10" fill="#FFFFFF" stroke="#1A1422" stroke-width="2.4"/>
+  <text x="330" y="488" text-anchor="middle" font-size="23" font-weight="700" fill="#1A1422">The model answers</text>
+  <text x="330" y="515" text-anchor="middle" font-size="20" fill="#554D60">text is not shown yet</text>
+
+  <rect x="570" y="454" width="360" height="82" rx="10" fill="#F4EEFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="750" y="488" text-anchor="middle" font-size="22" fill="#1A1422">Tier 0 rules read it</text>
+  <text x="750" y="516" text-anchor="middle" font-size="21" font-weight="600" fill="#7500C0">2 paise per answer</text>
+
+  <rect x="990" y="454" width="360" height="82" rx="10" fill="#F4EEFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="1170" y="488" text-anchor="middle" font-size="22" fill="#1A1422">Tier 1 signals score it</text>
+  <text x="1170" y="516" text-anchor="middle" font-size="21" font-weight="600" fill="#7500C0">18 paise per answer</text>
+
+  <rect x="1410" y="454" width="360" height="82" rx="10" fill="#ECE2FF" stroke="#7500C0" stroke-width="2.4"/>
+  <text x="1590" y="488" text-anchor="middle" font-size="22" fill="#1A1422">Isotonic calibration</text>
+  <text x="1590" y="516" text-anchor="middle" font-size="22" fill="#1A1422">makes the score honest</text>
+
+  <line x1="512" y1="495" x2="566" y2="495" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <line x1="932" y1="495" x2="986" y2="495" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <line x1="1352" y1="495" x2="1406" y2="495" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+
+  <rect x="150" y="566" width="1620" height="74" rx="10" fill="#FFFFFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="960" y="597" text-anchor="middle" font-size="22" fill="#1A1422">Out comes one number for each of five harms, and a note saying how far the evidence goes.</text>
+  <text x="960" y="624" text-anchor="middle" font-size="21" fill="#554D60">Hallucination, private data, bias, unsafe content, prompt attack. Evidence is grounded, estimable or unverifiable.</text>
+
+  <!-- flow admit -> observe -->
+  <path d="M330 246 L330 262 L118 262 L118 420 L134 420 L134 495 L146 495" fill="none" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+
+  <!-- ================= BAND 3  DECIDE ================= -->
+  <rect x="24" y="690" width="74" height="360" rx="8" fill="#ECE2FF" stroke="#C2A3FF"/>
+  <text transform="translate(70,870) rotate(-90)" text-anchor="middle" font-size="23" font-weight="700" fill="#450073" letter-spacing="2">DECIDE</text>
+  <rect x="116" y="690" width="1762" height="360" rx="12" fill="none" stroke="#A100FF" stroke-width="2.4" stroke-dasharray="9 7"/>
+
+  <!-- scales glyph -->
+  <g transform="translate(150,722)" stroke="#A100FF" stroke-width="2.4" fill="none" stroke-linecap="round">
+    <line x1="17" y1="4" x2="17" y2="30"/><line x1="4" y1="10" x2="30" y2="10"/>
+    <path d="M4 10 L-1 22 h10 z" fill="#F4EEFF"/><path d="M30 10 L25 22 h10 z" fill="#F4EEFF"/>
+    <line x1="9" y1="30" x2="25" y2="30"/>
+  </g>
+  <text x="196" y="744" font-size="21" font-weight="600" fill="#450073" letter-spacing="1.4">THE ONLY PLACE MONEY IS SPENT. A SAFETY FLOOR THE BUDGET CANNOT OVERRULE.</text>
+
+  <rect x="150" y="768" width="780" height="112" rx="12" fill="#DECDFF" stroke="#450073" stroke-width="2.6"/>
+  <text x="540" y="806" text-anchor="middle" font-size="25" font-weight="700" fill="#450073">THE SAFETY FLOOR</text>
+  <text x="540" y="838" text-anchor="middle" font-size="22" fill="#1A1422">Must this answer be checked whatever it costs</text>
+  <text x="540" y="866" text-anchor="middle" font-size="20" fill="#554D60">A threshold is learned for every route and it is proved on data it never saw</text>
+
+  <rect x="990" y="768" width="780" height="112" rx="12" fill="#ECE2FF" stroke="#7500C0" stroke-width="2.6"/>
+  <text x="1380" y="806" text-anchor="middle" font-size="25" font-weight="700" fill="#450073">THE ALLOCATOR</text>
+  <text x="1380" y="843" text-anchor="middle" font-size="27" font-weight="700" fill="#1A1422" font-family="Consolas,monospace">r &#215; c &#215; k  &#62;  (1 + &#955;) &#215; (v + d)</text>
+  <text x="1380" y="868" text-anchor="middle" font-size="20" fill="#554D60">Buy the check only when the damage it prevents is worth more than the check</text>
+
+  <line x1="934" y1="824" x2="984" y2="824" stroke="#A100FF" stroke-width="3" marker-end="url(#arp)"/>
+
+  <!-- three regime cards -->
+  <rect x="150" y="914" width="516" height="118" rx="10" fill="#FFFFFF" stroke="#DECDFF" stroke-width="2"/>
+  <circle cx="196" cy="956" r="15" fill="#DECDFF"/>
+  <text x="228" y="963" font-size="22" font-weight="700" fill="#1A1422">Let it through</text>
+  <text x="176" y="998" font-size="20" fill="#554D60">The answer is almost certainly fine, so nothing</text>
+  <text x="176" y="1020" font-size="20" fill="#554D60">is spent and the user waits for nobody.</text>
+
+  <rect x="692" y="914" width="516" height="118" rx="10" fill="#FFFFFF" stroke="#A100FF" stroke-width="2"/>
+  <circle cx="738" cy="956" r="15" fill="#A100FF"/>
+  <text x="770" y="963" font-size="22" font-weight="700" fill="#1A1422">Buy a second opinion</text>
+  <text x="718" y="998" font-size="20" fill="#554D60">A mistake here would cost more than the check,</text>
+  <text x="718" y="1020" font-size="20" fill="#554D60">so a deeper reader is paid for out of the budget.</text>
+
+  <rect x="1234" y="914" width="536" height="118" rx="10" fill="#FFFFFF" stroke="#FF50A0" stroke-width="2"/>
+  <circle cx="1280" cy="956" r="15" fill="#FF50A0"/>
+  <text x="1312" y="963" font-size="22" font-weight="700" fill="#1A1422">Hold it back</text>
+  <text x="1260" y="998" font-size="20" fill="#554D60">No amount of checking would make this safe to</text>
+  <text x="1260" y="1020" font-size="20" fill="#554D60">release, so it never reaches the person.</text>
+
+  <path d="M960 646 L960 764" fill="none" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <text x="944" y="712" text-anchor="end" font-size="20" fill="#554D60" font-style="italic">the five numbers and the evidence note arrive here</text>
+
+  <text x="1770" y="898" text-anchor="end" font-size="19" fill="#554D60" font-style="italic">&#955; rises when the budget runs hot and falls when it runs cool</text>
+
+  <!-- ================= BAND 4  ACT AND PROVE ================= -->
+  <rect x="24" y="1076" width="74" height="376" rx="8" fill="#F4EEFF" stroke="#DECDFF"/>
+  <text transform="translate(70,1264) rotate(-90)" text-anchor="middle" font-size="23" font-weight="700" fill="#7500C0" letter-spacing="2">ACT AND PROVE</text>
+  <rect x="116" y="1076" width="1762" height="376" rx="12" fill="none" stroke="#B9A8CC" stroke-width="2" stroke-dasharray="9 7"/>
+
+  <!-- chain glyph -->
+  <g transform="translate(150,1108)" stroke="#A100FF" stroke-width="2.4" fill="none" stroke-linecap="round">
+    <rect x="1" y="12" width="15" height="11" rx="5.5"/><rect x="17" y="12" width="15" height="11" rx="5.5"/>
+    <line x1="9" y1="12" x2="9" y2="5"/><line x1="24" y1="23" x2="24" y2="30"/>
+  </g>
+  <text x="196" y="1130" font-size="21" font-weight="600" fill="#554D60" letter-spacing="1.4">WORDS AND ACTIONS ARE GATED SEPARATELY, AND EVERY DECISION LEAVES A RECEIPT</text>
+
+  <rect x="150" y="1152" width="360" height="94" rx="10" fill="#ECE2FF" stroke="#7500C0" stroke-width="2.4"/>
+  <text x="330" y="1186" text-anchor="middle" font-size="23" font-weight="700" fill="#1A1422">A verdict is reached</text>
+  <text x="330" y="1213" text-anchor="middle" font-size="20" fill="#554D60">allow, annotate, abstain,</text>
+  <text x="330" y="1235" text-anchor="middle" font-size="20" fill="#554D60">hold or block</text>
+
+  <rect x="570" y="1152" width="360" height="94" rx="10" fill="#FFFFFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="750" y="1186" text-anchor="middle" font-size="22" fill="#1A1422">The words may already</text>
+  <text x="750" y="1213" text-anchor="middle" font-size="22" fill="#1A1422">be streaming, so nobody</text>
+  <text x="750" y="1236" text-anchor="middle" font-size="22" fill="#1A1422">waits on a verdict</text>
+
+  <rect x="990" y="1152" width="360" height="94" rx="10" fill="#FFF0F6" stroke="#FF50A0" stroke-width="2.4"/>
+  <text x="1170" y="1186" text-anchor="middle" font-size="23" font-weight="700" fill="#1A1422">The action waits</text>
+  <text x="1170" y="1213" text-anchor="middle" font-size="20" fill="#554D60">money moving and data</text>
+  <text x="1170" y="1235" text-anchor="middle" font-size="20" fill="#554D60">changing are gated apart</text>
+
+  <rect x="1410" y="1152" width="360" height="94" rx="10" fill="#F4EEFF" stroke="#7500C0" stroke-width="2"/>
+  <text x="1590" y="1186" text-anchor="middle" font-size="22" fill="#1A1422">Every decision is written</text>
+  <text x="1590" y="1213" text-anchor="middle" font-size="22" fill="#1A1422">to a chained record that</text>
+  <text x="1590" y="1236" text-anchor="middle" font-size="22" fill="#1A1422">cannot be edited later</text>
+
+  <line x1="512" y1="1199" x2="566" y2="1199" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <line x1="932" y1="1199" x2="986" y2="1199" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+  <line x1="1352" y1="1199" x2="1406" y2="1199" stroke="#6E6478" stroke-width="2.4" marker-end="url(#ar)"/>
+
+  <rect x="150" y="1288" width="1620" height="86" rx="10" fill="#FFF4E8" stroke="#E2A15A" stroke-width="2"/>
+  <text x="960" y="1322" text-anchor="middle" font-size="22" font-weight="700" fill="#8A5200">A slice of traffic is reviewed by people every day, including answers nobody checked.</text>
+  <text x="960" y="1352" text-anchor="middle" font-size="21" fill="#8A5200">Their verdicts retrain the calibrator, re measure how often each check actually catches harm, and move the safety floor.</text>
+
+  <path d="M960 1250 L960 1284" fill="none" stroke="#C36A00" stroke-width="2.4" marker-end="url(#arf)"/>
+  <path d="M150 1331 L118 1331 L118 824 L146 824" fill="none" stroke="#C36A00" stroke-width="2.6" stroke-dasharray="8 6" marker-end="url(#arf)"/>
+  <text x="1782" y="1408" text-anchor="end" font-size="20" fill="#554D60" font-style="italic">the loop closes here, so the numbers stay true as traffic changes</text>
+
+  <!-- decide -> act -->
+  <path d="M540 1040 L540 1072" fill="none" stroke="#A100FF" stroke-width="3" marker-end="url(#arp)"/>
+  <text x="568" y="1064" font-size="20" fill="#554D60" font-style="italic">the decision, the reason for it and the evidence behind it all move on together</text>
+</svg>
+</body></html>
