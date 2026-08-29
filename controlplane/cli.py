@@ -104,7 +104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         interactions = ensure_corpus(ROOT / "data")
         frame, _ = build_report(ROOT, interactions)
         print(frame.to_string(index=False))
-        print("Wrote reports/evaluation.md and reports/figures/loss_averted_vs_spend.png.")
+        print("Wrote reports/evaluation.csv, reports/evaluation.json, and reports/evaluation.md.")
         return 0
     if args.command == "demo":
         interactions = ensure_corpus(ROOT / "data")

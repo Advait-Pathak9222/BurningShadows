@@ -242,6 +242,9 @@ make toxicchat     # ToxicChat probe
 make benchmarks    # Aegis and OR-Bench
 ```
 
+The benchmark-only parquet and plotting dependencies are optional. Install them before running the
+external probes with `pip install -e ".[external]"`.
+
 ### 5. The budget is a budget
 
 A shadow price is a soft constraint. It cannot bound spend on its own, and ours did not: at the

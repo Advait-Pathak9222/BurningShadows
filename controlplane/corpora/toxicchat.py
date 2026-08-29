@@ -18,11 +18,11 @@ from typing import Literal
 
 import pandas as pd
 
-from controlplane.corpora.fetch import fetch
+from controlplane.corpora.download import ensure_cached_file
 from controlplane.models import HarmVector, Interaction
 
 # Split 0124. The 1123 split is the earlier, smaller annotation round.
-# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/download.py.
 REVISION = "29df8e4dba60e1f4af4b4075c0705c5b313548a8"
 BASE_URL = (
     f"https://huggingface.co/datasets/lmsys/toxic-chat/resolve/{REVISION}/data/0124"
@@ -63,8 +63,13 @@ def ensure_downloaded(cache_dir: Path, split: str) -> Path:
     """Fetch one split unless it is already cached, verifying its pinned digest."""
     if split not in FILES:
         raise ValueError(f"unknown split {split!r}; expected one of {sorted(FILES)}")
-    return fetch(
-        f"{BASE_URL}/{FILES[split]}", _cache_path(cache_dir, split), DIGESTS[split], timeout=120
+    path = _cache_path(cache_dir, split)
+    filename = FILES[split]
+    return ensure_cached_file(
+        url=f"{BASE_URL}/{filename}",
+        path=path,
+        sha256=DIGESTS[split],
+        timeout_seconds=120,
     )
 
 

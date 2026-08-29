@@ -13,7 +13,7 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.141,<1",
   "httpx>=0.28,<1",
-  "matplotlib>=3.8,<4",
+  "numpy>=1.26,<3",
   "pandas>=2.2,<4",
   "pydantic>=2.9,<3",
   "PyYAML>=6,<7",
@@ -36,6 +36,10 @@ dev = [
 # 400 MB over the network on first use, and this prototype promises to run offline.
 models = [
   "presidio-analyzer>=2.2,<3",
+]
+external = [
+  "matplotlib>=3.8,<4",
+  "pyarrow>=15,<23",
 ]
 tracking = [
   "mlflow>=3,<4",
@@ -78,17 +82,15 @@ exclude = ["console"]
 # same answer on a clean install as it does on a developer machine that happens to have
 # the extras -- otherwise the advertised gate is only green where it was written.
 module = [
-    "pandas",
-    "yaml",
-    "mlflow",
-    "mlflow.*",
-    "matplotlib",
-    "matplotlib.*",
-    "presidio_analyzer",
-    "presidio_analyzer.*",
-    "spacy",
-    "spacy.*",
-    "streamlit",
-    "streamlit.*",
+  "pandas",
+  "yaml",
+  "mlflow",
+  "mlflow.*",
+  "spacy",
+  "spacy.*",
+  "presidio_analyzer",
+  "presidio_analyzer.*",
+  "streamlit",
+  "streamlit.*",
 ]
 ignore_missing_imports = true
