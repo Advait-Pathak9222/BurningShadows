@@ -68,7 +68,8 @@ Attention as a share of total assurance cost, across that band:
 **The claim to make is the conservative one.** At the budgets an enterprise would actually run,
 which is where the knee sits at ten to twenty five percent, human attention is **82% to 98% of the
 assurance bill across the entire band**. That holds even at a low-cost moderator rate. The
-81% to 97% figure quoted elsewhere is the 1,200 row specifically and should be cited as such.
+81% to 98% range quoted in the README is the 1,200 row across compute budgets specifically, and is
+cited as such there.
 
 Where it does break down is at full coverage on a cheap desk. At a 100% compute budget and an
 INR 300 reviewer, attention falls to 50.9% and the argument becomes a coin flip. We do not

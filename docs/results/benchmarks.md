@@ -16,8 +16,8 @@ statement about the base rate, not about detection.
 |---|---|---:|---:|---:|---|:--:|
 | ToxicChat (OpenAI moderation as Tier 1) | AUPRC | **0.5967** | 0.0712 | +0.5255 | 0.532 - 0.664 | yes |
 | Aegis 1.0 (defensive) | AUPRC | **0.8114** | 0.6606 | +0.1508 | 0.860 - 0.941 | no |
-| BeaverTails (natural, 55.8% harm) | F1 | **0.7473** | 0.7160 | +0.0313 | 0.364 - 0.839 | yes |
-| BeaverTails (prevalence-corrected, 7% harm) | F1 | **0.1646** | 0.1385 | +0.0261 | 0.364 - 0.839 | no |
+| BeaverTails (natural, 55.8% harm) | F1 | **0.7473** | 0.7160 | +0.0313 | -- | -- |
+| BeaverTails (prevalence-corrected, 7% harm) | F1 | **0.1646** | 0.1385 | +0.0261 | -- | -- |
 | RAGTruth | F1 | **0.6009** | 0.5177 | +0.0832 | 0.520 - 0.792 | yes |
 | OR-Bench | AUC | **0.7837** | 0.5000 | +0.2837 | -- | -- |
 
@@ -25,8 +25,8 @@ statement about the base rate, not about detection.
 
 - **ToxicChat (OpenAI moderation as Tier 1)** — The Tier 1 signal is OpenAI's, not ours. We supply calibration, the floor and the allocator around it; with our lexical Tier 1 this corpus scores far lower.
 - **Aegis 1.0 (defensive)** — Below the published band -- a failed endpoint. Fitted bag-of-words Tier 1.
-- **BeaverTails (natural, 55.8% harm)** — At this base rate the margin over flagging everything is the only real signal.
-- **BeaverTails (prevalence-corrected, 7% harm)** — The deployment-realistic prevalence, and far harder than the natural rate.
+- **BeaverTails (natural, 55.8% harm)** — No published band is quoted: our label is a bespoke mapping of the 14 categories onto five axes, so published F1 figures are not measured on the same target. At this base rate the margin over flagging everything is the only real signal.
+- **BeaverTails (prevalence-corrected, 7% harm)** — No published band, for the same reason as the row above. The deployment-realistic prevalence, and far harder than the natural rate.
 - **RAGTruth** — Threshold chosen on calibration and applied unchanged. Fitted grounding Tier 1.
 - **OR-Bench** — Over-refusal benchmark; the operating point matters more than the AUC.
 

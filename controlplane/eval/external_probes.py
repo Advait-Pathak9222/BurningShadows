@@ -20,7 +20,11 @@ from controlplane.eval.corpus_probe import CorpusSpec, probe
 from controlplane.eval.toxicchat_probe import write_report as write_toxicchat_report
 from controlplane.models import Interaction
 
-# Published on the Aegis test set, from the NVIDIA Aegis model card and arXiv:2404.05993.
+# Published on the Aegis test set. Source: the Aegis model card
+# (https://huggingface.co/nvidia/Aegis-AI-Content-Safety-LlamaGuard-Defensive-1.0),
+# reporting the evaluation table of arXiv:2404.05993. Verified against the card
+# 29 Aug 2026: Perspective 0.860, OpenAI Mod 0.895, Llama Guard Base 0.930,
+# Llama Guard Defensive 0.941.
 AEGIS_PUBLISHED = {
     "Aegis LlamaGuard Defensive": {"auprc": 0.941, "f1": 0.85},
     "Aegis LlamaGuard Permissive": {"auprc": 0.941, "f1": 0.76},
@@ -273,6 +277,8 @@ def build_matrix(
                 # AUPRC's trivial null is the base rate: 7.12% here, which is why this
                 # number is not comparable with the AUPRC figures on 53%-harmful corpora.
                 float(tc["base_rate"]),
+                # AUPRC on ToxicChat, from the Llama Guard paper (arXiv:2312.06674),
+                # which is also where the Aegis paper sources its Perspective figure.
                 {"Llama Guard Base": 0.664, "OpenAI Mod API": 0.588, "Perspective API": 0.532},
                 "The Tier 1 signal is OpenAI's, not ours. We supply calibration, the floor "
                 "and the allocator around it; with our lexical Tier 1 this corpus scores "
@@ -300,16 +306,24 @@ def build_matrix(
             "F1",
             float(bt_natural["fixed_threshold"]["f1"]),
             float(bt_natural["flag_everything_f1"]),
-            {"published band high": 0.839, "published band low": 0.364},
-            "At this base rate the margin over flagging everything is the only real signal.",
+            # No published band. Our BeaverTails target is built from our own mapping of
+            # the corpus's 14 categories onto five harm axes, so no published F1 is
+            # measured on the same label, and quoting one would compare two different
+            # questions. The margin over the trivial null is the only honest signal here.
+            {},
+            "No published band is quoted: our label is a bespoke mapping of the 14 "
+            "categories onto five axes, so published F1 figures are not measured on the "
+            "same target. At this base rate the margin over flagging everything is the "
+            "only real signal.",
         ),
         _matrix_row(
             "BeaverTails (prevalence-corrected, 7% harm)",
             "F1",
             float(bt_corrected["fixed_threshold"]["f1"]),
             float(bt_corrected["flag_everything_f1"]),
-            {"published band high": 0.839, "published band low": 0.364},
-            "The deployment-realistic prevalence, and far harder than the natural rate.",
+            {},
+            "No published band, for the same reason as the row above. The "
+            "deployment-realistic prevalence, and far harder than the natural rate.",
         ),
         _matrix_row(
             "RAGTruth",
@@ -317,6 +331,8 @@ def build_matrix(
             float(rag["fixed_threshold"]["f1"]),
             float(rag["flag_everything_f1"]),
             {
+                # Example-level F1 on RAGTruth, Table 2 of the LettuceDetect paper
+                # (arXiv:2502.17125). Verified 29 Aug 2026.
                 "LettuceDetect large": 0.7922,
                 "Fine-tuned Llama-2-13B": 0.787,
                 "Luna": 0.654,

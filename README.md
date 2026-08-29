@@ -31,7 +31,7 @@ deployment: [Industry fit](docs/INDUSTRY-FIT.md).
 ### 1. Human attention is where assurance money goes
 
 **What the claim means.** Running a guardrail costs money in two places: the automated checks, and
-the people who review whatever those checks escalate. Of every rupee spent on assurance, **81 to 97
+the people who review whatever those checks escalate. Of every rupee spent on assurance, **81 to 98
 paise go to the humans**, not the machines. Buying a cheaper or faster model optimises the small
 part of the bill.
 
@@ -39,6 +39,14 @@ The arithmetic is a ratio of two configured prices. A reviewer costs ₹1,200/ho
 per case, so **one completed review costs ₹120**. The most expensive automated check — a Tier 2 LLM
 judge — costs **₹3.20**. A review is **37.5x** an automated check, so it takes only a handful of
 escalations to outweigh checking every response by machine.
+
+**The reviewer rate is derived, not measured, and it is the number to push on.** ₹1,200/hour is a
+₹10,00,000 base at a 1.8x loading over 1,500 productive hours. That sits at the *top* of a
+defensible band, which is the end that flatters this argument, so the whole band and what it does
+to the conclusion are worked through in [assumptions](docs/03-assumptions.md). The short version: at
+the budgets the knee curve recommends, human attention is 91% to 98% of the bill anywhere between
+₹300 and ₹1,800 an hour. The claim survives its own sensitivity analysis; at 100% coverage on a
+₹300/hour desk it does not, and that is stated there too.
 
 Over 1,500 held-out interactions, with 166 reviews completed at the configured capacity (₹19,920 of
 attention), against the compute the allocator actually spends:
@@ -76,8 +84,9 @@ expected loss that first-in-first-out does from the same **166** completed revie
 | deadline (ablation) | 160 | ₹2,266,731 | 13 |
 
 The `density` ablation — the shipped rule with its deadline term removed — leads on both axes, and
-is reported as the stronger rule. Keeping up with arrivals needs **6.8 reviewers** against the two
-the scenario staffs, which is the larger lever.
+is reported as the stronger rule. Ordering is still the smaller lever: keeping up with arrivals at
+this budget needs **3.0 reviewers** against the two the scenario staffs, rising to **6.8** at full
+Tier-2 coverage. No serving rule substitutes for that.
 
 Full detail: [queue comparison](docs/results/attention.md).
 
@@ -142,7 +151,7 @@ it claim 0.1407 while held-out data showed **0.2800** — a violated guarantee. 
 fitting/selection split fixed it. **The discipline is the guarantee**, and both halves of that are
 on the record.
 
-### 4. Detection is in band on three benchmarks, and out of band on a fourth
+### 4. Detection is in band on two benchmarks, and out of band on a third
 
 Read the **null** column before the score. On an imbalanced corpus, a policy that flags every
 single row scores `2p/(1+p)`, which can look respectable and beat published numbers while detecting
@@ -152,8 +161,8 @@ nothing. The margin over that null is the only part that is ours.
 |---|---:|---:|---:|---|---|
 | ToxicChat (AUPRC) | **0.597** | 0.071 | +0.526 | Llama Guard 0.664 · OpenAI Mod 0.588 · Perspective 0.532 | in band ¹ |
 | RAGTruth (F1) | **0.601** | 0.518 | +0.083 | LettuceDetect 0.792 · GPT-4 prompt 0.634 · RAGAS 0.520 | in band ² |
-| BeaverTails, natural 55.8% harm (F1) | 0.747 | **0.716** | **+0.031** | band 0.364 – 0.839 | in band, but see ³ |
-| BeaverTails, corrected 7% harm (F1) | **0.165** | 0.139 | +0.026 | band 0.364 – 0.839 | **below band** |
+| BeaverTails, natural 55.8% harm (F1) | 0.747 | **0.716** | **+0.031** | none quoted ³ | margin only ³ |
+| BeaverTails, corrected 7% harm (F1) | **0.165** | 0.139 | +0.026 | none quoted ³ | margin only ³ |
 | **Aegis (AUPRC)** | **0.811** | 0.661 | +0.151 | band 0.860 – 0.941 | **below band — endpoint failed** |
 | OR-Bench (AUC) | 0.784 | 0.500 | +0.284 | operating point below | partial ² |
 
@@ -164,10 +173,28 @@ allocator around it. With our own lexical Tier 1 the same corpus scores far lowe
 ² Uses a detector fitted on that corpus (`fitted_grounding`, `fitted_bayes_bow`). These are
 **evaluation adapters**, fitted on the calibration fold and *not wired into the serving path*.
 
-³ **The BeaverTails headline was misleading and is corrected here.** 0.749 was measured at the
-corpus's natural 55.8% harm rate, where flagging every row already scores 0.716 — a margin of
-0.031. At a deployment-realistic 7% prevalence the same pipeline scores **0.165**, below the
-published band. Both rows are now shown; previously only the flattering one was.
+³ **BeaverTails carries no published comparison, and the band we used to quote has been
+withdrawn.** An audit of every published figure on this page could not trace the "0.364 - 0.839"
+band we had been printing to any source, so it is gone. It should never have been there for a
+second reason: our BeaverTails label is our own mapping of the corpus's 14 categories onto five
+harm axes, so no published F1 is measured on the same target and any band would compare two
+different questions. What survives is the margin over the trivial null, which is small. The
+headline was also misleading in its own right: 0.749 was measured at the natural 55.8% harm rate,
+where flagging every row already scores 0.716. At a deployment-realistic 7% prevalence the same
+pipeline scores **0.165**. Both rows are shown; previously only the flattering one was.
+
+**Where every published number in that table comes from.** Each was re-checked against its primary
+source on 29 August 2026, and the constants in
+[`external_probes.py`](controlplane/eval/external_probes.py) carry the same citations.
+
+| Figure | Source |
+|---|---|
+| ToxicChat AUPRC — Llama Guard 0.664, OpenAI Mod 0.588, Perspective 0.532 | [Llama Guard, arXiv:2312.06674](https://arxiv.org/abs/2312.06674) |
+| RAGTruth F1 — LettuceDetect 0.792, Llama-2-13B 0.787, Luna 0.654, GPT-4 Turbo 0.634, RAGAS 0.520 | [LettuceDetect, arXiv:2502.17125](https://arxiv.org/abs/2502.17125), Table 2 |
+| Aegis AUPRC — Perspective 0.860, OpenAI Mod 0.895, Llama Guard Base 0.930, Llama Guard Defensive 0.941 | [Aegis model card](https://huggingface.co/nvidia/Aegis-AI-Content-Safety-LlamaGuard-Defensive-1.0), reporting [arXiv:2404.05993](https://arxiv.org/abs/2404.05993) |
+| OR-Bench refusal — Claude-3-Opus 91.0%, Llama-3-70b 37.7%, Mistral-large 9.7%, GPT-4o 6.7% | [OR-Bench, arXiv:2405.20947](https://arxiv.org/abs/2405.20947), Table 2 |
+| OR-Bench toxic catch — 98.1% / 78.7% / 72.8% / 84.9% | Same paper, Table 3, converted from the acceptance rates it reports |
+| BeaverTails | **No published band.** See note 3 above. |
 
 <p align="center">
   <img src="docs/images/benchmark-comparison.png" alt="ControlPlane against published detectors on five public benchmarks, with the trivial null shown behind each score" width="900">
@@ -247,8 +274,8 @@ operator put it.
 
 Two numbers make a budget honest, and both are now computed and reported:
 
-- **The floor cost** — what the guarantee obliges at any price — is **₹46.26** on our test corpus,
-  0.96% of full Tier-2 coverage. A budget below it is *infeasible*: the floor wins and the run
+- **The floor cost** — what the guarantee obliges at any price — is **₹51.84** on our test corpus,
+  1.08% of full Tier-2 coverage. A budget below it is *infeasible*: the floor wins and the run
   reports the overspend rather than silently skipping a mandatory check. Which of the two gives is
   an operator's decision, not ours.
 - **The blanket-coverage boundary** is `c_tier1 / c_tier2` = `0.18 / 3.20` = **5.625%**. Above it,
@@ -309,7 +336,7 @@ exists to bound how much that matters.
 | Do consequence assumptions move decisions? | Across a **0.25x–4x** band, **10.9%** of tier decisions change and the verdict flip rate is **0%** — consequence prices a check but does not enter the release rule. |
 | Is the audit trail complete? | **1,500 of 1,500** decisions and **205** reviews in one valid chain; **224 of 224** proposed effects logged. |
 | Is the detector catch rate measured or assumed? | Measured. Labelled Tier 2 catch rate **0.928** against **0.880** configured, over **359** observations. |
-| Does the allocator stay inside its budget? | Yes, once governed: **1.00x–1.03x** of budget across the grid, against up to **3.75x** before. The floor costs **₹46.26** and a budget below that is reported infeasible rather than silently breached. |
+| Does the allocator stay inside its budget? | Yes, once governed: **1.00x–1.03x** of budget across the grid, against up to **3.75x** before. The floor costs **₹51.84** and a budget below that is reported infeasible rather than silently breached. |
 | What does it do to safe traffic? | Refuses **13.5%** of adversarially-hard safe prompts on OR-Bench, against 6.7%–91.0% for published models. |
 
 <p align="center">
@@ -340,7 +367,7 @@ runs; actions that change something wait behind a separate gate.
 
 | Plane | What it does |
 |---|---|
-| **Admit** | A per-route token bucket and bounded lanes decide whether there is capacity. If not, the request is refused before the model generates anything. |
+| **Admit** | A per-route token bucket and bounded lanes decide whether there is capacity. A preflight Tier 0 scan then reads the prompt on its own and refuses it outright above an injection score of 0.70. Both happen before the model generates anything, so a refused request pays for neither generation nor checking. |
 | **Observe** | Tier 0 rules and Tier 1 signals score the answer on five harm axes. Isotonic calibration turns those scores into probabilities, and the evidence regime records what can be checked at all. |
 | **Decide** | The release floor marks what must be checked. The allocator prices each remaining tier against the budget's shadow price. Tier 2 runs only when it is selected, and the decision is recomputed with its signal. |
 | **Act & prove** | A verdict of allow, annotate, abstain, hold or block covers the text. Proposed effects are permitted, held or denied independently. Everything is appended to the hash chain. |
