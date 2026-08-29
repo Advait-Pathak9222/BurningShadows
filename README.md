@@ -476,6 +476,9 @@ MLflow run per policy and budget to `./mlruns`.
 | `run_submission.sh` | Clone-and-run reviewer entrypoint: gate, demo, report, byte-identity check |
 | `LICENSE` | MIT for this code; the external corpora keep their own licences and are not vendored |
 
+**Project handoff:** [`docs/PROJECT-HANDOFF.md`](docs/PROJECT-HANDOFF.md) gives a new collaborator the
+product story, architecture rationale, simulator walkthrough, and pitch-video runbook in one place.
+
 **Worth reading first:** [`allocator.py`](controlplane/economics/allocator.py) holds the decision in
 plain arithmetic, and [`conformal.py`](controlplane/guarantees/conformal.py) holds the guarantee
 that overrides the budget.
