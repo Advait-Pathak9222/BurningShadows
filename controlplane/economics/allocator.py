@@ -4,6 +4,7 @@ from controlplane.models import (
     DecisionTrace,
     DetectionBundle,
     EvidenceRegime,
+    HarmVector,
     RoutePolicy,
     TierDecision,
     TierEconomics,
@@ -38,8 +39,14 @@ def allocate_verification(
     shadow_price: float,
     conformal_threshold: float,
     tool_calls: list[ToolCall],
+    raw_harm: HarmVector | None = None,
 ) -> DecisionTrace:
-    """Spend assurance where expected avoided loss exceeds its priced cost."""
+    """Spend assurance where expected avoided loss exceeds its priced cost.
+
+    `raw_harm` is the pre-calibration vector, recorded but never decided on. Every
+    decision below uses the calibrated `bundle.harm`; the raw copy exists so a later
+    refit has the score half of the (score, label) pair it needs.
+    """
     if shadow_price < 0:
         raise ValueError("shadow_price must be non-negative")
 
@@ -54,6 +61,7 @@ def allocate_verification(
         verdict=verdict,
         reason=reason,
         harm=bundle.harm,
+        raw_harm=raw_harm,
         evidence_regime=bundle.evidence_regime,
         selected_tier=tier_number,
         forced_by_conformal=forced,

@@ -78,11 +78,19 @@ class AssessmentEngine:
             signals.append(self.tier2.run(interaction))
         return signals
 
-    def _bundle(
+    def _combine(
         self, interaction: Interaction, signals: list[DetectorSignal]
     ) -> DetectionBundle:
-        bundle = combine_signals(signals, infer_evidence_regime(interaction))
-        route_calibrators = self.calibrators.get(interaction.route)
+        """Merge detector signals without calibrating them.
+
+        Kept separate from `_calibrate` because the uncalibrated vector is what a future
+        refit has to be fitted against: a calibration map is a function of the raw score,
+        so storing only the calibrated value leaves nothing to re-derive the map from.
+        """
+        return combine_signals(signals, infer_evidence_regime(interaction))
+
+    def _calibrate(self, route: str, bundle: DetectionBundle) -> DetectionBundle:
+        route_calibrators = self.calibrators.get(route)
         if route_calibrators is None:
             return bundle
         calibrated = {
@@ -90,6 +98,11 @@ class AssessmentEngine:
             for axis, score in bundle.harm.values_by_name().items()
         }
         return bundle.model_copy(update={"harm": bundle.harm.model_validate(calibrated)})
+
+    def _bundle(
+        self, interaction: Interaction, signals: list[DetectorSignal]
+    ) -> DetectionBundle:
+        return self._calibrate(interaction.route, self._combine(interaction, signals))
 
     def preflight(self, route: str, jurisdiction: str, prompt: str) -> PreflightDecision:
         policy = self.policy_store.resolve(route, jurisdiction)
@@ -113,8 +126,7 @@ class AssessmentEngine:
         )
 
     def _raw_detect(self, interaction: Interaction, include_tier2: bool = False) -> DetectionBundle:
-        signals = self._signals(interaction, include_tier2)
-        return combine_signals(signals, infer_evidence_regime(interaction))
+        return self._combine(interaction, self._signals(interaction, include_tier2))
 
     def assess(
         self,
@@ -134,7 +146,8 @@ class AssessmentEngine:
         session_risk = self.sessions.risk(session_id)
         threshold = tightened_threshold(fitted, session_risk)
         signals = self._signals(interaction)
-        bundle = self._bundle(interaction, signals)
+        raw = self._combine(interaction, signals)
+        bundle = self._calibrate(interaction.route, raw)
         tiers = self.cost_model.tiers(policy, interaction.tool_calls)
         effective_price = shadow_price
         if mandatory_only:
@@ -147,12 +160,14 @@ class AssessmentEngine:
             shadow_price=effective_price,
             conformal_threshold=threshold,
             tool_calls=interaction.tool_calls,
+            raw_harm=raw.harm,
         )
         if trace.selected_tier == 2:
             # Tier 0 and Tier 1 already ran; escalation adds the judge to their signals
             # instead of recomputing the whole cascade.
             signals = [*signals, self.tier2.run(interaction)]
-            bundle = self._bundle(interaction, signals)
+            raw = self._combine(interaction, signals)
+            bundle = self._calibrate(interaction.route, raw)
             reviewed = allocate_verification(
                 interaction_id=interaction.interaction_id,
                 bundle=bundle,
@@ -161,6 +176,7 @@ class AssessmentEngine:
                 shadow_price=effective_price,
                 conformal_threshold=threshold,
                 tool_calls=interaction.tool_calls,
+                raw_harm=raw.harm,
             )
             # Tier 2 has already run and been paid for. The second pass may revise the
             # verdict on better evidence, but it must not report the check as skipped.

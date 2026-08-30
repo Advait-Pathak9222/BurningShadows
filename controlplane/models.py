@@ -200,6 +200,11 @@ class ReviewRecord(BaseModel):
     reason_code: str
     # What the reviewer determined was actually true, which is the label the system learns from.
     observed_harm: bool
+    # Which axes the reviewer actually found wrong, not merely that something was. The
+    # calibration maps are fitted per axis, so a single boolean cannot refit them. Added
+    # alongside `observed_harm` rather than replacing it, so existing call sites, the
+    # catch-rate estimator and chains written before this field keep working.
+    observed_axes: HarmVector | None = None
     system_withheld: bool
     selected_tier: int | None
     decided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -231,6 +236,11 @@ class DecisionTrace(BaseModel):
     verdict: Verdict
     reason: str
     harm: HarmVector
+    # The same vector before calibration. A calibration map is a function of the raw
+    # score, so a record carrying only the calibrated value cannot be used to refit one.
+    # Optional because chains written before this field existed must still parse; a refit
+    # skips those rows rather than inventing a score for them.
+    raw_harm: HarmVector | None = None
     evidence_regime: EvidenceRegime
     selected_tier: int | None
     forced_by_conformal: bool
