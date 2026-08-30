@@ -16,7 +16,10 @@ REVIEWER_ERROR_RATE = 0.06
 
 
 def review_case(
-    interaction: Interaction, trace: DecisionTrace, reviewer: str = "queue-reviewer-1"
+    interaction: Interaction,
+    trace: DecisionTrace,
+    reviewer: str = "queue-reviewer-1",
+    sampled_at_random: bool = False,
 ) -> ReviewRecord:
     """Produce the label a human would return for one case.
 
@@ -35,6 +38,7 @@ def review_case(
         reason_code=_reason(observed, withheld),
         observed_harm=observed,
         observed_axes=_observed_axes(interaction.truth, correct),
+        sampled_at_random=sampled_at_random,
         system_withheld=withheld,
         selected_tier=trace.selected_tier,
     )

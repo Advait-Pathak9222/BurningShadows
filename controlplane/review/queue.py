@@ -105,6 +105,19 @@ class ReviewQueue:
     economics: ReviewEconomics
     pending: list[ReviewCase] = field(default_factory=list)
     strategy: str = "deadline_density"
+    # Share of serving slots filled uniformly at random rather than by the rule.
+    #
+    # This costs queue performance and buys the only thing that can recalibrate the
+    # system. Serving by expected loss per minute means harmful rows are likelier to be
+    # reviewed *within* the raised population, so the labels it produces are a biased
+    # sample of it — and biased in a way no stratum-level weight can undo, because the
+    # selection happens inside the stratum. Measured on this corpus: a value-ordered
+    # sample runs 37% harmful against 18.4% in the traffic it has to price, and inverse
+    # probability weighting moved that to 38.2%, which is to say nowhere.
+    #
+    # A randomly filled slot has a known, uniform inclusion probability. Those rows, and
+    # the fixed-rate audit of released rows, are the only ones a refit may fit on.
+    random_share: float = 0.0
 
     def submit(self, case: ReviewCase) -> None:
         self.pending.append(case)
@@ -153,7 +166,14 @@ class ReviewQueue:
                 # Idle until the next case exists, rather than inventing work to do.
                 free_at[reviewer] = arrivals[next_arrival].arrived_at_minutes
                 continue
-            case = min(waiting, key=lambda item: (*key(item), item.interaction_id))
+            at_random = self._is_random_slot(len(decisions))
+            if at_random:
+                # Uniform over what is waiting, so every raised case in the window has the
+                # same chance of landing here. That is the whole point: a known inclusion
+                # probability, which the serving rule cannot give.
+                case = min(waiting, key=lambda item: _stable_uniform(item.interaction_id))
+            else:
+                case = min(waiting, key=lambda item: (*key(item), item.interaction_id))
             waiting.remove(case)
             finished = max(now, case.arrived_at_minutes) + case.review_minutes
             if finished > window:
@@ -170,6 +190,7 @@ class ReviewQueue:
                     ),
                     wait_minutes=waited,
                     spend_inr=case.review_cost_inr,
+                    sampled_at_random=at_random,
                 )
             )
 
@@ -180,6 +201,20 @@ class ReviewQueue:
                     self._shed(case, max(0.0, window - case.arrived_at_minutes))
                 )
         return decisions
+
+    def _is_random_slot(self, served_so_far: int) -> bool:
+        """Spread the random slots evenly rather than drawing per slot.
+
+        A per-slot coin flip would make the number of random reviews itself random, so a
+        run could produce far fewer labels than the share implies. Spacing them keeps the
+        count exact and the run reproducible.
+        """
+        if self.random_share <= 0.0:
+            return False
+        if self.random_share >= 1.0:
+            return True
+        spacing = round(1.0 / self.random_share)
+        return served_so_far % spacing == 0
 
     @staticmethod
     def _shed(case: ReviewCase, elapsed: float) -> ReviewDecision:

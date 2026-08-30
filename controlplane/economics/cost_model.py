@@ -28,6 +28,15 @@ class CostModel:
         return float(self.config["controller"]["gateway_budget_rate_inr"])
 
     @property
+    def random_review_share(self) -> float:
+        """Reviewer slots spent on uniformly sampled cases instead of the highest-value ones.
+
+        Buys the only labels a calibration refit may use, and costs queue performance to
+        do it. See `ReviewQueue.random_share` for why nothing cheaper works.
+        """
+        return float(self.config["review"].get("random_review_share", 0.0))
+
+    @property
     def audit_rate_unchecked(self) -> float:
         return float(self.config["review"]["audit_rate_unchecked"])
 

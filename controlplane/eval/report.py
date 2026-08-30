@@ -418,7 +418,7 @@ def _run_review(
     count rather than assuming a reviewer idles whenever the queue is short.
     """
     economics = engine.cost_model.review
-    queue = ReviewQueue(economics)
+    queue = ReviewQueue(economics, random_share=engine.cost_model.random_review_share)
     by_id = {item.interaction_id: item for item in test}
     # The test set is a stream, so a row's position in it is when it happened. Without
     # this every case is treated as arriving at minute zero.
@@ -438,7 +438,11 @@ def _run_review(
 
     trace_by_id = {trace.interaction_id: trace for trace in traces}
     records = [
-        review_case(by_id[d.case.interaction_id], trace_by_id[d.case.interaction_id])
+        review_case(
+            by_id[d.case.interaction_id],
+            trace_by_id[d.case.interaction_id],
+            sampled_at_random=d.sampled_at_random,
+        )
         for d in served
     ]
     records.extend(_audit_released(engine, test, traces))

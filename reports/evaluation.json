@@ -246,28 +246,28 @@
         "selected": false
       },
       "1": {
-        "catches": 35,
+        "catches": 39,
         "configured": 0.68,
         "has_evidence": true,
-        "measured": 0.7708333333333334,
+        "measured": 0.7884615384615384,
         "misses": 9,
-        "observations": 44,
+        "observations": 48,
         "selected": true
       },
       "2": {
-        "catches": 335,
+        "catches": 341,
         "configured": 0.88,
         "has_evidence": true,
-        "measured": 0.928374655647383,
+        "measured": 0.9295392953929539,
         "misses": 24,
-        "observations": 359,
+        "observations": 365,
         "selected": true
       }
     },
     "precision": {
       "escape_rate_in_audit": 0.11777777777777777,
       "escaped_found": 53.0,
-      "precision": 0.3714859437751004,
+      "precision": 0.3815261044176707,
       "released_reviewed": 450.0,
       "reviewed": 1446.0,
       "withheld": 996.0
@@ -888,13 +888,13 @@
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.164,
       "cases_raised": 246.0,
-      "p99_wait_minutes": 347.0,
+      "p99_wait_minutes": 193.66666666666669,
       "queue_spend_inr": 19920.0,
-      "reviewed": 103.0,
+      "reviewed": 101.0,
       "reviewer_minutes": 996.0,
       "shed": 80.0,
       "shed_rate": 0.3252032520325203,
-      "sla_breached": 63.0
+      "sla_breached": 65.0
     },
     "0.25": {
       "attention_spend_inr": 25320.0,
@@ -903,13 +903,13 @@
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.218,
       "cases_raised": 327.0,
-      "p99_wait_minutes": 225.33333333333337,
+      "p99_wait_minutes": 220.33333333333334,
       "queue_spend_inr": 19920.0,
-      "reviewed": 118.0,
+      "reviewed": 112.0,
       "reviewer_minutes": 996.0,
       "shed": 161.0,
       "shed_rate": 0.4923547400611621,
-      "sla_breached": 48.0
+      "sla_breached": 54.0
     },
     "0.40": {
       "attention_spend_inr": 25440.0,
@@ -918,13 +918,13 @@
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.22933333333333333,
       "cases_raised": 344.0,
-      "p99_wait_minutes": 147.99999999999997,
+      "p99_wait_minutes": 91.33333333333333,
       "queue_spend_inr": 19920.0,
-      "reviewed": 133.0,
+      "reviewed": 114.0,
       "reviewer_minutes": 996.0,
       "shed": 178.0,
       "shed_rate": 0.5174418604651163,
-      "sla_breached": 33.0
+      "sla_breached": 52.0
     },
     "0.60": {
       "attention_spend_inr": 25320.0,
@@ -933,13 +933,13 @@
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.27066666666666667,
       "cases_raised": 406.0,
-      "p99_wait_minutes": 49.00000000000003,
+      "p99_wait_minutes": 169.33333333333331,
       "queue_spend_inr": 19920.0,
-      "reviewed": 136.0,
+      "reviewed": 112.0,
       "reviewer_minutes": 996.0,
       "shed": 240.0,
       "shed_rate": 0.5911330049261084,
-      "sla_breached": 30.0
+      "sla_breached": 54.0
     },
     "0.80": {
       "attention_spend_inr": 24720.0,
@@ -948,13 +948,13 @@
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.32266666666666666,
       "cases_raised": 484.0,
-      "p99_wait_minutes": 49.00000000000003,
+      "p99_wait_minutes": 137.66666666666669,
       "queue_spend_inr": 19920.0,
-      "reviewed": 136.0,
+      "reviewed": 116.0,
       "reviewer_minutes": 996.0,
       "shed": 318.0,
       "shed_rate": 0.6570247933884298,
-      "sla_breached": 30.0
+      "sla_breached": 50.0
     },
     "1.00": {
       "attention_spend_inr": 24600.0,
@@ -963,13 +963,13 @@
       "capacity_minutes": 1000.0000000000001,
       "case_rate": 0.37933333333333336,
       "cases_raised": 569.0,
-      "p99_wait_minutes": 57.333333333333336,
+      "p99_wait_minutes": 93.66666666666667,
       "queue_spend_inr": 19920.0,
-      "reviewed": 134.0,
+      "reviewed": 117.0,
       "reviewer_minutes": 996.0,
       "shed": 403.0,
       "shed_rate": 0.7082601054481547,
-      "sla_breached": 32.0
+      "sla_breached": 49.0
     }
   },
   "shadow_price": {

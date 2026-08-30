@@ -144,23 +144,24 @@ def collect_labelled_scores(ledger: LedgerStore, cost_model: CostModel) -> list[
 def _inclusion_rates(
     decisions: dict[str, dict[str, Any]], reviews: dict[str, dict[str, Any]]
 ) -> dict[str, float]:
-    """What share of each route's raised cases the queue actually got to.
+    """What share of each route's raised cases landed in a randomly filled slot.
 
-    The queue serves by expected loss per reviewer minute, so this is not a random sample
-    of the raised population and the rate is an approximation. It is a far better one than
-    assuming every raised case was seen, which is what an unweighted fit assumes.
+    Only those slots have a computable inclusion probability, so this is the rate the
+    weights are built from. Cases the serving rule chose are counted in the denominator,
+    because they were eligible for a random slot, but never in the numerator.
     """
     raised: dict[str, int] = {}
-    reviewed: dict[str, int] = {}
+    sampled: dict[str, int] = {}
     for interaction_id, decision in decisions.items():
         if decision.get("verdict") not in WITHHELD_VERDICTS:
             continue
         route = str(decision["route"])
         raised[route] = raised.get(route, 0) + 1
-        if interaction_id in reviews:
-            reviewed[route] = reviewed.get(route, 0) + 1
+        review = reviews.get(interaction_id)
+        if review is not None and bool(review.get("sampled_at_random", False)):
+            sampled[route] = sampled.get(route, 0) + 1
     return {
-        route: reviewed.get(route, 0) / count for route, count in raised.items() if count
+        route: sampled.get(route, 0) / count for route, count in raised.items() if count
     }
 
 
@@ -170,10 +171,22 @@ def _inclusion_probability(
     served: dict[str, float],
     cost_model: CostModel,
 ) -> float:
-    if bool(review["system_withheld"]):
+    """This row's probability of being reviewed, or zero when nobody can compute it.
+
+    Returning zero excludes a row from the fit, and most reviewed rows are excluded. A
+    case served by the queue was chosen because its expected loss per minute was high, so
+    within the raised population harmful rows are far likelier to be looked at. That is
+    selection inside a stratum, and a stratum-level weight cannot undo it: measured here,
+    weighting moved the sample's harm rate from 37.2% to 38.2% against traffic at 18.4%.
+
+    Two designs survive. A slot reserved for uniform sampling picks from everything
+    waiting with equal probability, and the fixed-rate audit samples released rows at a
+    rate somebody configured. Both are computable; the serving rule is not.
+    """
+    if bool(review.get("sampled_at_random", False)):
         return served.get(route, 0.0)
-    # A released row is only ever looked at through the stratified audit, whose rates are
-    # configured rather than emergent, so this half of the sample has a known design.
+    if bool(review["system_withheld"]):
+        return 0.0
     if review.get("selected_tier") is None:
         return cost_model.audit_rate_unchecked
     return cost_model.audit_rate_checked

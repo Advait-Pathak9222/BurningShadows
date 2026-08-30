@@ -11,6 +11,14 @@ review:
   # already scored.
   audit_rate_unchecked: 0.40
   audit_rate_checked: 0.04
+  # Reviewer slots filled by uniform sampling rather than by the serving rule. This is
+  # the price of being able to recalibrate at all: the queue serves by expected loss per
+  # minute, so the labels it produces over-represent harm 37% against the 18.4% actually
+  # present, and no stratum-level weight corrects selection happening inside a stratum.
+  # Only randomly sampled rows and the fixed-rate audit have a computable inclusion
+  # probability, and only those may fit a calibration map. Raising this buys labels and
+  # spends queue performance; the attention report prices both sides.
+  random_review_share: 0.20
 
 controller:
   learning_rate: 0.35

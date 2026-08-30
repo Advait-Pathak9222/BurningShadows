@@ -180,6 +180,10 @@ class ReviewDecision(BaseModel):
     outcome: ReviewOutcome
     wait_minutes: float = Field(ge=0.0)
     spend_inr: float = Field(ge=0.0)
+    # Filled by a slot reserved for uniform sampling rather than by the serving rule, so
+    # this row's probability of being reviewed is known. Only such rows may fit a
+    # calibration map; see `ReviewQueue.random_share`.
+    sampled_at_random: bool = False
 
 
 class ReviewVerdict(StrEnum):
@@ -205,6 +209,10 @@ class ReviewRecord(BaseModel):
     # alongside `observed_harm` rather than replacing it, so existing call sites, the
     # catch-rate estimator and chains written before this field keep working.
     observed_axes: HarmVector | None = None
+    # Whether this row reached a reviewer through a known sampling design rather than
+    # through the value-ordered queue. A refit may only fit on rows where this is true, or
+    # on audit rows, because those are the only inclusion probabilities anyone can compute.
+    sampled_at_random: bool = False
     system_withheld: bool
     selected_tier: int | None
     decided_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

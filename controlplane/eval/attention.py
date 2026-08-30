@@ -40,6 +40,7 @@ def run_attention(root: Path, interactions: list[Interaction]) -> dict[str, Any]
     # the report's is now budget-governed. Sized on calibration, as it is there.
     floor_rate = engine.floor_rate_inr(calibration)
     economics = engine.cost_model.review
+    random_share = engine.cost_model.random_review_share
     minutes = economics.capacity_minutes_per_hour * (len(test) / INTERACTIONS_PER_HOUR)
     full_spend = _full_check_spend(engine, test)
 
@@ -48,7 +49,8 @@ def run_attention(root: Path, interactions: list[Interaction]) -> dict[str, Any]
         cases = _raise_cases(engine, test, full_spend * fraction, floor_rate)
         cutoff = _quantile([case.expected_loss_inr for case in cases], HIGH_VALUE_QUANTILE)
         results = {
-            name: _serve(cases, economics, minutes, name, cutoff) for name in STRATEGIES
+            name: _serve(cases, economics, minutes, name, cutoff, random_share)
+            for name in STRATEGIES
         }
         budgets.append(
             {
@@ -110,8 +112,11 @@ def _serve(
     minutes: float,
     strategy: str,
     high_value_cutoff: float,
+    random_share: float = 0.0,
 ) -> dict[str, float]:
-    queue = ReviewQueue(economics, strategy=strategy)
+    # Every rule pays the same sampling reserve, because the shipped desk pays it. Leaving
+    # it out of this comparison would publish a serving figure no deployment can reach.
+    queue = ReviewQueue(economics, strategy=strategy, random_share=random_share)
     for case in cases:
         queue.submit(case)
     decisions = queue.drain(minutes)

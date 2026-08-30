@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report sensitivity attention pii-probe judge-probe loadtest toxicchat benchmarks api console mlflow-ui test lint typecheck check clean
+.PHONY: install data demo report sensitivity attention relearn pii-probe judge-probe loadtest toxicchat benchmarks api console mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -19,6 +19,12 @@ sensitivity:
 
 attention:
 	$(PYTHON) -m controlplane.cli attention
+
+# Refit the calibration maps from reviewer labels in the audit chain, and refuse to
+# release one that is thinner, more degenerate or worse calibrated than what serves now.
+# Needs `make report` first, which is what writes reviews into the chain.
+relearn:
+	$(PYTHON) -m controlplane.cli relearn
 
 pii-probe:
 	$(PYTHON) -m controlplane.cli pii-probe

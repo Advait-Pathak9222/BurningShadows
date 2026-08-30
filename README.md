@@ -72,16 +72,21 @@ Raising the compute budget raises the number of cases needing a person, because 
 more to escalate. Reviewer capacity is fixed, so the queue saturates and what differs between
 policies is which cases get served. That makes serving order worth measuring.
 
-At a fixed reviewer capacity, on identical cases, the shipped queue rule serves **1.57x** the
+At a fixed reviewer capacity, on identical cases, the shipped queue rule serves **1.59x** the
 expected loss that first-in-first-out does from the same **166** completed reviews:
 
 | Serving rule | SLA breaches | Expected loss served | High-value cases shed |
 |---|---:|---:|---:|
-| **deadline_density** (shipped) | 63 | **₹3,348,580** | **1** |
-| fifo (baseline) | 149 | ₹2,129,319 | 16 |
+| **deadline_density** (shipped) | 65 | **₹3,430,681** | **2** |
+| fifo (baseline) | 139 | ₹2,162,224 | 15 |
 | random (baseline) | 47 | ₹2,816,476 | 9 |
-| density (ablation) | **35** | **₹3,875,966** | **1** |
-| deadline (ablation) | 160 | ₹2,266,731 | 13 |
+| density (ablation) | **48** | **₹3,798,647** | **2** |
+| deadline (ablation) | 150 | ₹2,200,133 | 15 |
+
+Every rule above pays the same **20% sampling reserve**: one slot in five is filled uniformly at
+random rather than by the rule. That reserve is what makes the calibrator refittable at all — see
+[section 8](#8-the-system-can-relearn-and-refuses-to-relearn-badly) — and it is charged to every
+rule here, because a serving figure measured without it is one no deployment can reach.
 
 The `density` ablation — the shipped rule with its deadline term removed — leads on both axes, and
 is reported as the stronger rule. Ordering is still the smaller lever: keeping up with arrivals at
@@ -313,6 +318,44 @@ success. Results are reported against those criteria whether or not they were me
 of how each result was reached — including a queue-model defect that was recorded before it was
 corrected — is preserved in [the pre-registrations](docs/PREREGISTRATION.md) and in
 [the queue provenance notes](docs/results/attention.md).
+
+### 8. The system can relearn, and refuses to relearn badly
+
+The calibration map used to be fitted once, at startup, off a seeded file, and never again — so the
+map that turns a raw score into a probability never saw live traffic, and every conformal threshold
+sat on top of it. `make relearn` closes that loop. It joins the raw scores now carried in the ledger
+to the per-axis labels reviewers give, refits the isotonic maps on the fitting fold, re-selects the
+thresholds on the disjoint one, and writes a versioned artifact.
+
+**The gate is the point, not the refit.** `learn_then_test` cannot fail: with no passing threshold
+it returns 0.0, which releases nothing and satisfies the bound by checking everything. So a release
+is refused when the sample is too thin, when the threshold collapses to full coverage, when
+calibration error exceeds an absolute ceiling, or when it regresses against the map already
+serving. Artifacts are bound to a detector fingerprint and a mismatch loads nothing, because
+serving a map fitted against different detectors corrupts every probability while spend barely
+moves — measured here, a cruder map changed **22.4% of tier decisions and removed all 80 blocks
+while total spend stayed within 0.3%**.
+
+**Most reviewer labels cannot be learned from, and that is the interesting part.** The queue serves
+by expected loss per reviewer minute, so harmful rows are likelier to be reviewed *within* the
+raised population. That is selection happening inside a stratum, and no stratum-level weight undoes
+it: the value-ordered sample runs **37.2% harmful against 18.4% in the traffic it has to price**,
+and inverse-probability weighting moved that to 38.2%. The same offline map that scores ECE
+0.008–0.043 on the test set scores **0.1425** on it.
+
+So only two designs qualify: rows drawn by the **20% sampling reserve** described above, and the
+fixed-rate audit of released rows. Everything the serving rule chose is used for catch rates and
+excluded from the fit. On this corpus that leaves 73 usable pairs against the ~100 per route the
+bound needs, so `make relearn` currently **refuses on all three routes and says so**:
+
+```
+Labelled pairs joined from the chain: 73
+  REFUSED   finops-agent: too few rows: 6 fitting (need 40), 12 selection (need 60)
+```
+
+That is the mechanism working. A live desk accumulates labels across days; a single pass over 1,500
+rows does not. What the reserve costs is visible in the queue table above — the shipped rule moved
+from 1.57x to 1.59x, because the reserve costs FIFO more than it costs a value-ordered rule.
 
 ---
 
