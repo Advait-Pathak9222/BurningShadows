@@ -378,7 +378,7 @@ exists to bound how much that matters.
 | Are the risk scores calibrated? | Expected calibration error **0.008 – 0.043** by route. |
 | Do consequence assumptions move decisions? | Across a **0.25x–4x** band, **10.9%** of tier decisions change and the verdict flip rate is **0%** — consequence prices a check but does not enter the release rule. |
 | Is the audit trail complete? | **1,500 of 1,500** decisions and **205** reviews in one valid chain; **224 of 224** proposed effects logged. |
-| Is the detector catch rate measured or assumed? | Measured. Labelled Tier 2 catch rate **0.928** against **0.880** configured, over **359** observations. |
+| Is the detector catch rate measured or assumed? | Measured. Labelled Tier 2 catch rate **0.930** against **0.880** configured, over **365** observations. |
 | Does the allocator stay inside its budget? | Yes, once governed: **1.00x–1.03x** of budget across the grid, against up to **3.75x** before. The floor costs **₹51.84** and a budget below that is reported infeasible rather than silently breached. |
 | What does it do to safe traffic? | Refuses **13.5%** of adversarially-hard safe prompts on OR-Bench, against 6.7%–91.0% for published models. |
 

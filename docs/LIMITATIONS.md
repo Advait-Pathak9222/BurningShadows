@@ -142,8 +142,8 @@ than either number, so here it is in full:
 3. `ReviewQueue.drain` is now a discrete-event simulation over reviewer-servers: a case cannot be
    started before it arrives, and wait is measured from its own arrival to the end of its review.
    Breaches fell from ~161 to 33-55 of 166 and p99 wait from 495 to 106-160 minutes.
-4. Run two passes: the shipped rule dominates FIFO at every budget, breaching 49 against 148 at the
-   tight budget while serving 1.57x the expected loss from the same reviews.
+4. Run two passes: the shipped rule dominates FIFO at every budget, breaching 65 against 139 at the
+   tight budget while serving 1.59x the expected loss from the same reviews.
 
 **A result that flips when its authors correct their own model is weaker evidence than one that does
 not.** The order of operations is the only thing that makes it credible at all — the defect was
