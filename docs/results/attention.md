@@ -40,7 +40,7 @@ The one thing the deadline term does buy is route fairness — it sheds 31 `fino
 
 The seeded random null breaches fewer SLAs than the shipped rule at 4 of 6 budgets — the tightest one. It serves far less value (2,816,476 against 3,348,580) and drops 9 top-decile cases against our 1, so it is not a better rule. But a shuffle beating us on any axis is worth saying out loud.
 
-And ordering is still the smaller lever. Keeping up with arrivals needs 6.8 reviewers against the 2 configured. **No serving rule substitutes for that**, and it remains the number worth putting in front of a buyer.
+And ordering is still the smaller lever. Keeping up with arrivals needs 3.0 reviewers at the tightest budget and 6.8 at full cover, against the 2 configured. **No serving rule substitutes for that**, and it remains the number worth putting in front of a buyer.
 
 ## Budget 10% — 246 cases raised
 

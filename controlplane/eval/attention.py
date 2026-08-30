@@ -262,7 +262,11 @@ def _diagnosis_lines(summary: dict[str, Any]) -> list[str]:
         for row in budgets
         if row["strategies"]["deadline"]["breached"] > row["strategies"][NULL]["breached"]
     )
+    # Report the range, not just the peak. Quoting the maximum alone reads as if it
+    # applied at every budget, and that ambiguity propagated into the README and a
+    # figure before it was caught.
     capacity = max(row["reviewers_for_throughput"] for row in budgets)
+    capacity_low = min(row["reviewers_for_throughput"] for row in budgets)
     return [
         "### Read this before the result: it is a re-run, and the first run failed",
         "",
@@ -328,9 +332,10 @@ def _diagnosis_lines(summary: dict[str, Any]) -> list[str]:
         f"beating us on any axis is worth saying out loud.",
         "",
         f"And ordering is still the smaller lever. Keeping up with arrivals needs "
-        f"{capacity:.1f} reviewers against the {summary['reviewers_on_shift']:.0f} "
-        f"configured. **No serving rule substitutes for that**, and it remains the number "
-        f"worth putting in front of a buyer.",
+        f"{capacity_low:.1f} reviewers at the tightest budget and {capacity:.1f} at full "
+        f"cover, against the {summary['reviewers_on_shift']:.0f} configured. **No serving "
+        f"rule substitutes for that**, and it remains the number worth putting in front of "
+        f"a buyer.",
         "",
     ]
 
