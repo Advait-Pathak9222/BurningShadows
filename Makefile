@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install data demo report sensitivity attention relearn pii-probe judge-probe loadtest toxicchat benchmarks api console mlflow-ui test lint typecheck check clean
+.PHONY: install data demo report sensitivity attention relearn pii-probe judge-probe loadtest toxicchat benchmarks api console prototype mlflow-ui test lint typecheck check clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -49,6 +49,12 @@ api:
 
 console: report
 	$(PYTHON) -m streamlit run console/streamlit_app.py
+
+# The live prototype: a support chatbot with the plane in its request path. Needs the
+# corpus to fit the calibration maps, but no API key -- without one it uses a fixed
+# reply and says so on the card.
+prototype: data
+	$(PYTHON) -m streamlit run console/demo_app.py
 
 mlflow-ui:
 	$(PYTHON) -m mlflow ui --backend-store-uri ./mlruns
