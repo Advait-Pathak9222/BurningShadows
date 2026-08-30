@@ -46,7 +46,7 @@ Two consequences worth stating plainly to a buyer:
 - **The queue is already 2.7x oversubscribed** at two reviewers on shift: 9,060 cases raised per
   week demanding 906 reviewer-hours against 333 available, and 63% of cases shed. Intervention
   precision is 0.396, so three fifths of what is escalated a reviewer disagrees with. That is alert
-  fatigue, measured rather than asserted. **Keeping up with arrivals at all needs 5.4 reviewers
+  fatigue, measured rather than asserted. **Keeping up with arrivals at all needs 4.1 reviewers
   against the two configured**, and no queue rule substitutes for that. Allocation decides which
   cases a short-staffed desk loses; it cannot decide that the desk is short-staffed.
 
@@ -60,7 +60,7 @@ Risk can challenge it.
 | Reviewer rate and handling time | Invoice and queue study | **Defensible.** This is a real number a CFO already owns |
 | Check price `v` | Provider token prices | Defensible once a real provider adapter is in place |
 | Catch rate `k` | **Measured from reviewer labels plus a stratified audit slice** | Tier 2 measures 0.950 against a configured 0.880 over 398 observations; Tier 1 measures 0.593 against 0.680 over 23 |
-| Consequence `c` | Finance and Risk, low/base/high | **Assumption, now bounded.** Still our softest input, but `make sensitivity` shows 15.8% of decisions move across a 0.25x-4x band and the *verdict* never does |
+| Consequence `c` | Finance and Risk, low/base/high | **Assumption, now bounded.** Still our softest input, but `make sensitivity` shows 10.9% of decisions move across a 0.25x-4x band and the *verdict* never does |
 
 The value side is deliberately not headlined. The synthetic corpus produces a loss-averted figure in
 the millions per week, and that number is a property of our assumed `c`, not evidence. What can be
@@ -148,9 +148,9 @@ Promotion to production requires all of:
 
 | Risk | Consequence | Mitigation and stop condition |
 |---|---|---|
-| `c` steers the wrong traffic | False confidence in the allocator | **Measured**: 15.8% of decisions flip across a 0.25x-4x band against a 20% stop condition, and the verdict never moves. Worst single draw is 27.7% and does breach |
+| `c` steers the wrong traffic | False confidence in the allocator | **Measured**: 10.9% of decisions flip across a 0.25x-4x band against a 20% stop condition, and the verdict never moves. Worst single draw is 27.7% and does breach |
 | Selective labels inflate `k` | Catch rate is biased upward | Stratified audit slice, already implemented and costed |
-| Reviewer capacity is the real constraint | The allocator optimises the wrong budget | **Confirmed, and it is.** Attention is 85-97% of total cost, the queue needs 5.4 reviewers to keep up against two configured, and our serving rule only beat FIFO after we corrected our own queue model |
+| Reviewer capacity is the real constraint | The allocator optimises the wrong budget | **Confirmed, and it is.** Attention is 85-97% of total cost, the queue needs 4.1 reviewers to keep up against two configured, and our serving rule only beat FIFO after we corrected our own queue model |
 | Drift invalidates the route bound | Mandatory misses rise | Window monitoring, label refresh, widen coverage |
 | Text streams before a verdict | User exposure | Blocking output checks on high-consequence text routes |
 | Floor exceeds budget | Budget target unmeetable | Report infeasibility; never relax alpha silently |
@@ -178,10 +178,10 @@ design is not its best version, because pre-registration 3 said an ablation beat
 becomes the headline.
 
 What we do stand behind, because it is measured rather than asserted: **the cost structure.**
-Attention is 85% to 97% of assurance cost. The queue is 2.7x oversubscribed and needs 5.4 reviewers
+Attention is 81% to 98% of assurance cost. The queue is 2.7x oversubscribed and needs 4.1 reviewers
 where two are staffed. Intervention precision is 0.396, so three fifths of what reaches a person is
 something they disagree with. Catch rates come from labels, not config: Tier 2 at 0.950 against a
-configured 0.880 over 398 observations. And 15.8% of decisions move across a 4x swing in the softest
+configured 0.880 over 398 observations. And 10.9% of decisions move across a 4x swing in the softest
 input we have, while the verdict does not move at all.
 
 That is the honest pitch: **we cannot yet prove we allocate better than the obvious alternatives,

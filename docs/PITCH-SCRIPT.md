@@ -133,7 +133,7 @@ The form is pre-filled. Read it out:
 
 > "Which changes what the problem even is. If reviewer time is the cost and capacity is fixed, the
 > lever is not *how much* you check — it is *whose case gets served first*. Same capacity, same
-> cases, five different serving rules. Ours serves 1.57× the expected loss that first-in-first-out
+> cases, five different serving rules. Ours serves 1.59× the expected loss that first-in-first-out
 > does from the same 166 reviews."
 
 **Point at the `density` row. Do not skip this.**
@@ -230,7 +230,7 @@ The form is pre-filled. Read it out:
 **"Your numbers are synthetic."**
 > Yes, and that is stated on the front page and in `docs/LIMITATIONS.md`. The rupee amounts describe
 > this implementation and its assumptions. What transfers is the mechanism and the sensitivity
-> result: across a 0.25×–4× band on the consequence table, 15.8% of tier decisions change and the
+> result: across a 0.25×–4× band on the consequence table, 10.9% of tier decisions change and the
 > verdict flip rate is 0%. Getting the consequence table wrong costs you money, not safety.
 
 **"What happens when the traffic drifts?"**
@@ -246,7 +246,7 @@ The form is pre-filled. Read it out:
 
 **"Why should a shadow price beat a well-tuned threshold?"**
 > At six of six budgets it averts more loss than a tuned fixed-rate policy, and at the 80% and 100%
-> budgets it beats checking *everything* — more loss averted for 28% less compute. But be careful
+> budgets it beats checking *everything* — more loss averted for 20% less compute. But be careful
 > with this one: the margins over the tuned baseline are 0.4–3.6%, which is honest but not dramatic,
 > and we say so.
 

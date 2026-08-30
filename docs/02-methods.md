@@ -28,9 +28,9 @@ Consistency is not truth: a model can repeat the same false statement. Sampling 
 
 Calibration asks whether events scored near a probability occur at that frequency. Platt scaling fits a sigmoid; isotonic regression learns a monotone non-parametric mapping; reliability diagrams and expected calibration error compare confidence with empirical frequency. [Guo et al.](https://arxiv.org/abs/1706.04599) show why uncalibrated neural confidence should not be taken at face value.
 
-`risk/calibration.py` includes a pair-adjacent-violators isotonic calibrator and ECE calculation. Calibration is fit only on the calibration split and evaluated on the test split. Route separation is retained because a 0.6 score need not mean the same thing in support and FinOps.
+`risk/calibration.py` includes a pair-adjacent-violators isotonic calibrator and ECE calculation, both of which accept sample weights. Calibration is fit on the calibration split and evaluated on the test split, and `make relearn` can refit it from reviewer labels afterwards — under a release gate, because labels drawn from a value-ordered review queue are a biased sample of the traffic the map has to price. Route separation is retained because a 0.6 score need not mean the same thing in support and FinOps.
 
-Isotonic calibration overfits small sets and is piecewise constant. ECE depends on binning and can hide local errors. Calibration quality also decays after drift, so plots are monitoring evidence rather than a permanent certificate.
+Isotonic calibration overfits small sets, and the textbook form is piecewise constant. Ours interpolates between block boundaries instead, because the constant form collapsed 977 OR-Bench rows onto five distinct scores and left no threshold that could sit inside the gap. ECE depends on binning and can hide local errors. Calibration quality also decays after drift, so plots are monitoring evidence rather than a permanent certificate.
 
 ## Cascades and selective evaluation
 

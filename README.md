@@ -533,7 +533,7 @@ make console     # opens the inspection console at http://localhost:8501
   <img src="docs/images/console.png" alt="The ControlPlane assurance console" width="880">
 </p>
 
-The console has five views over the same committed evidence. What each one shows, where its numbers
+The console has six views over the same committed evidence. What each one shows, where its numbers
 come from, and what to look at first: [console guide](docs/CONSOLE.md).
 
 **One command, from a clean clone:**

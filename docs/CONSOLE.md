@@ -31,6 +31,7 @@ which is why switching views is instant after the first load:
 |---|---|---|---|
 | `load_artifacts()` | `@st.cache_data` | `reports/evaluation.csv`, `reports/evaluation.json`, `reports/scenarios.json` | Overview, Scenarios |
 | `load_attention()` | `@st.cache_data` | `docs/results/attention.json` | Reviewer queue |
+| `load_relearn()` | none | `docs/results/relearn.json` | Relearn |
 | `assessment_engine()` | `@st.cache_resource` | corpus + `config/`, writes `data/audit.db` | Decision lab, Audit ledger |
 
 `load_artifacts()` falls back to computing the report in-process if `reports/` is missing, so a
@@ -80,11 +81,11 @@ Below that:
 
 ## 2. Reviewer queue — the finding that follows from the first one
 
-If reviewer time is 85–97% of the cost and capacity is fixed, then the only remaining lever is
+If reviewer time is 81–98% of the cost and capacity is fixed, then the only remaining lever is
 **which cases get served first**. This view is that experiment.
 
 Four metrics: cases raised, queue oversubscription, reviewers needed to keep up, and total capacity
-in minutes. At a 40% budget the queue is oversubscribed and needs about 5.4 reviewers against the 2
+in minutes. At a 40% budget the queue is oversubscribed and needs about 4.1 reviewers against the 2
 on shift.
 
 The table compares five serving rules at identical capacity on identical cases, so the comparison is
@@ -104,7 +105,29 @@ project — the ablation that undercuts our own default is right there in the de
 
 ---
 
-## 3. Scenarios — nine hand-built situations
+## 3. Relearn — what the calibrator learned, and why it usually refuses
+
+Reads `docs/results/relearn.json`, written by `make relearn`. Empty until that command has run,
+and the view says so rather than rendering a blank panel.
+
+Three metrics across the top: usable labelled pairs, how many routes cleared the release gate, and
+the detector fingerprint the maps were fitted against. Then a row per route with the reason it was
+released or refused, in the words the gate itself used.
+
+**Read the refusal, not the metrics.** A refit is offered, not applied, and on the shipped corpus
+every route is refused for want of labels. That is the mechanism working: `learn_then_test` cannot
+fail, because with no passing threshold it returns 0.0, which releases nothing and satisfies the
+bound by checking everything. Without a gate, a refit that learned nothing would look like a
+success.
+
+The count that governs everything here is **usable** pairs, not reviews. A case the queue chose
+because its expected loss per minute was high tells you nothing about the traffic the map has to
+price, so only the queue's random reserve and the fixed-rate audit are counted. On 1,500 rows that
+is 73 pairs against roughly 100 per route the bound needs.
+
+---
+
+## 4. Scenarios — nine hand-built situations
 
 A dropdown of nine scenarios, each with a written view rather than a JSON dump. Every one also has a
 **Raw scenario record** expander at the bottom for anyone who wants the underlying numbers.
@@ -127,7 +150,7 @@ checking depending on where they were said).
 
 ---
 
-## 4. Decision lab — the only view that computes something new
+## 5. Decision lab — the only view that computes something new
 
 Everything else reads committed artifacts. This view runs the live engine on text you type.
 
@@ -154,7 +177,7 @@ Every run appends to the hash chain, which sets up the next view.
 
 ---
 
-## 5. Audit ledger — proving nothing was edited
+## 6. Audit ledger — proving nothing was edited
 
 A banner reports whether the chain verifies and across how many records. Below it, the most recent
 50 records, and a selector to inspect any single record as JSON.

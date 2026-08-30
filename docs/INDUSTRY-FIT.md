@@ -45,13 +45,13 @@ Running the LLM judge on all traffic is the `check_all` policy, and we measured 
 
 | Policy | Compute spend | Loss averted | Share of check_all's benefit | Share of its cost |
 |---|---:|---:|---:|---:|
-| `check_all` | ₹4,800.00 | ₹5,476,400 | 100% | 100% |
-| allocator @ 10% budget | **₹660.90** | ₹5,315,700 | **97.1%** | **13.8%** |
-| allocator @ 25% budget | ₹1,066.36 | ₹5,411,200 | 98.8% | 22.2% |
-| allocator @ 80% budget | ₹3,470.60 | ₹5,479,500 | **100.1%** | 72.3% |
+| `check_all` | ₹4,800.00 | ₹5,469,400 | 100% | 100% |
+| allocator @ 10% budget | **₹480.98** | ₹5,078,000 | **92.8%** | **10.0%** |
+| allocator @ 25% budget | ₹1,098.58 | ₹5,407,000 | 98.9% | **22.9%** |
+| allocator @ 80% budget | ₹3,839.64 | ₹5,477,300 | **100.1%** | **80.0%** |
 
-**97% of the benefit for 14% of the spend.** And at the 80% budget the allocator does not merely
-approach checking everything — it beats it, averting more loss for 28% less compute, because
+**93% of the benefit for 10% of the spend.** And at the 80% budget the allocator does not merely
+approach checking everything — it beats it, averting more loss for 20% less compute, because
 `check_all` spends its Tier 2 budget on rows where the judge had nothing to find.
 
 The cost argument is the smaller half. The larger half is **latency**: Tier 2 is 900 ms. Running it
@@ -116,7 +116,7 @@ Being straight about this is more useful than claiming readiness.
 |---|---|---|
 | Tier 2 is a stub | Medium | The adapter exists; a production judge must be built and its catch rate re-measured. The feedback loop handles the re-measurement. |
 | Calibration is fit on synthetic traffic | **High** | Isotonic calibrators and the per-route release thresholds do not transfer. Needs roughly 500 labelled rows per route — about four weeks of one reviewer. |
-| Consequence table needs Finance sign-off | Low | Sensitivity across a 0.25×–4× band moves 15.8% of tier decisions and flips **0%** of verdicts. Getting it wrong costs money, not safety. |
+| Consequence table needs Finance sign-off | Low | Sensitivity across a 0.25×–4× band moves 10.9% of tier decisions and flips **0%** of verdicts. Getting it wrong costs money, not safety. |
 | Drift breaks the bound silently | **High** | The finite-sample guarantee is valid only for the distribution it was calibrated on. Production needs a drift detector triggering recalibration. Not built. |
 | Single-process state | Medium | The ledger and budget controller assume one process. Multi-worker needs shared state. |
 

@@ -163,7 +163,7 @@ an argument for route-awareness, not for the rule we shipped.
 
 Two more things we lose on. The seeded random null breaches fewer SLAs than the shipped rule at the
 tightest budget, though it serves far less value and drops 16 top-decile cases against our 1. And
-ordering remains the smaller lever: keeping up with arrivals needs 5.4 reviewers against the 2
+ordering remains the smaller lever: keeping up with arrivals needs 3.0 reviewers at the tightest budget and 6.8 at full cover against the 2
 configured, and no serving rule substitutes for that.
 
 ### Multi-turn session risk, and what it is not
@@ -324,7 +324,7 @@ review and effective-date handling.
 ## Next evidence needed
 
 1. Derive `c` from something defensible — regulatory exposure, remediation cost, reversal cost,
-   support-contact cost. The sensitivity analysis is now built (`make sensitivity`): 15.8% of
+   support-contact cost. The sensitivity analysis is now built (`make sensitivity`): 10.9% of
    decisions flip across a 0.25x-4x band against a 20% stop condition, tier selection moves and the
    verdict does not, and the worst single draw does breach at 27.7%. What remains missing is the
    derivation of the band itself, which is still our judgement rather than a customer's numbers.

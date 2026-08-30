@@ -1,5 +1,13 @@
 # The review loop: allocating attention, not just compute
 
+> **This is the plan, written before the work.** It is kept as a record of what was intended
+> rather than updated to match what exists, so the "we have almost nothing for this" framing
+> below describes the state at the time of writing, not today. What shipped: R1 the review
+> queue, R2 the stratified audit, and R4 session risk. R3 shipped by halves — `make relearn`
+> refits the calibration maps from reviewer labels under a release gate, but its own "done
+> when" is not met, because the measured catch rate is still reported rather than fed back
+> into anything the allocator reads. `docs/LIMITATIONS.md` carries the outstanding half.
+
 ## Why
 
 The problem statement names three things we have almost nothing for:
