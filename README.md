@@ -347,8 +347,8 @@ The console is deployed at [controlplane-ai.streamlit.app](https://controlplane-
 | [Assumptions](docs/03-assumptions.md) | Every assumed input with its status and source |
 | [Limitations](docs/LIMITATIONS.md) | The evaluation boundary and the evidence we would want next |
 | [Pre registration](docs/PREREGISTRATION.md) | What would have counted as success, written before each result |
-| [Business proposal](docs/07-business-proposal.md) | The commercial framing |
-| [Project handoff](docs/PROJECT-HANDOFF.md) | Product story, architecture rationale and runbook in one place |
+| [Decision records](docs/adr/) | The five design decisions that shape everything else, and why |
+| [Runtime pre registration](docs/RUNTIME_PREREGISTRATION.md) | The registered endpoint for admission control under load |
 
 ## Troubleshooting
 
