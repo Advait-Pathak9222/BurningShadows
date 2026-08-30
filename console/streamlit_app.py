@@ -4,6 +4,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+# Sibling module. Streamlit puts the entry script's own directory on sys.path, and
+# importing it renders nothing, because its page section only runs as the entry script.
+import demo_app
 import pandas as pd
 import streamlit as st
 
@@ -151,28 +154,54 @@ st.caption(
     "where expected harm is highest. All displayed numbers come from the seeded 3000-row corpus."
 )
 
+VIEWS = [
+    "Overview",
+    "Reviewer queue",
+    "Relearn",
+    "Scenarios",
+    "Decision lab",
+    "Audit ledger",
+    "Live demonstration",
+]
+
+# A view can be linked to, so a demonstration can be opened straight from a URL rather
+# than clicked to. Anything unrecognised falls back to the overview.
+requested_view = st.query_params.get("view", "")
+default_view = next((v for v in VIEWS if v.lower() == requested_view.lower()), "Overview")
+
 view = st.segmented_control(
-    "View",
-    ["Overview", "Reviewer queue", "Relearn", "Scenarios", "Decision lab", "Audit ledger"],
-    default="Overview",
-    required=True,
-    width="stretch",
+    "View", VIEWS, default=default_view, required=True, width="stretch"
 )
 
+LIVE = view == "Live demonstration"
+
 with st.sidebar:
-    st.subheader("Global filters")
-    budget_fraction = st.select_slider(
-        "Budget fraction",
-        options=[0.10, 0.25, 0.40, 0.60, 0.80, 1.00],
-        value=0.40,
-        format_func=lambda value: f"{value:.0%}",
-    )
-    policy_filter = st.multiselect(
-        "Policies",
-        ["allocator", "fixed_rate", "check_none", "check_all"],
-        default=["allocator", "fixed_rate"],
-    )
-    st.caption("Prototype v0.3 · seeded corpus 20260824 · manifest v3")
+    if LIVE:
+        st.subheader("Live demonstration")
+    else:
+        st.subheader("Global filters")
+    budget_fraction = 0.40
+    policy_filter = ["allocator", "fixed_rate"]
+    if not LIVE:
+        budget_fraction = st.select_slider(
+            "Budget fraction",
+            options=[0.10, 0.25, 0.40, 0.60, 0.80, 1.00],
+            value=0.40,
+            format_func=lambda value: f"{value:.0%}",
+        )
+        policy_filter = st.multiselect(
+            "Policies",
+            ["allocator", "fixed_rate", "check_none", "check_all"],
+            default=["allocator", "fixed_rate"],
+        )
+        st.caption("Prototype v0.3 · seeded corpus 20260824 · manifest v3")
+
+if LIVE:
+    # Rendered before the evaluation frame is touched. The walkthrough advances by
+    # rerunning the script once per step, and building the report on each of those
+    # reruns would make every step wait on work this view never reads.
+    demo_app.render(standalone=False)
+    st.stop()
 
 frame, detail, scenarios = load_artifacts()
 

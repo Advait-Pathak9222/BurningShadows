@@ -57,24 +57,24 @@ VERDICT_TONE = {
     "block": ("#FF4D6D", "withheld from the customer"),
 }
 
-st.set_page_config(
-    page_title="ControlPlane live prototype",
-    page_icon=":material/shield:",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+STANDALONE = __name__ == "__main__"
 
-CSS = """
+if STANDALONE:
+    st.set_page_config(
+        page_title="ControlPlane live prototype",
+        page_icon=":material/shield:",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
+
+# The demo's own markup. Safe to inject anywhere, because every selector below names a
+# class this file writes.
+PANEL_CSS = """
 <style>
 :root{
   --ink:#0B0817; --panel:#151029; --panel2:#1C1536; --line:#2E2450;
   --text:#F2EEFF; --muted:#9B92B8; --accent:#A100FF;
 }
-.stApp{background:radial-gradient(1200px 700px at 15% -5%, #1E1140 0%, #0B0817 55%);}
-section.main > div{padding-top:1.1rem;}
-#MainMenu, footer, header{visibility:hidden;}
-.block-container{padding-top:1.2rem; padding-bottom:1rem; max-width:1700px;}
-
 .cp-title{display:flex;align-items:baseline;gap:.7rem;margin:0 0 .15rem 0;}
 .cp-title u{font-size:1.5rem;font-weight:760;color:var(--text);text-decoration:none;
              letter-spacing:-.02em;}
@@ -157,6 +157,16 @@ table.g tr.pick td:first-child{border-left:2px solid var(--accent);}
 .tl i.on{background:var(--accent);}
 .idle{color:var(--muted);font-size:.83rem;text-align:center;padding:2.4rem 1rem;line-height:1.6;}
 
+</style>
+"""
+
+CHROME_CSS = """
+<style>
+.stApp{background:radial-gradient(1200px 700px at 15% -5%, #1E1140 0%, #0B0817 55%);}
+section.main > div{padding-top:1.1rem;}
+#MainMenu, footer, header{visibility:hidden;}
+.block-container{padding-top:1.2rem; padding-bottom:1rem; max-width:1700px;}
+
 /* ---------- Streamlit's own chrome, dressed to match ---------- */
 /* Scoped in this file rather than in .streamlit/config.toml, because a repository-level
    theme would also repaint console/streamlit_app.py and its matplotlib figures. */
@@ -222,7 +232,23 @@ table.g tr.pick td:first-child{border-left:2px solid var(--accent);}
 [data-testid="stSpinner"] *{color:var(--muted) !important;}
 </style>
 """
-st.markdown(CSS, unsafe_allow_html=True)
+
+
+EMBED_CSS = """
+<style>
+/* The two panels keep their own dark ground. Everything the demo draws outside them sits
+   on the console's light page, so it is recoloured here rather than left unreadable. */
+.cp-sub{color:#4A4458;}
+.cp-head b{color:#17121F;}
+.cp-head i{color:#6B6478;}
+</style>
+"""
+
+
+def inject_css(standalone: bool) -> None:
+    """Panel styling always. Widget styling only when this page is not a guest."""
+    st.markdown(PANEL_CSS, unsafe_allow_html=True)
+    st.markdown(CHROME_CSS if standalone else EMBED_CSS, unsafe_allow_html=True)
 
 
 # --------------------------------------------------------------------------------------
@@ -1051,113 +1077,137 @@ def finish() -> None:
 
 
 # --------------------------------------------------------------------------------------
-# Page
+# The page
 # --------------------------------------------------------------------------------------
 
-for name, value in {
-    "messages": [],
-    "steps": [],
-    "cursor": 0,
-    "outcome": {},
-    "spend": 0.0,
-    "served": 0,
-    "lam": GATEWAY_LAMBDA,
-    "session_id": f"demo-{uuid.uuid4().hex[:8]}",
-    "llm_error": "",
-}.items():
-    st.session_state.setdefault(name, value)
 
-if "controller" not in st.session_state:
-    controller = BudgetController(budget_rate_inr=0.75, learning_rate=0.35)
-    controller.shadow_price = GATEWAY_LAMBDA
-    st.session_state.controller = controller
+def render(standalone: bool = True) -> None:
+    """Draw the whole demonstration.
 
-with st.sidebar:
-    st.markdown("#### The assistant being guarded")
-    st.session_state.api_key = st.text_input(
-        "Groq API key", value=configured_key(), type="password"
+    Called with `standalone=False` by the assurance console, where this is one view among
+    several. In that mode the widget styling is left alone and the page title is dropped,
+    because the console already supplies both.
+    """
+    inject_css(standalone)
+    for name, value in {
+        "messages": [],
+        "steps": [],
+        "cursor": 0,
+        "outcome": {},
+        "spend": 0.0,
+        "served": 0,
+        "lam": GATEWAY_LAMBDA,
+        "session_id": f"demo-{uuid.uuid4().hex[:8]}",
+        "llm_error": "",
+    }.items():
+        st.session_state.setdefault(name, value)
+
+    if "controller" not in st.session_state:
+        controller = BudgetController(budget_rate_inr=0.75, learning_rate=0.35)
+        controller.shadow_price = GATEWAY_LAMBDA
+        st.session_state.controller = controller
+
+    with st.sidebar:
+        st.markdown("#### The assistant being guarded")
+        st.session_state.api_key = st.text_input(
+            "Groq API key", value=configured_key(), type="password"
+        )
+        st.session_state.model = st.text_input("Model", value="llama-3.3-70b-versatile")
+        st.session_state.live = st.toggle("Call the live model", value=True)
+        st.caption(
+            "With no key the demo falls back to a fixed reply, and every card says so. "
+            "The control plane behaves identically either way: it only ever sees text."
+        )
+        st.markdown("#### Recording")
+        st.session_state.pace = st.slider("Seconds per step", 0.3, 4.0, 1.3, 0.1)
+        if st.button("Clear the conversation", use_container_width=True):
+            # A new session id too, not just an empty transcript. Session risk only ever
+            # tightens the conformal floor, so replaying a demo into the same session would
+            # decide the second run against a stricter bar than the first.
+            st.session_state.messages = []
+            st.session_state.steps = []
+            st.session_state.outcome = {}
+            st.session_state.cursor = 0
+            st.session_state.session_id = f"demo-{uuid.uuid4().hex[:8]}"
+            st.rerun()
+
+    if standalone:
+        st.markdown(
+            '<div class="cp-title"><u>ControlPlane</u>'
+            "<span>live prototype &middot; support assistant &middot; eu</span></div>",
+            unsafe_allow_html=True,
+        )
+    st.markdown(
+        '<p class="cp-sub">Left is what the customer sees. Right is every check, price and '
+        "verdict the control plane ran to decide what they were allowed to see.</p>",
+        unsafe_allow_html=True,
     )
-    st.session_state.model = st.text_input("Model", value="llama-3.3-70b-versatile")
-    st.session_state.live = st.toggle("Call the live model", value=True)
-    st.caption(
-        "With no key the demo falls back to a fixed reply, and every card says so. "
-        "The control plane behaves identically either way: it only ever sees text."
-    )
-    st.markdown("#### Recording")
-    st.session_state.pace = st.slider("Seconds per step", 0.3, 4.0, 1.3, 0.1)
-    if st.button("Clear the conversation", use_container_width=True):
-        # A new session id too, not just an empty transcript. Session risk only ever
-        # tightens the conformal floor, so replaying a demo into the same session would
-        # decide the second run against a stricter bar than the first.
-        st.session_state.messages = []
-        st.session_state.steps = []
-        st.session_state.outcome = {}
-        st.session_state.cursor = 0
-        st.session_state.session_id = f"demo-{uuid.uuid4().hex[:8]}"
+    if st.session_state.llm_error:
+        st.warning(
+            "Live model unavailable, using the scripted reply. "
+            f"{st.session_state.llm_error}"
+        )
+
+    left, right = st.columns([0.46, 0.54], gap="medium")
+    with left:
+        st.markdown(
+            '<div class="cp-head"><span class="cp-dot" style="background:#A100FF"></span>'
+            "<b>The customer</b><i>what they see</i></div>",
+            unsafe_allow_html=True,
+        )
+        chat_slot = st.empty()
+    with right:
+        st.markdown(
+            '<div class="cp-head"><span class="cp-dot" style="background:#00CFC1"></span>'
+            "<b>Inside the control plane</b><i>last three steps</i></div>",
+            unsafe_allow_html=True,
+        )
+        rail_slot = st.empty()
+
+    render_chat(chat_slot)
+    render_rail(rail_slot)
+
+    busy = st.session_state.cursor < len(st.session_state.steps)
+
+    st.markdown("")
+    requested = st.query_params.get("demo")
+    if requested in BY_KEY and not st.session_state.steps and not st.session_state.messages:
+        start(BY_KEY[requested].prompt, BY_KEY[requested])
         st.rerun()
 
-st.markdown(
-    '<div class="cp-title"><u>ControlPlane</u>'
-    "<span>live prototype &middot; support assistant &middot; eu</span></div>"
-    '<p class="cp-sub">Left is what the customer sees. Right is every check, price and '
-    "verdict the control plane ran to decide what they were allowed to see.</p>",
-    unsafe_allow_html=True,
-)
-if st.session_state.llm_error:
-    st.warning(f"Live model unavailable, using the scripted reply. {st.session_state.llm_error}")
+    columns = st.columns(len(DEMOS))
+    for column, demo in zip(columns, DEMOS, strict=True):
+        with column:
+            pressed = st.button(
+                demo.label, use_container_width=True, disabled=busy, key=f"demo-{demo.key}"
+            )
+            if pressed:
+                start(demo.prompt, demo)
+                st.rerun()
+            st.caption(demo.blurb)
 
-left, right = st.columns([0.46, 0.54], gap="medium")
-with left:
-    st.markdown(
-        '<div class="cp-head"><span class="cp-dot" style="background:#A100FF"></span>'
-        "<b>The customer</b><i>what they see</i></div>",
-        unsafe_allow_html=True,
+    typed = st.chat_input("Or type your own message to the support assistant", disabled=busy)
+    if typed:
+        start(typed, None)
+        st.rerun()
+
+    footer = st.columns(4)
+    footer[0].metric("Shadow price L", f"{st.session_state.lam:,.1f}")
+    footer[1].metric("Requests served", st.session_state.served)
+    footer[2].metric("Assurance spent", f"Rs {st.session_state.spend:,.2f}")
+    footer[3].metric(
+        "If we judged everything",
+        f"Rs {st.session_state.served * (TIER_COST_INR[0] + TIER_COST_INR[2]):,.2f}",
     )
-    chat_slot = st.empty()
-with right:
-    st.markdown(
-        '<div class="cp-head"><span class="cp-dot" style="background:#00CFC1"></span>'
-        "<b>Inside the control plane</b><i>last three steps</i></div>",
-        unsafe_allow_html=True,
-    )
-    rail_slot = st.empty()
 
-render_chat(chat_slot)
-render_rail(rail_slot)
+    if busy:
+        time.sleep(st.session_state.pace)
+        st.session_state.cursor += 1
+        if st.session_state.cursor >= len(st.session_state.steps):
+            finish()
+        st.rerun()
 
-busy = st.session_state.cursor < len(st.session_state.steps)
 
-st.markdown("")
-requested = st.query_params.get("demo")
-if requested in BY_KEY and not st.session_state.steps and not st.session_state.messages:
-    start(BY_KEY[requested].prompt, BY_KEY[requested])
-    st.rerun()
+if STANDALONE:
+    render(standalone=True)
 
-columns = st.columns(len(DEMOS))
-for column, demo in zip(columns, DEMOS, strict=True):
-    with column:
-        if st.button(demo.label, use_container_width=True, disabled=busy, key=demo.key):
-            start(demo.prompt, demo)
-            st.rerun()
-        st.caption(demo.blurb)
-
-typed = st.chat_input("Or type your own message to the support assistant", disabled=busy)
-if typed:
-    start(typed, None)
-    st.rerun()
-
-footer = st.columns(4)
-footer[0].metric("Shadow price L", f"{st.session_state.lam:,.1f}")
-footer[1].metric("Requests served", st.session_state.served)
-footer[2].metric("Assurance spent", f"Rs {st.session_state.spend:,.2f}")
-footer[3].metric(
-    "If we judged everything",
-    f"Rs {st.session_state.served * (TIER_COST_INR[0] + TIER_COST_INR[2]):,.2f}",
-)
-
-if busy:
-    time.sleep(st.session_state.pace)
-    st.session_state.cursor += 1
-    if st.session_state.cursor >= len(st.session_state.steps):
-        finish()
-    st.rerun()
