@@ -86,7 +86,7 @@ rate, latency. Swap the detector, supply the three numbers, and the arithmetic i
 
 And the catch rate is not left as a guess. `controlplane/feedback/recalibration.py` holds a
 `BetaBinomialCatchRate` that updates from labelled outcomes, which is how the measured Tier 2 catch
-rate of **0.950** was recovered against the **0.880** configured, over 398 observations. **Plug in a
+rate of **0.930** was recovered against the **0.880** configured, over 365 observations. **Plug in a
 better detector and it self-reports its higher catch rate, and the allocator automatically buys more
 of it.** That is the property that makes the detector question genuinely orthogonal.
 

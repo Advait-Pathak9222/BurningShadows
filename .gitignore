@@ -23,3 +23,7 @@ data/external/
 
 # Internal build log, not part of the submission.
 progress.csv
+
+# Generated from README.md at build time by submission/build_readme.py. Tracking it
+# would leave a second copy of the README that drifts from the real one.
+submission/readme.html

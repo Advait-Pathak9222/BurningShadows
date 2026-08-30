@@ -43,11 +43,11 @@ Two consequences worth stating plainly to a buyer:
   cases raised from 295 to 453 per 1500 interactions, because more checking produces more holds,
   abstentions and blocks. Assurance spend is not a substitute for reviewer headcount; without
   allocation it is a multiplier on it.
-- **The queue is already 2.7x oversubscribed** at two reviewers on shift: 9,060 cases raised per
-  week demanding 906 reviewer-hours against 333 available, and 63% of cases shed. Intervention
-  precision is 0.396, so three fifths of what is escalated a reviewer disagrees with. That is alert
-  fatigue, measured rather than asserted. **Keeping up with arrivals at all needs 4.1 reviewers
-  against the two configured**, and no queue rule substitutes for that. Allocation decides which
+- **The queue is already 1.5x oversubscribed** at the tight budget with two reviewers on shift:
+  246 cases raised against 166 completed reviews, and 32.5% of cases shed. Intervention precision
+  is 0.193, so most of what is escalated a reviewer disagrees with. That is alert fatigue,
+  measured rather than asserted. **Keeping up with arrivals at all needs 3.0 reviewers against the
+  two configured**, rising to 6.8 at full Tier 2 cover, and no queue rule substitutes for that. Allocation decides which
   cases a short-staffed desk loses; it cannot decide that the desk is short-staffed.
 
 ## Where the money comes from
@@ -59,7 +59,7 @@ Risk can challenge it.
 |---|---|---|
 | Reviewer rate and handling time | Invoice and queue study | **Defensible.** This is a real number a CFO already owns |
 | Check price `v` | Provider token prices | Defensible once a real provider adapter is in place |
-| Catch rate `k` | **Measured from reviewer labels plus a stratified audit slice** | Tier 2 measures 0.950 against a configured 0.880 over 398 observations; Tier 1 measures 0.593 against 0.680 over 23 |
+| Catch rate `k` | **Measured from reviewer labels plus a stratified audit slice** | Tier 2 measures 0.930 against a configured 0.880 over 365 observations; Tier 1 measures 0.788 against 0.680 over 48 |
 | Consequence `c` | Finance and Risk, low/base/high | **Assumption, now bounded.** Still our softest input, but `make sensitivity` shows 10.9% of decisions move across a 0.25x-4x band and the *verdict* never does |
 
 The value side is deliberately not headlined. The synthetic corpus produces a loss-averted figure in
@@ -83,17 +83,18 @@ manual review headcount rather than as a tooling line.
 
 Two baselines the customer already pays, both derivable from their own data in a two-week study:
 
-1. **Unchecked release.** With no verification, our measured residual loss is 10.4x the allocator's
+1. **Unchecked release.** With no verification, our measured residual loss is 4.29x the allocator's
    on the same traffic. The customer's equivalent is their incident rate times their own consequence
    range.
-2. **Blanket manual review.** Reviewing every flagged case at current flag rates is what the 2.7x
-   oversubscription describes. Most organisations are already silently shedding; they simply do not
+2. **Blanket manual review.** Reviewing every flagged case at current flag rates is what the 1.5x to 3.4x
+   oversubscription across the budget grid describes. Most organisations are already silently shedding; they simply do not
    measure it.
 
-Note honestly: **a tuned blanket-Tier-1 baseline gets within 1.1% of our loss averted** at a
-fraction of the compute spend. Our advantage on compute alone is small, and once both policies are
+Note honestly: **at the tight budget a tuned blanket-Tier-1 baseline averts 2.4% more than we do**
+for a fraction of the compute spend, averting Rs 51,99,700 for Rs 270 against our Rs 50,78,000 for
+Rs 480.98. Our advantage on compute alone is small, and once both policies are
 charged the reviewer minutes they generate it is smaller still — the baseline's ROI advantage falls
-from 2.28x to 1.002x at the tight budget, but because the attention bill dwarfs compute for both, not
+from 1.82x to 1.035x at the tight budget, but because the attention bill dwarfs compute for both, not
 because allocation improved.
 
 Where we do beat the obvious alternative is on the resource that costs the money. Our reviewer
@@ -150,7 +151,7 @@ Promotion to production requires all of:
 |---|---|---|
 | `c` steers the wrong traffic | False confidence in the allocator | **Measured**: 10.9% of decisions flip across a 0.25x-4x band against a 20% stop condition, and the verdict never moves. Worst single draw is 27.7% and does breach |
 | Selective labels inflate `k` | Catch rate is biased upward | Stratified audit slice, already implemented and costed |
-| Reviewer capacity is the real constraint | The allocator optimises the wrong budget | **Confirmed, and it is.** Attention is 85-97% of total cost, the queue needs 4.1 reviewers to keep up against two configured, and our serving rule only beat FIFO after we corrected our own queue model |
+| Reviewer capacity is the real constraint | The allocator optimises the wrong budget | **Confirmed, and it is.** Attention is 81% to 98% of total cost, the queue needs 3.0 reviewers to keep up against two configured, and our serving rule only beat FIFO after we corrected our own queue model |
 | Drift invalidates the route bound | Mandatory misses rise | Window monitoring, label refresh, widen coverage |
 | Text streams before a verdict | User exposure | Blocking output checks on high-consequence text routes |
 | Floor exceeds budget | Budget target unmeetable | Report infeasibility; never relax alpha silently |
@@ -165,7 +166,7 @@ and throughput numbers describe our harness.
 Three things we set out to prove and did not:
 
 1. **Round 1 dominance over a fixed-rate baseline.** The margin is 1.0% to 5.4% on loss averted, and
-   a blanket cheap check gets within 1.1% for a fraction of the spend.
+   a blanket cheap check averts 2.4% more at the tight budget for a fraction of the spend.
 2. **That allocating compute meaningfully lowers total assurance cost.** It does not, because
    compute is 3% to 16% of the bill.
 3. **That our reviewer queue allocates attention better than a naive one, first time.**
@@ -178,10 +179,10 @@ design is not its best version, because pre-registration 3 said an ablation beat
 becomes the headline.
 
 What we do stand behind, because it is measured rather than asserted: **the cost structure.**
-Attention is 81% to 98% of assurance cost. The queue is 2.7x oversubscribed and needs 4.1 reviewers
-where two are staffed. Intervention precision is 0.396, so three fifths of what reaches a person is
-something they disagree with. Catch rates come from labels, not config: Tier 2 at 0.950 against a
-configured 0.880 over 398 observations. And 10.9% of decisions move across a 4x swing in the softest
+Attention is 81% to 98% of assurance cost. The queue is 1.5x oversubscribed at the tight budget and needs 3.0
+reviewers where two are staffed. Intervention precision is 0.193, so most of what reaches a person
+is something they disagree with. Catch rates come from labels, not config: Tier 2 at 0.930 against a
+configured 0.880 over 365 observations. And 10.9% of decisions move across a 4x swing in the softest
 input we have, while the verdict does not move at all.
 
 That is the honest pitch: **we cannot yet prove we allocate better than the obvious alternatives,
