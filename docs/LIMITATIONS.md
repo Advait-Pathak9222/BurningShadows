@@ -279,8 +279,21 @@ not yet addressed.
 - `ReviewOverride` has been deleted. It was a five-field dataclass with no caller, superseded by
   `ReviewRecord`, which carries the same information plus the observed label and joins the hash
   chain. Leaving it in place read as an unimplemented promise rather than as dead code.
-- `c` is never recalibrated by anything. Only `r` is fitted, and only once. Its uncertainty is
-  now measured (`make sensitivity`) but not reduced.
+- `c` is never recalibrated by anything. Its uncertainty is measured (`make sensitivity`) but not
+  reduced. `r` is no longer fitted only once — `make relearn` refits the isotonic maps and
+  re-selects the thresholds from reviewer labels — but on this corpus it **refuses on every route**,
+  and that refusal is the honest state of the feature rather than a bug in it.
+- **Most reviewer labels cannot be learned from.** The queue serves by expected loss per reviewer
+  minute, so harmful rows are likelier to be reviewed *within* the raised population. That is
+  selection inside a stratum and no stratum-level weight undoes it: measured on `finops-agent`, the
+  value-ordered sample runs 37.2% harmful against 18.4% in traffic, inverse-probability weighting
+  moved that to 38.2%, and the offline map scoring ECE 0.008–0.043 on the test set scores 0.1425 on
+  it. Only the 20% random reserve and the fixed-rate audit have computable inclusion probabilities,
+  which on 1,500 rows yields 73 usable pairs against the ~100 per route the bound needs. A live desk
+  accumulates those across days; one pass does not.
+- **The catch rate is still not fed back.** `make relearn` refits the calibrator, but the measured
+  per-tier catch rate is reported and not written anywhere the allocator reads. Closing that half
+  means a person editing `config/economics.yaml`.
 
 ## Operational gaps
 

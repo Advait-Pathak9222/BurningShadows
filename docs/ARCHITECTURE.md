@@ -72,6 +72,7 @@ flowchart TD
 | Allocator | Risk, costs, lambda, floor | Tier, verdict, and arithmetic trace | `controlplane/economics/allocator.py` |
 | Effect gate | Tool calls, verdict, policy | Permit, hold, or deny per effect | `controlplane/effects/effect_gate.py` |
 | Ledger | Decision trace | SQLite row linked by hashes | `controlplane/ledger/store.py` |
+| Refit | Chain scores joined to reviewer labels | A versioned calibration artifact, or a refusal with its reason | `controlplane/learning/refit.py` |
 
 ## State and failure boundaries
 

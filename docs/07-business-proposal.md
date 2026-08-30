@@ -97,8 +97,8 @@ from 2.28x to 1.002x at the tight budget, but because the attention bill dwarfs 
 because allocation improved.
 
 Where we do beat the obvious alternative is on the resource that costs the money. Our reviewer
-queue serves **1.57x the expected loss FIFO does from the same reviewer-hours**, breaching 49 SLAs
-against 148 and dropping 1 top-decile case against 22. At two thirds of a desk's output being shed,
+queue serves **1.59x the expected loss FIFO does from the same reviewer-hours**, breaching 65 SLAs
+against 139 and dropping 2 top-decile cases against 15. At two thirds of a desk's output being shed,
 that is the difference between losing your cheapest cases and losing your most expensive ones.
 
 State it with its caveats, because they are the reason to trust it: the first run of that

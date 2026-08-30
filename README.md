@@ -586,6 +586,7 @@ MLflow run per policy and budget to `./mlruns`.
 | `controlplane/guarantees/` | Per-route finite-sample release thresholds |
 | `controlplane/economics/` | Cost model, budget controller, allocator |
 | `controlplane/review/` | Human-review economics and queue strategies |
+| `controlplane/learning/` | Refits the calibration maps from reviewer labels, and the gate that can refuse one |
 | `controlplane/effects/` | Independent effect gating |
 | `controlplane/ledger/` | Hash-chained decision and review records |
 | `controlplane/eval/` | Reproducible evaluation, ablation, sensitivity and runtime commands |
