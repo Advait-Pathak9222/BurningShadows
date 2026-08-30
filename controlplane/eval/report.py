@@ -521,9 +521,22 @@ def _full_check_spend(engine: AssessmentEngine, test: list[Interaction]) -> floa
     return total
 
 
+def chain_path(root: Path, fraction: float) -> Path:
+    return root / "reports" / f"audit-{int(fraction * 100):03d}.db"
+
+
+def recorded_chain_path(root: Path) -> Path:
+    """The one chain a run actually writes: decisions and the reviews of them.
+
+    Only the last budget in the sweep records, so this is the chain that carries both
+    record kinds — and therefore the only one a refit can join scores to labels from.
+    """
+    return chain_path(root, BUDGET_FRACTIONS[-1])
+
+
 def _fresh_ledger(root: Path, fraction: float) -> LedgerStore:
     """Clear in place rather than deleting the file, which a live connection holds open."""
-    ledger = LedgerStore(root / "reports" / f"audit-{int(fraction * 100):03d}.db")
+    ledger = LedgerStore(chain_path(root, fraction))
     ledger.reset()
     return ledger
 

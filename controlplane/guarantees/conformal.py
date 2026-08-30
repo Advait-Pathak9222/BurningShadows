@@ -1,7 +1,26 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from math import exp, lgamma, log, log1p
+
+
+def in_fitting_fold(interaction_id: str) -> bool:
+    """Whether this row may fit a score map, rather than certify a bound built on one.
+
+    Learn-Then-Test is only valid when the score map is fixed before the labels are read.
+    Fitting the isotonic maps and selecting thresholds on the same rows made the bound
+    optimistic by roughly a factor of nine on `finops-agent`. The split is keyed off the
+    interaction id so the folds are stable across runs, across machines, and across the
+    offline and online paths — the refit calls this too, so a row that fitted a map
+    offline cannot certify a threshold online.
+
+    It lives here rather than beside the caller because it is a property of the guarantee,
+    not of any one pipeline. The isotonic map converges on less data than the
+    finite-sample test needs, so the selection fold gets the larger share.
+    """
+    digest = hashlib.sha256(f"fold:{interaction_id}".encode()).digest()
+    return digest[0] < 90
 
 
 @dataclass(frozen=True)

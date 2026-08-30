@@ -1,3 +1,7 @@
-from controlplane.guarantees.conformal import ConformalCalibration, learn_then_test
+from controlplane.guarantees.conformal import (
+    ConformalCalibration,
+    in_fitting_fold,
+    learn_then_test,
+)
 
-__all__ = ["ConformalCalibration", "learn_then_test"]
+__all__ = ["ConformalCalibration", "in_fitting_fold", "learn_then_test"]

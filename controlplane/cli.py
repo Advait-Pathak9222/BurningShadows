@@ -33,6 +33,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "loadtest",
             "toxicchat",
             "benchmarks",
+            "relearn",
             "clean",
         ),
     )
@@ -100,6 +101,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         report_path = run_loadtest(ROOT)
         print(f"Wrote {report_path.relative_to(ROOT)}.")
         return 0
+    if args.command == "relearn":
+        return _relearn()
     if args.command == "report":
         interactions = ensure_corpus(ROOT / "data")
         frame, _ = build_report(ROOT, interactions)
@@ -122,6 +125,50 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Audit chain valid: {chain_ok} ({records} records checked)")
         return 0 if chain_ok else 1
     _clean_generated_files()
+    return 0
+
+
+def _relearn() -> int:
+    """Refit the calibration maps from reviewer labels already in the audit chain."""
+    from controlplane.eval.report import recorded_chain_path
+    from controlplane.learning import (
+        collect_labelled_scores,
+        latest_artifact,
+        refit_calibration,
+        write_artifact,
+    )
+
+    # The scenario chain in data/ carries decisions only. Reviews are written by the
+    # evaluation run, so that is the chain a refit can join scores to labels from.
+    ledger_path = recorded_chain_path(ROOT)
+    if not ledger_path.exists():
+        print(f"No audit chain at {ledger_path.relative_to(ROOT)}; run `make report` first.")
+        return 1
+
+    engine = AssessmentEngine(ROOT, ledger_path=ledger_path)
+    assert engine.ledger is not None
+    rows = collect_labelled_scores(engine.ledger, engine.cost_model)
+    fingerprint = engine.detector_fingerprint()
+    outcome = refit_calibration(
+        rows,
+        engine.policy_store,
+        fingerprint,
+        incumbent=latest_artifact(ROOT, fingerprint),
+    )
+    engine.ledger.close()
+
+    print(f"Labelled pairs joined from the chain: {outcome.pairs_found}")
+    for route, reason in sorted(outcome.accepted.items()):
+        print(f"  accepted  {route}: {reason}")
+    for route, reason in sorted(outcome.refused.items()):
+        print(f"  REFUSED   {route}: {reason}")
+    if outcome.artifact is None:
+        # Not an error. Refusing to ship a map is the gate working, and the previous
+        # artifact keeps serving.
+        print("No route cleared the release gate; nothing written.")
+        return 0
+    path = write_artifact(outcome.artifact, ROOT)
+    print(f"Wrote {path.relative_to(ROOT)} for detector {fingerprint}.")
     return 0
 
 

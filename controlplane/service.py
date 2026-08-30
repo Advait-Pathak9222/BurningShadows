@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,7 +10,12 @@ from controlplane.economics import CostModel, allocate_verification
 from controlplane.economics.allocator import expected_loss_averted_inr
 from controlplane.effects import gate_effects
 from controlplane.feedback import SessionRiskStore, tightened_threshold
-from controlplane.guarantees import ConformalCalibration, learn_then_test
+from controlplane.guarantees import ConformalCalibration, in_fitting_fold, learn_then_test
+from controlplane.learning.artifacts import (
+    CalibrationArtifact,
+    detector_version,
+    latest_artifact,
+)
 from controlplane.ledger import LedgerStore
 from controlplane.models import (
     DecisionTrace,
@@ -54,6 +58,7 @@ class AssessmentEngine:
         conformal_thresholds: dict[str, float] | None = None,
     ) -> None:
         paths = RuntimePaths(root)
+        self.root = root
         self.policy_store = PolicyStore(paths.policy_dir)
         self.cost_model = CostModel(paths.economics)
         self.tier0 = Tier0Rules()
@@ -66,6 +71,29 @@ class AssessmentEngine:
         self.conformal_thresholds: dict[str, float] = dict(conformal_thresholds or {})
         # Multi-turn risk. Only ever tightens the floor; see feedback/session.py.
         self.sessions = SessionRiskStore()
+
+    def detector_fingerprint(self) -> str:
+        """Identify the scorers now running, so a map cannot outlive the detector."""
+        return detector_version([self.tier0, self.tier1, self.tier2])
+
+    def load_released_calibration(self) -> CalibrationArtifact | None:
+        """Adopt a released refit, if one was fitted against these detectors.
+
+        Returns nothing when no artifact matches, and the caller then falls back to
+        fitting from a corpus. A mismatch is not an error: it means the detectors moved
+        and no released map applies to them yet. Serving the mismatched map instead would
+        be the silent corruption `learning/artifacts.py` exists to prevent.
+
+        The evaluation path never calls this. It calls `calibrate()` explicitly, so every
+        published number stays a function of the committed corpus rather than of whatever
+        happens to be sitting in `data/learned/`.
+        """
+        artifact = latest_artifact(self.root, self.detector_fingerprint())
+        if artifact is None:
+            return None
+        self.calibrators = artifact.calibrators()
+        self.conformal_thresholds = artifact.thresholds()
+        return artifact
 
     def detect(self, interaction: Interaction, include_tier2: bool = False) -> DetectionBundle:
         return self._bundle(interaction, self._signals(interaction, include_tier2))
@@ -180,11 +208,18 @@ class AssessmentEngine:
             )
             # Tier 2 has already run and been paid for. The second pass may revise the
             # verdict on better evidence, but it must not report the check as skipped.
+            #
+            # `raw_harm` is kept from the first pass for a different reason: a calibration
+            # map is fitted per detector stack, and the escalated vector comes from a
+            # different one. Recording whichever stack happened to run would mix two score
+            # distributions into one map. The first-pass vector is the one every row has,
+            # and the one the floor and the buy-the-judge decision were actually taken on.
             trace = reviewed.model_copy(
                 update={
                     "selected_tier": 2,
                     "assurance_spend_inr": trace.assurance_spend_inr,
                     "forced_by_conformal": trace.forced_by_conformal,
+                    "raw_harm": trace.raw_harm,
                 }
             )
 
@@ -291,19 +326,10 @@ class AssessmentEngine:
 def _split_folds(
     interactions: list[Interaction],
 ) -> tuple[list[Interaction], list[Interaction]]:
-    """Learn-Then-Test is only valid when the score map is fixed before the labels are read.
-
-    Fitting the isotonic maps and selecting thresholds on the same rows made the bound
-    optimistic by roughly a factor of nine on finops-agent. The split is keyed off the
-    interaction id so both folds are stable across runs and machines.
-    """
     fitting: list[Interaction] = []
     selection: list[Interaction] = []
     for item in interactions:
-        digest = hashlib.sha256(f"fold:{item.interaction_id}".encode()).digest()
-        # The isotonic map converges on less data than the finite-sample test needs,
-        # so the selection fold gets the larger share.
-        (fitting if digest[0] < 90 else selection).append(item)
+        (fitting if in_fitting_fold(item.interaction_id) else selection).append(item)
     return fitting, selection
 
 

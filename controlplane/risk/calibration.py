@@ -11,9 +11,34 @@ class IsotonicCalibrator:
     probabilities: tuple[float, ...]
 
     @classmethod
-    def fit(cls, scores: list[float], labels: list[bool]) -> IsotonicCalibrator:
+    def fit(
+        cls,
+        scores: list[float],
+        labels: list[bool],
+        weights: list[float] | None = None,
+    ) -> IsotonicCalibrator:
+        """Fit a monotone score-to-probability map, optionally on a weighted sample.
+
+        `weights` exists because labels do not arrive as a random sample of traffic. A
+        reviewer only ever sees rows the system raised, plus a fixed-rate audit of rows it
+        released, so the labelled set is enriched for harm — measured on this corpus,
+        36.3% against the 18.4% actually present. Fitting that unweighted produced a map
+        with ECE 0.128 where the corpus fit reaches 0.008 to 0.043. A weight of `1/p`,
+        where `p` is a row's known probability of being reviewed, recovers the population
+        the map is meant to price.
+
+        Weights only change what a block's mean is averaged over; the pooling rule and
+        every guarantee below it are untouched. Omitting them leaves the offline path
+        exactly as it was.
+        """
         if len(scores) != len(labels) or not scores:
             raise ValueError("scores and labels must be non-empty and equally sized")
+        if weights is None:
+            weights = [1.0] * len(scores)
+        elif len(weights) != len(scores):
+            raise ValueError("weights must be the same length as scores")
+        elif any(weight <= 0.0 for weight in weights):
+            raise ValueError("weights must be positive")
         # Tied scores must enter as ONE block. Feeding them in one row at a time leaves
         # equal-x blocks that pool-adjacent-violators will not merge — a run of negatives
         # (mean 0) followed by positives (mean 1) is not a violation — and `predict` then
@@ -21,10 +46,10 @@ class IsotonicCalibrator:
         # zero-probability one. Any detector emitting discrete or repeated scores had its
         # signal destroyed: a synthetic detector with raw AUC 0.9893 calibrated to 0.5000.
         totals: dict[float, list[float]] = {}
-        for score, label in zip(scores, labels, strict=True):
+        for score, label, weight in zip(scores, labels, weights, strict=True):
             bucket = totals.setdefault(score, [0.0, 0.0])
-            bucket[0] += float(label)
-            bucket[1] += 1.0
+            bucket[0] += float(label) * weight
+            bucket[1] += weight
 
         blocks: list[list[float]] = []
         for score in sorted(totals):
@@ -84,22 +109,38 @@ def _mean(block: list[float]) -> float:
 
 
 def expected_calibration_error(
-    probabilities: list[float], labels: list[bool], bins: int = 10
+    probabilities: list[float],
+    labels: list[bool],
+    bins: int = 10,
+    weights: list[float] | None = None,
 ) -> float:
+    """Mean gap between predicted probability and observed frequency, by bin.
+
+    `weights` matters for the same reason it matters in `fit`: measured on a sample that
+    over-represents harm, a map that is correctly calibrated for traffic looks badly
+    calibrated, because every bin's observed frequency is inflated. Weighting the fit but
+    not the measurement was worth 0.13 of apparent error on this corpus against the 0.008
+    to 0.043 the same map scores on the traffic it actually serves.
+    """
     if len(probabilities) != len(labels) or not probabilities:
         raise ValueError("probabilities and labels must be non-empty and equally sized")
-    total = len(probabilities)
+    if weights is None:
+        weights = [1.0] * len(probabilities)
+    elif len(weights) != len(probabilities):
+        raise ValueError("weights must be the same length as probabilities")
+    total = sum(weights)
     error = 0.0
     for index in range(bins):
         lower = index / bins
         upper = (index + 1) / bins
         members = [
-            (probability, label)
-            for probability, label in zip(probabilities, labels, strict=True)
+            (probability, label, weight)
+            for probability, label, weight in zip(probabilities, labels, weights, strict=True)
             if lower <= probability < upper or (index == bins - 1 and probability == 1.0)
         ]
-        if members:
-            confidence = sum(item[0] for item in members) / len(members)
-            accuracy = sum(item[1] for item in members) / len(members)
-            error += len(members) / total * abs(confidence - accuracy)
+        mass = sum(item[2] for item in members)
+        if mass:
+            confidence = sum(item[0] * item[2] for item in members) / mass
+            accuracy = sum(item[1] * item[2] for item in members) / mass
+            error += mass / total * abs(confidence - accuracy)
     return error
