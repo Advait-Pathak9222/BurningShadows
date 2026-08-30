@@ -327,13 +327,20 @@ check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost<
 cd BurningShadows
 make install
 make demo        # ~18s: builds the corpus, calibrates, runs scenarios, verifies the chain
-make console     # opens the inspection console at http://localhost:8501</code></pre>
+make console     # opens the console at http://localhost:8501</code></pre>
   <figure>
     <img src="assets/console.png" alt="The ControlPlane assurance console">
-    <figcaption>The assurance console — six views over the same committed evidence.</figcaption>
+    <figcaption>The assurance console — six views over the same committed evidence, plus a
+    seventh that runs a request through the plane live.</figcaption>
   </figure>
+  <p><b>The live demonstration</b> puts a support chatbot next to the control plane. The customer
+  view is on the left and every check, price and verdict is on the right, revealed one step at a
+  time. Three preset requests show a prompt injection stopped before the model runs, an ordinary
+  lookup the allocator declines to spend on, and a quiet data leak that the cheap tiers score below
+  their own decision line and the judge catches.</p>
   <div class="cta">
-    <a class="btn btn-primary" href="https://controlplane-ai.streamlit.app" target="_blank" rel="noopener">Open the live console →</a>
+    <a class="btn btn-primary" href="https://controlplane-ai.streamlit.app/?view=Live%20demonstration" target="_blank" rel="noopener">Watch a request being decided →</a>
+    <a class="btn btn-ghost" href="https://controlplane-ai.streamlit.app" target="_blank" rel="noopener">Open the console</a>
     <a class="btn btn-ghost" href="https://github.com/Advait-Pathak9222/BurningShadows" target="_blank" rel="noopener">Read the code</a>
   </div>
 </div></section>
