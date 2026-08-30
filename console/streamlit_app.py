@@ -54,6 +54,15 @@ def load_attention() -> dict[str, Any] | None:
     return loaded
 
 
+def load_relearn() -> dict[str, Any] | None:
+    """What the last calibration refit found, when `make relearn` has been run."""
+    path = ROOT / "docs" / "results" / "relearn.json"
+    if not path.exists():
+        return None
+    loaded: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return loaded
+
+
 @st.cache_resource
 def assessment_engine() -> AssessmentEngine:
     interactions = ensure_corpus(ROOT / "data")
@@ -144,7 +153,7 @@ st.caption(
 
 view = st.segmented_control(
     "View",
-    ["Overview", "Reviewer queue", "Scenarios", "Decision lab", "Audit ledger"],
+    ["Overview", "Reviewer queue", "Relearn", "Scenarios", "Decision lab", "Audit ledger"],
     default="Overview",
     required=True,
     width="stretch",
@@ -561,6 +570,60 @@ elif view == "Scenarios":
 
     with st.expander("Raw scenario record", icon=":material/data_object:"):
         st.json(data)
+
+elif view == "Relearn":
+    st.subheader("Refitting the calibrator from reviewer labels")
+    relearn = load_relearn()
+    if relearn is None:
+        st.info("Run `make relearn` to refit the calibration maps from the audit chain.")
+    else:
+        floors = relearn["floors"]
+        left, middle, right = st.columns(3)
+        with left:
+            st.metric("Usable labelled pairs", f"{relearn['pairs_found']:,}", border=True)
+        with middle:
+            st.metric(
+                "Routes released",
+                f"{len(relearn['accepted'])} of "
+                f"{len(relearn['accepted']) + len(relearn['refused'])}",
+                border=True,
+            )
+        with right:
+            st.metric("Detector fingerprint", relearn["detector_version"], border=True)
+
+        st.caption(
+            "Only rows whose probability of being reviewed can be computed are counted: the "
+            "queue's random reserve, and the fixed-rate audit of released rows. Cases the "
+            "serving rule chose are excluded, because a queue ordered by expected loss picks "
+            "harmful rows from inside the raised population, and no stratum-level weight undoes "
+            "selection happening inside a stratum."
+        )
+
+        rows = [
+            {
+                "Route": route,
+                "Released": "yes" if route in relearn["accepted"] else "no",
+                "Why": relearn["accepted"].get(route) or relearn["refused"].get(route, ""),
+            }
+            for route in sorted(set(relearn["accepted"]) | set(relearn["refused"]))
+        ]
+        if rows:
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
+        if not relearn["released"]:
+            st.warning(
+                "No route cleared the release gate, so the maps already serving stayed in place. "
+                "That is the gate working: a refit is offered, not applied.",
+                icon=":material/gpp_maybe:",
+            )
+        st.caption(
+            f"Gate: at least {floors['min_fitting_rows']} fitting and "
+            f"{floors['min_selection_rows']} selection rows, a threshold that still releases "
+            f"something, calibration error at or below {floors['max_ece']}, and no regression "
+            f"beyond {floors['ece_tolerance']} against the incumbent. The selection floor is "
+            "derived: at alpha 0.15 with delta Bonferroni-corrected to 0.10/21, a threshold "
+            "needs 33 released rows before the binomial bound can clear alpha at all."
+        )
 
 elif view == "Decision lab":
     st.subheader("Inspect one decision")

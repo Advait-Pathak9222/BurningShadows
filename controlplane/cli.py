@@ -136,6 +136,7 @@ def _relearn() -> int:
         latest_artifact,
         refit_calibration,
         write_artifact,
+        write_refit_report,
     )
 
     # The scenario chain in data/ carries decisions only. Reviews are written by the
@@ -162,6 +163,8 @@ def _relearn() -> int:
         print(f"  accepted  {route}: {reason}")
     for route, reason in sorted(outcome.refused.items()):
         print(f"  REFUSED   {route}: {reason}")
+    for path in write_refit_report(ROOT, outcome, fingerprint):
+        print(f"Wrote {path.relative_to(ROOT)}.")
     if outcome.artifact is None:
         # Not an error. Refusing to ship a map is the gate working, and the previous
         # artifact keeps serving.

@@ -10,6 +10,7 @@ from controlplane.learning.refit import (
     RefitOutcome,
     collect_labelled_scores,
     refit_calibration,
+    write_refit_report,
 )
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "detector_version",
     "latest_artifact",
     "refit_calibration",
+    "write_refit_report",
     "write_artifact",
 ]

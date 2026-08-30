@@ -1,0 +1,18 @@
+{
+  "accepted": {},
+  "detector_version": "0bcc94d2f1a9512f",
+  "floors": {
+    "ece_tolerance": 0.01,
+    "max_ece": 0.05,
+    "min_fitting_rows": 40,
+    "min_selection_rows": 60
+  },
+  "pairs_found": 73,
+  "refused": {
+    "finops-agent": "too few rows: 6 fitting (need 40), 12 selection (need 60)",
+    "internal-kb": "too few rows: 13 fitting (need 40), 17 selection (need 60)",
+    "support-assistant": "too few rows: 8 fitting (need 40), 17 selection (need 60)"
+  },
+  "released": false,
+  "routes": {}
+}

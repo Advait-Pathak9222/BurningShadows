@@ -30,6 +30,8 @@ GENERATORS = {
     "sensitivity.json": "make sensitivity",
     "sensitivity.md": "make sensitivity",
     "runtime.md": "make loadtest",
+    "relearn.json": "make relearn",
+    "relearn.md": "make relearn",
     "toxicchat.json": "make toxicchat",
     "aegis.json": "make benchmarks",
     "orbench.json": "make benchmarks",

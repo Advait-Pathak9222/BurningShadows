@@ -125,7 +125,7 @@
   </div>
 
   <div class="stats">
-    <div class="stat"><b>85–97%</b><span>of assurance cost is human review, not compute</span></div>
+    <div class="stat"><b>81–98%</b><span>of assurance cost is human review, not compute</span></div>
     <div class="stat"><b>0.9879</b><span>AUC on disclosure detection, against 0.5881 for pattern rules</span></div>
     <div class="stat"><b>1.59×</b><span>more expected loss served from the same 166 reviews</span></div>
     <div class="stat"><b>1,500/1,500</b><span>decisions in one verified hash chain</span></div>
@@ -158,22 +158,22 @@ check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost<
 
 <section id="findings"><div class="wrap">
   <p class="eyebrow">What we measured</p>
-  <h2>Three findings</h2>
+  <h2>Four findings</h2>
 
   <h3>1. Human attention is where the money actually goes</h3>
   <p>A completed review costs <strong>₹120</strong>. The most expensive automated check costs
-  <strong>₹3.20</strong> — a 37× gap. Once both are counted, human review is 85% to 97% of operating
+  <strong>₹3.20</strong> — a 37× gap. Once both are counted, human review is 81% to 98% of operating
   assurance cost, and the compute budget everyone argues about is a rounding error.</p>
   <div class="tw"><table>
     <thead><tr><th>Budget</th><th class="n">Automated checking</th><th class="n">Human review</th>
       <th class="n">Attention share</th><th class="n">Cases raised</th></tr></thead>
     <tbody>
-      <tr><td>10%</td><td class="n">₹660.90</td><td class="n">₹19,920</td><td class="n"><strong>96.8%</strong></td><td class="n">295</td></tr>
-      <tr><td>25%</td><td class="n">₹1,066.36</td><td class="n">₹19,920</td><td class="n">94.9%</td><td class="n">308</td></tr>
-      <tr><td>40%</td><td class="n">₹1,882.26</td><td class="n">₹19,920</td><td class="n">91.4%</td><td class="n">340</td></tr>
-      <tr><td>60%</td><td class="n">₹2,972.30</td><td class="n">₹19,920</td><td class="n">87.0%</td><td class="n">410</td></tr>
-      <tr><td>80%</td><td class="n">₹3,470.60</td><td class="n">₹19,920</td><td class="n">85.2%</td><td class="n">453</td></tr>
-      <tr><td>100%</td><td class="n">₹3,470.60</td><td class="n">₹19,920</td><td class="n">85.2%</td><td class="n">453</td></tr>
+      <tr><td>10%</td><td class="n">₹480.98</td><td class="n">₹19,920</td><td class="n"><strong>97.6%</strong></td><td class="n">246</td></tr>
+      <tr><td>25%</td><td class="n">₹1,098.58</td><td class="n">₹19,920</td><td class="n">94.8%</td><td class="n">327</td></tr>
+      <tr><td>40%</td><td class="n">₹1,920.18</td><td class="n">₹19,920</td><td class="n">91.2%</td><td class="n">344</td></tr>
+      <tr><td>60%</td><td class="n">₹2,812.84</td><td class="n">₹19,920</td><td class="n">87.6%</td><td class="n">406</td></tr>
+      <tr><td>80%</td><td class="n">₹3,839.64</td><td class="n">₹19,920</td><td class="n">83.8%</td><td class="n">484</td></tr>
+      <tr><td>100%</td><td class="n">₹4,800.00</td><td class="n">₹19,920</td><td class="n">80.6%</td><td class="n">569</td></tr>
     </tbody>
   </table></div>
   <p>Raising the compute budget <em>raises</em> the number of cases needing a person, because more
@@ -185,17 +185,16 @@ check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost<
     <thead><tr><th>Serving rule</th><th class="n">SLA breaches</th><th class="n">Expected loss served</th>
       <th class="n">High-value cases shed</th></tr></thead>
     <tbody>
-      <tr class="hi"><td>deadline_density <span class="muted">(shipped)</span></td><td class="n">49</td><td class="n">₹3,584,692</td><td class="n">1</td></tr>
-      <tr><td>fifo <span class="muted">(baseline)</span></td><td class="n">148</td><td class="n">₹2,279,871</td><td class="n">22</td></tr>
-      <tr><td>random <span class="muted">(baseline)</span></td><td class="n">33</td><td class="n">₹2,309,114</td><td class="n">21</td></tr>
-      <tr><td>density <span class="muted">(ablation)</span></td><td class="n">28</td><td class="n"><span class="win">₹4,258,434</span></td><td class="n">1</td></tr>
-      <tr><td>deadline <span class="muted">(ablation)</span></td><td class="n">160</td><td class="n">₹2,258,118</td><td class="n">18</td></tr>
+      <tr class="hi"><td>deadline_density <span class="muted">(shipped)</span></td><td class="n">65</td><td class="n">₹3,430,681</td><td class="n">2</td></tr>
+      <tr><td>fifo <span class="muted">(baseline)</span></td><td class="n">139</td><td class="n">₹2,162,224</td><td class="n">15</td></tr>
+      <tr><td>random <span class="muted">(baseline)</span></td><td class="n">47</td><td class="n">₹2,816,476</td><td class="n">9</td></tr>
+      <tr><td>density <span class="muted">(ablation)</span></td><td class="n">48</td><td class="n"><span class="win">₹3,798,647</span></td><td class="n">2</td></tr>
+      <tr><td>deadline <span class="muted">(ablation)</span></td><td class="n">150</td><td class="n">₹2,200,133</td><td class="n">15</td></tr>
     </tbody>
   </table></div>
   <p class="small muted">The <code>density</code> ablation — our shipped rule with its deadline term
   removed — beats the shipped rule on both axes. We report it as the stronger rule rather than
-  burying it. Keeping up with arrivals needs 5.4 reviewers against the 2 the scenario staffs, which
-  is the larger lever.</p>
+  burying it. Keeping up with arrivals needs 3.0 reviewers at this budget and 6.8 at full cover, against the 2 the scenario staffs, which is the larger lever.</p>
 
   <h3>2. Authorisation matters more than recognition</h3>
   <p>Our pattern-matching PII detector scored <strong>0.5881 AUC</strong> — barely above chance.
@@ -232,9 +231,29 @@ check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost<
 
   <h3>3. The endpoints were fixed before the work started</h3>
   <p>Every significant claim has a pre-registration written in advance stating what would count as
-  success. Results are reported against those criteria whether or not they were met — including a
+  success. Results are reported against those criteria whether or not they were met &mdash; including a
   queue-model defect that was recorded before it was corrected, and an ablation that beats our own
   shipped rule.</p>
+
+  <h3>4. Most reviewer labels cannot teach a calibrator</h3>
+  <p>The map that turns a raw score into a probability used to be fitted once, at startup, and never
+  again. <code>make relearn</code> now refits it from what reviewers actually found &mdash; and then
+  usually refuses to ship the result, which is the interesting part.</p>
+  <p>A queue that serves by expected loss per reviewer minute picks harmful rows from
+  <em>inside</em> the raised population, so its labels are a biased sample of it. On
+  <code>finops-agent</code> that sample runs <strong>37.2% harmful against 18.4% in the traffic it
+  has to price</strong>, and inverse-probability weighting moves it to 38.2% &mdash; nowhere. Selection
+  happening inside a stratum cannot be undone by a stratum-level weight.</p>
+  <p>So one reviewer slot in five is now filled uniformly at random. Those rows and the fixed-rate
+  audit are the only ones with a computable inclusion probability, and the only ones a refit may fit
+  on. That reserve costs less than expected &mdash; the shipped queue rule went from 1.57&times; to
+  <strong>1.59&times;</strong> against FIFO, because the reserve costs FIFO more than it costs a
+  value-ordered rule.</p>
+  <p class="small muted">On 1,500 rows it yields 73 usable pairs against the ~100 per route the
+  bound needs, so every route is currently refused and the maps already serving stay in place. A
+  live desk accumulates those across days; one pass does not. The gate, not the refit, is the part
+  worth having: <code>learn_then_test</code> cannot fail, so a refit that releases nothing would
+  otherwise look like a success.</p>
 </div></section>
 
 <section id="architecture"><div class="wrap">
@@ -276,19 +295,21 @@ check when  expected loss × catch rate  &gt;  (1 + shadow price) × check cost<
     <thead><tr><th>Question</th><th>Result</th></tr></thead>
     <tbody>
       <tr><td style="white-space:normal">Does allocation beat a tuned fixed-rate policy?</td>
-        <td style="white-space:normal">More loss averted at <strong>6 of 6</strong> budgets, by 0.4–3.6%; better compute ROI at 4 of 6. At the tightest budget, ₹5,315,700 averted for ₹660.90 against ₹5,224,700 for ₹270.</td></tr>
+        <td style="white-space:normal">Not universally, and saying otherwise would not survive a reader with the repository open. At matched actual spend it wins <strong>5 of 7</strong> budgets here, 4 of 7 and 3 of 7 on BeaverTails, 3 of 7 on OR-Bench and <strong>1 of 7</strong> on Aegis.</td></tr>
       <tr><td style="white-space:normal">Does allocation beat checking everything?</td>
-        <td style="white-space:normal">At the 80% and 100% budgets, yes — <strong>₹5,479,500</strong> averted for ₹3,470.60 against ₹5,476,400 for ₹4,800. More loss averted for <span class="win">28% less compute</span>.</td></tr>
+        <td style="white-space:normal">No — it gets most of the way for a fraction of the cost. At a 10% budget it averts <strong>₹5,078,000</strong> for <strong>₹480.98</strong>, against ₹5,469,400 for ₹4,800 — <span class="win">92.8% of the benefit for 10.0% of the compute</span>.</td></tr>
       <tr><td style="white-space:normal">Does the per-route release floor hold?</td>
         <td style="white-space:normal">Observed unchecked harm 0.0560 / 0.0714 / 0.0529 against α = 0.15, over 339 / 476 / 397 released rows. Vacuous on Aegis and OR-Bench, where the base rate exceeds α.</td></tr>
       <tr><td style="white-space:normal">Are the risk scores calibrated?</td>
         <td style="white-space:normal">Expected calibration error <strong>0.0083 – 0.0429</strong> by route.</td></tr>
       <tr><td style="white-space:normal">Do consequence assumptions move decisions?</td>
-        <td style="white-space:normal">Across a 0.25×–4× band, 15.8% of tier decisions change and the verdict flip rate is <strong>0%</strong> — consequence prices a check but does not enter the release rule.</td></tr>
+        <td style="white-space:normal">Across a 0.25×–4× band, 10.9% of tier decisions change and the verdict flip rate is <strong>0%</strong> — consequence prices a check but does not enter the release rule.</td></tr>
       <tr><td style="white-space:normal">Is the audit trail complete?</td>
-        <td style="white-space:normal"><strong>1,500 of 1,500</strong> decisions and 299 reviews in one valid chain; 224 of 224 proposed effects logged.</td></tr>
+        <td style="white-space:normal"><strong>1,500 of 1,500</strong> decisions and 205 reviews in one valid chain; 224 of 224 proposed effects logged.</td></tr>
       <tr><td style="white-space:normal">Is the detector catch rate measured or assumed?</td>
         <td style="white-space:normal">Measured. Labelled Tier 2 catch rate 0.930 against 0.880 configured, over 365 observations.</td></tr>
+      <tr><td style="white-space:normal">Can the system improve itself?</td>
+        <td style="white-space:normal">It can refit its own calibration maps from reviewer labels, and it currently <strong>refuses to</strong> — 73 usable pairs against the ~100 per route the bound needs. A queue ordered by expected loss cannot teach a calibrator, so only the 20% random reserve and the fixed-rate audit count.</td></tr>
     </tbody>
   </table></div>
   <figure>
