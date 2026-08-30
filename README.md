@@ -1,30 +1,135 @@
+<div align="center">
+
 # ControlPlane
 
-**Companies deploying AI assistants cannot check every answer — thorough checking costs more than
-the AI itself. So most check a random sample, which spends the same effort on "what are your
-opening hours" as on a payment instruction.**
+**Checking every AI answer costs more than generating it. Checking a random sample
+spends the same effort on "what are your opening hours" as on a payment instruction.
+ControlPlane prices the difference.**
 
-ControlPlane treats this as an allocation problem rather than a detection problem. For every
-answer it estimates what the damage would be if that answer were wrong, and buys checking only
-where the damage prevented is worth more than the check costs. Underneath sits a per-route safety
-floor that the budget cannot override, and every decision is written to a hash-chained ledger where
-it can be re-derived from its own arithmetic.
+[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](#run-it-locally)
+[![Licence](https://img.shields.io/badge/licence-MIT-green)](LICENSE)
+[![Runs offline](https://img.shields.io/badge/runs-offline%20%C2%B7%20no%20key%20%C2%B7%20no%20GPU-6D28D9)](#run-it-locally)
+[![Console](https://img.shields.io/badge/live-console-FF4B4B?logo=streamlit&logoColor=white)](https://controlplane-ai.streamlit.app)
 
-It runs offline against a seeded provider and lexical detector stubs, so the committed evidence
-tests the decision system rather than production model quality. No API key, no network call, no GPU.
+</div>
 
-> **Offline is a property of the evidence, not of the product.** In production the gateway sits in
-> front of a model API, and Tier 2 is designed to be an LLM-judge call. Freezing detector quality is
-> what makes the measured gain attributable to allocation rather than to a vendor's model — and it
-> means anyone can reproduce these numbers exactly.
-
-**Hosted:** [live console](https://controlplane-ai.streamlit.app) — see
-[Deployment](docs/DEPLOYMENT.md).
-
-On where an LLM judge belongs, what has to run locally, and what changes before an enterprise
-deployment: [Industry fit](docs/INDUSTRY-FIT.md).
+For every answer, ControlPlane estimates what the damage would be if that answer were wrong, and
+buys checking only where the damage prevented is worth more than the check costs. Underneath sits a
+per-route safety floor the budget cannot override, and every decision lands in a hash-chained ledger
+where it can be re-derived from its own arithmetic.
 
 ---
+
+## What it buys you
+
+### Money
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**92.8% of the protection for 10% of the compute**
+
+Over 1,500 held-out interactions, the allocator averts **₹50,78,000** of expected loss for
+**₹480.98** of checking. Checking every answer with the most expensive tier averts ₹54,69,400 — for
+**₹4,800**.
+
+</td>
+<td width="50%" valign="top">
+
+**Spend lands where you set it**
+
+A shadow price alone cannot bound spend; it is a soft penalty that cannot price out a mandatory
+check. Once the budget governor reserves the floor's cost, spend lands at **1.00x–1.03x** of budget
+across the grid, against **3.75x** before.
+
+</td>
+</tr>
+</table>
+
+At two million interactions a year, that is **₹6.4 lakh** against **₹64 lakh** to check everything —
+before a single reviewer is paid. And reviewers are where the money actually goes: at the budgets
+worth running, **81 to 98 paise in every assurance rupee** is human time, not compute.
+
+### Latency
+
+Words stream while checking runs; only actions wait behind the verdict. So the two latencies are
+different quantities, and the effect gate is the only one anybody waits on.
+
+Under overload the choice is between slowing everyone down and refusing some people. Bounded
+admission takes the second, which keeps the tail flat and makes the refusal visible:
+
+| At 400 offered RPS | Text p99 | Effect p99 | Achieved RPS | Rejected |
+|---|---:|---:|---:|---:|
+| Unbounded | 540.6 ms | 1508.1 ms | 198.4 | 0 |
+| **Bounded admission** | **26.2 ms** | **104.1 ms** | 63.7 | 499 |
+| | **20x tighter** | **14x tighter** | | |
+
+**Read the last two columns before the first two.** Bounded is not free: it turns 499 requests away
+and its throughput is a third of unbounded's. What it buys is that the requests it does serve are
+served properly, and the ones it cannot serve are told so, rather than everybody quietly waiting
+half a second. Under degradation every served request still completed its mandatory assessment,
+none bought a Tier 2 check, and no rejected request ever generated text.
+
+Full table, including the 20 and 80 RPS points where bounded costs almost nothing:
+[runtime results](docs/results/runtime.md).
+
+---
+
+> **Offline is a property of the evidence, not of the product.** Everything above runs against a
+> seeded provider and lexical detector stubs — no API key, no network call, no GPU. The latency
+> figures therefore measure the scheduler and not a production model; they are reported because the
+> *shape* is a property of the admission design rather than of anything a vendor supplies.
+>
+> Freezing detector quality is also what makes the measured cost gain attributable to *allocation*
+> rather than to a vendor's model, and it is why anyone can reproduce these numbers exactly. On
+> where an LLM judge belongs and what changes before an enterprise deployment:
+> [industry fit](docs/INDUSTRY-FIT.md). To see it running: [live console](https://controlplane-ai.streamlit.app)
+> and [deployment notes](docs/DEPLOYMENT.md).
+
+---
+
+## Architecture
+
+The gateway uses only the request, the response, the supplied context, and any proposed tool calls.
+It needs no model weights, hidden states, or log probabilities. Text may stream while verification
+runs; actions that change something wait behind a separate gate.
+
+<p align="center">
+  <img src="docs/images/architecture.png" alt="ControlPlane architecture across four planes: admit, observe, decide, and act and prove" width="1000">
+</p>
+
+| Plane | What it does |
+|---|---|
+| **Admit** | A per-route token bucket and bounded lanes decide whether there is capacity. A preflight Tier 0 scan then reads the prompt on its own and refuses it outright above an injection score of 0.70. Both happen before the model generates anything, so a refused request pays for neither generation nor checking. |
+| **Observe** | Tier 0 rules and Tier 1 signals score the answer on five harm axes. Isotonic calibration turns those scores into probabilities, and the evidence regime records what can be checked at all. |
+| **Decide** | The release floor marks what must be checked. The allocator prices each remaining tier against the budget's shadow price. Tier 2 runs only when it is selected, and the decision is recomputed with its signal. |
+| **Act & prove** | A verdict of allow, annotate, abstain, hold or block covers the text. Proposed effects are permitted, held or denied independently. Everything is appended to the hash chain. |
+
+The decision rule prices each candidate check without letting the budget relax the route floor:
+
+```text
+expected loss = calibrated risk × consequence
+check when  expected loss × catch rate  >  (1 + shadow price) × check cost
+```
+
+### One request, end to end
+
+Held-out row `cp-02477`: a finance-route request carrying a `transfer_funds` call, where the model
+echoes back an attempt to exfiltrate a secret the source says must never be repeated.
+
+<p align="center">
+  <img src="docs/images/traced-request.png" alt="One held-out request traced through all nine decision stages" width="900">
+</p>
+
+Component contracts and the full request sequence: [architecture notes](docs/ARCHITECTURE.md).
+Both diagrams are hand-authored SVG and regenerate from their own source, so a figure cannot drift
+away from the system it describes: [architecture.html](docs/images/architecture.html) and
+[traced-request.html](docs/images/traced-request.html), rendered with
+`chrome --headless --screenshot`.
+
+---
+
 
 ## What we measured
 
@@ -95,8 +200,9 @@ Tier-2 coverage. No serving rule substitutes for that.
 
 Full detail: [queue comparison](docs/results/attention.md).
 
-### 2. Authorisation matters more than recognition
-
+<details>
+<summary><b>2. Authorisation matters more than recognition</b> — Why pattern matching cannot work here, and what replaced it <b>(AUC 0.5881 → 0.9879)</b></summary>
+<br>
 The earlier pattern-matching PII detector scored **0.5881 AUC**. Measuring the ceiling explained
 why: a *perfect* shape-only detector reaches **0.5869** on this corpus, so pattern matching had
 nothing left to give.
@@ -124,8 +230,10 @@ answered is whether this requester may receive this value on this route — and 
 the evidence, not the words. Mechanism-by-mechanism attribution and ablations:
 [PII probe](docs/results/pii.md).
 
-### 3. The guarantee holds on real traffic — and we know what breaks it
-
+</details>
+<details>
+<summary><b>3. The guarantee holds on real traffic — and we know what breaks it</b> — The release floor on five public conditions, and the rule for when it is worth having</summary>
+<br>
 The results above run on a corpus we generated, so the system was run against **five public
 benchmarks** — see [the corpus table](#the-corpora) below. Endpoints were pre-registered first.
 
@@ -156,8 +264,10 @@ it claim 0.1407 while held-out data showed **0.2800** — a violated guarantee. 
 fitting/selection split fixed it. **The discipline is the guarantee**, and both halves of that are
 on the record.
 
-### 4. Detection is in band on two benchmarks, and out of band on a third
-
+</details>
+<details>
+<summary><b>4. Detection is in band on two benchmarks, and out of band on a third</b> — Benchmark results against published detectors, including the endpoint we failed</summary>
+<br>
 Read the **null** column before the score. On an imbalanced corpus, a policy that flags every
 single row scores `2p/(1+p)`, which can look respectable and beat published numbers while detecting
 nothing. The margin over that null is the only part that is ours.
@@ -225,8 +335,10 @@ Every figure in this section is regenerated by `make benchmarks`, which writes e
 the comparison page from them. Full detail and every caveat:
 [benchmarks](docs/results/benchmarks.md).
 
-### The corpora
-
+</details>
+<details>
+<summary><b>The corpora</b> — The six corpora, their licences, and what each one was for</summary>
+<br>
 Six corpora, five of them public and none of them ours to grade. Every number above names the one it
 came from, and each external corpus has a pre-registration written before it was run.
 
@@ -247,6 +359,7 @@ make toxicchat     # ToxicChat probe
 make benchmarks    # Aegis and OR-Bench
 ```
 
+</details>
 ### 5. The budget is a budget
 
 A shadow price is a soft constraint. It cannot bound spend on its own, and ours did not: at the
@@ -288,8 +401,9 @@ Two numbers make a budget honest, and both are now computed and reported:
   came out at exactly 5.6250% on Aegis and OR-Bench too, because it is arithmetic rather than a
   property of any corpus.
 
-### 6. What allocation is, and is not, worth
-
+<details>
+<summary><b>6. What allocation is, and is not, worth</b> — When budget-aware allocation beats a tuned fixed rate, and when it does not</summary>
+<br>
 Budget-aware allocation is **not** universally better than a well-ranked fixed-rate policy, and
 saying otherwise would not survive a judge with the repository open. At matched actual spend the
 allocator wins 5 of 7 budgets on our corpus, 4 of 7 on BeaverTails, 3 of 7 at its natural
@@ -311,14 +425,17 @@ already obliges ₹215.82 of the ₹216 that blanket Tier 1 costs, so there is n
 cost model and the label structure before deploying anything. Full measurements:
 [allocation regime](docs/results/allocation-regime.md).
 
-### 7. Endpoints were fixed before the work started
-
+</details>
+<details>
+<summary><b>7. Endpoints were fixed before the work started</b> — Pre-registration, and the results that came back negative</summary>
+<br>
 Each significant claim has a pre-registration written in advance stating what would count as
 success. Results are reported against those criteria whether or not they were met, and the record
 of how each result was reached — including a queue-model defect that was recorded before it was
 corrected — is preserved in [the pre-registrations](docs/PREREGISTRATION.md) and in
 [the queue provenance notes](docs/results/attention.md).
 
+</details>
 ### 8. The system can relearn, and refuses to relearn badly
 
 The calibration map used to be fitted once, at startup, off a seeded file, and never again — so the
@@ -359,6 +476,7 @@ from 1.57x to 1.59x, because the reserve costs FIFO more than it costs a value-o
 
 ---
 
+
 ## Evidence at a glance
 
 Every figure below is written by a committed command — `make report`, `make attention`,
@@ -398,46 +516,6 @@ a harness measurement and an empty sample is reported as `null` rather than as a
 
 ---
 
-## Architecture
-
-The gateway uses only the request, the response, the supplied context, and any proposed tool calls.
-It needs no model weights, hidden states, or log probabilities. Text may stream while verification
-runs; actions that change something wait behind a separate gate.
-
-<p align="center">
-  <img src="docs/images/architecture.png" alt="ControlPlane architecture across four planes: admit, observe, decide, and act and prove" width="1000">
-</p>
-
-| Plane | What it does |
-|---|---|
-| **Admit** | A per-route token bucket and bounded lanes decide whether there is capacity. A preflight Tier 0 scan then reads the prompt on its own and refuses it outright above an injection score of 0.70. Both happen before the model generates anything, so a refused request pays for neither generation nor checking. |
-| **Observe** | Tier 0 rules and Tier 1 signals score the answer on five harm axes. Isotonic calibration turns those scores into probabilities, and the evidence regime records what can be checked at all. |
-| **Decide** | The release floor marks what must be checked. The allocator prices each remaining tier against the budget's shadow price. Tier 2 runs only when it is selected, and the decision is recomputed with its signal. |
-| **Act & prove** | A verdict of allow, annotate, abstain, hold or block covers the text. Proposed effects are permitted, held or denied independently. Everything is appended to the hash chain. |
-
-The decision rule prices each candidate check without letting the budget relax the route floor:
-
-```text
-expected loss = calibrated risk × consequence
-check when  expected loss × catch rate  >  (1 + shadow price) × check cost
-```
-
-### One request, end to end
-
-Held-out row `cp-02477`: a finance-route request carrying a `transfer_funds` call, where the model
-echoes back an attempt to exfiltrate a secret the source says must never be repeated.
-
-<p align="center">
-  <img src="docs/images/traced-request.png" alt="One held-out request traced through all nine decision stages" width="900">
-</p>
-
-Component contracts and the full request sequence: [architecture notes](docs/ARCHITECTURE.md).
-Both diagrams are hand-authored SVG and regenerate from their own source, so a figure cannot drift
-away from the system it describes: [architecture.html](docs/images/architecture.html) and
-[traced-request.html](docs/images/traced-request.html), rendered with
-`chrome --headless --screenshot`.
-
----
 
 ## Run it locally
 
@@ -474,6 +552,7 @@ artifact does not reproduce byte-for-byte. Individual targets:
 | `make pii-probe` | [`docs/results/pii.md`](docs/results/pii.md) — disclosure detection and ablations |
 | `make sensitivity` | [`docs/results/sensitivity.md`](docs/results/sensitivity.md) — the consequence sweep |
 | `make loadtest` | [`docs/results/runtime.md`](docs/results/runtime.md) — admission control under load |
+| `make relearn` | `data/learned/` — refits the calibrator from reviewer labels, or refuses and says why |
 | `make toxicchat` | [`docs/results/toxicchat.json`](docs/results/toxicchat.json) — ToxicChat probe (downloads) |
 | `make benchmarks` | [`docs/results/benchmarks.md`](docs/results/benchmarks.md) + Aegis, OR-Bench, BeaverTails, RAGTruth JSON (downloads) |
 
@@ -494,6 +573,7 @@ Experiment tracking is optional: with `pip install -e ".[tracking]"`, every `mak
 MLflow run per policy and budget to `./mlruns`.
 
 ---
+
 
 ## Repository map
 
