@@ -359,6 +359,9 @@ make toxicchat     # ToxicChat probe
 make benchmarks    # Aegis and OR-Bench
 ```
 
+The benchmark-only parquet and plotting dependencies are optional. Install them before running the
+external probes with `pip install -e ".[external]"`.
+
 </details>
 ### 5. The budget is a budget
 
@@ -599,6 +602,9 @@ MLflow run per policy and budget to `./mlruns`.
 | `tests/` | Invariants, failure behaviour, reproducibility, regression coverage |
 | `run_submission.sh` | Clone-and-run reviewer entrypoint: gate, demo, report, byte-identity check |
 | `LICENSE` | MIT for this code; the external corpora keep their own licences and are not vendored |
+
+**Project handoff:** [`docs/PROJECT-HANDOFF.md`](docs/PROJECT-HANDOFF.md) gives a new collaborator the
+product story, architecture rationale, simulator walkthrough, and pitch-video runbook in one place.
 
 **Worth reading first:** [`allocator.py`](controlplane/economics/allocator.py) holds the decision in
 plain arithmetic, and [`conformal.py`](controlplane/guarantees/conformal.py) holds the guarantee

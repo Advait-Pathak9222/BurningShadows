@@ -106,19 +106,17 @@ def _log_audit(mlflow: Any, detail: dict[str, Any], fraction: float) -> None:
     )
     if audit is None:
         return
-    mlflow.log_metrics(
-        {
-            "audit_coverage": float(audit["coverage"]),
-            "audit_chain_valid": float(bool(audit["chain_valid"])),
-        }
-    )
+    metrics = {"audit_chain_valid": float(bool(audit["chain_valid"]))}
+    if audit["coverage"] is not None:
+        metrics["audit_coverage"] = float(audit["coverage"])
+    mlflow.log_metrics(metrics)
 
 
 def _log_artifacts(mlflow: Any, root: Path) -> None:
     for relative in (
-        "reports/figures/loss_averted_vs_spend.png",
-        "reports/figures/reliability_by_route.png",
         "reports/evaluation.csv",
+        "reports/evaluation.json",
+        "reports/evaluation.md",
         "reports/scenarios.json",
     ):
         path = root / relative

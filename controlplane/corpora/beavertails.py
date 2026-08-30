@@ -20,10 +20,10 @@ import lzma
 from dataclasses import dataclass
 from pathlib import Path
 
-from controlplane.corpora.fetch import fetch
+from controlplane.corpora.download import ensure_cached_file
 from controlplane.models import HarmVector, Interaction
 
-# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/download.py.
 REVISION = "8401fe609d288129cc684a9b3be6a93e41cfe678"
 BASE_URL = (
     "https://huggingface.co/datasets/PKU-Alignment/BeaverTails/resolve/"
@@ -73,7 +73,12 @@ class CorpusStats:
 
 def _download(cache_dir: Path) -> list[Path]:
     return [
-        fetch(f"{BASE_URL}/{name}", cache_dir / "beavertails" / name, DIGESTS[name])
+        ensure_cached_file(
+            url=f"{BASE_URL}/{name}",
+            path=cache_dir / "beavertails" / name,
+            sha256=DIGESTS[name],
+            timeout_seconds=300,
+        )
         for name in FILES
     ]
 

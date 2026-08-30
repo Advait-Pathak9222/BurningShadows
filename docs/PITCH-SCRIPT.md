@@ -121,12 +121,12 @@ The form is pre-filled. Read it out:
 **Point at the fourth metric, "Attention share of cost".**
 
 > "Now the finding we did not expect. A completed human review costs ₹120. Our most expensive
-> automated check costs ₹3.20. That is a 37× gap — and once you count both, human review is between
-> 85 and 97 percent of what assurance actually costs."
+> automated check costs ₹3.20. That is a 37.5× gap — and once you count both, human review is between
+> 81 and 98 percent of what assurance actually costs."
 
 **Drag the budget slider from 10% to 100%. Let them watch the number move.**
 
-> "It never goes below 85. The compute budget that every vendor in this space competes on is a
+> "It never goes below 80. The compute budget that every vendor in this space competes on is a
 > rounding error next to the salary cost of the people you escalate to."
 
 **Switch to Reviewer queue.**
@@ -176,7 +176,7 @@ The form is pre-filled. Read it out:
 > that we recorded before we fixed it, and the ablation you just saw that beats our own shipped
 > rule."
 
-> "179 tests, strict type checking, and an assumptions register that lists every input we could not
+> "183 tests, strict type checking, and an assumptions register that lists every input we could not
 > measure along with where it came from."
 
 ---

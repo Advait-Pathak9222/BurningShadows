@@ -53,7 +53,7 @@ def presidio_available() -> bool:
         from presidio_analyzer import AnalyzerEngine  # noqa: F401
     except ImportError:
         return False
-    return spacy.util.is_package(SPACY_MODEL)
+    return bool(spacy.util.is_package(SPACY_MODEL))
 
 
 class PresidioPii(Detector):

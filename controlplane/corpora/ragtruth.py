@@ -18,10 +18,10 @@ from typing import Literal
 
 import pandas as pd
 
-from controlplane.corpora.fetch import fetch
+from controlplane.corpora.download import ensure_cached_file
 from controlplane.models import HarmVector, Interaction
 
-# Pinned to an immutable commit, not `main`. See controlplane/corpora/fetch.py.
+# Pinned to an immutable commit, not `main`. See controlplane/corpora/download.py.
 REVISION = "eb4f4b9d1b68eb7092d3e1a61c0cd82d9808737b"
 BASE_URL = (
     f"https://huggingface.co/datasets/wandb/RAGTruth-processed/resolve/{REVISION}/data"
@@ -49,8 +49,13 @@ def ensure_downloaded(cache_dir: Path, split: str) -> Path:
     """Fetch one split unless it is already cached, verifying its pinned digest."""
     if split not in FILES:
         raise ValueError(f"unknown split {split!r}; expected one of {sorted(FILES)}")
-    return fetch(
-        f"{BASE_URL}/{FILES[split]}", cache_dir / "ragtruth" / FILES[split], DIGESTS[split]
+    filename = FILES[split]
+    path = cache_dir / "ragtruth" / filename
+    return ensure_cached_file(
+        url=f"{BASE_URL}/{filename}",
+        path=path,
+        sha256=DIGESTS[split],
+        timeout_seconds=300,
     )
 
 

@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from controlplane.economics import BudgetController, BudgetGovernor, decide_verdict
@@ -63,9 +62,7 @@ def build_report(
     root: Path, interactions: list[Interaction]
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     report_dir = root / "reports"
-    figure_dir = report_dir / "figures"
     report_dir.mkdir(parents=True, exist_ok=True)
-    figure_dir.mkdir(parents=True, exist_ok=True)
 
     calibration = [item for item in interactions if item.split == "calibration"]
     test = [item for item in interactions if item.split == "test"]
@@ -79,9 +76,7 @@ def build_report(
     detail: dict[str, Any] = {
         "conformal": {route: dict(vars(value)) for route, value in conformal.items()},
         "conformal_validation": _validate_conformal(test, conformal, scores),
-        "reliability": _plot_reliability(
-            test, figure_dir / "reliability_by_route.png", scores
-        ),
+        "reliability": _reliability_diagnostics(test, scores),
     }
     # Sized on calibration, never on the rows being rationed. See BudgetGovernor.
     floor_rate = engine.floor_rate_inr(calibration)
@@ -100,7 +95,6 @@ def build_report(
     (report_dir / "evaluation.json").write_text(
         json.dumps(detail, indent=2, sort_keys=True, default=str), encoding="utf-8", newline="\n"
     )
-    _plot_curve(frame, figure_dir / "loss_averted_vs_spend.png")
     _write_markdown(frame, detail, report_dir / "evaluation.md")
     _write_results(root, frame, detail)
     log_evaluation(root, frame, detail)
@@ -545,7 +539,9 @@ def _fresh_ledger(root: Path, fraction: float) -> LedgerStore:
     return ledger
 
 
-def _audit_coverage(test: list[Interaction], run: AllocatorRun) -> dict[str, float | bool]:
+def _audit_coverage(
+    test: list[Interaction], run: AllocatorRun
+) -> dict[str, float | bool | None]:
     """Count effects that survived into a verified ledger record, not effects proposed.
 
     The window is the verified chain length, not the interaction count. Reviews join the
@@ -574,7 +570,9 @@ def _audit_coverage(test: list[Interaction], run: AllocatorRun) -> dict[str, flo
         "decisions_expected": float(len(run.traces)),
         "effects_proposed": float(proposed),
         "effects_logged": float(logged),
-        "coverage": logged / proposed if proposed else 1.0,
+        # No proposed effects means the metric has no denominator. Reporting 100%
+        # would turn an unexercised control into a perfect score.
+        "coverage": logged / proposed if proposed else None,
     }
 
 
@@ -610,40 +608,12 @@ def _validate_conformal(
     return validation
 
 
-def _plot_curve(frame: pd.DataFrame, path: Path) -> None:
-    plt.figure(figsize=(8, 5))
-    colors = {
-        "allocator": "#A100FF",
-        "fixed_rate": "#2E5BFF",
-        "check_none": "#6B6574",
-        "check_all": "#E83E8C",
-    }
-    for policy, group in frame.groupby("policy"):
-        ordered = group.sort_values("assurance_spend_inr")
-        plt.plot(
-            ordered["assurance_spend_inr"],
-            ordered["loss_averted_inr"],
-            marker="o",
-            label=policy,
-            color=colors[str(policy)],
-        )
-    plt.xlabel("Assurance spend (INR)")
-    plt.ylabel("Loss averted (INR, simulated)")
-    plt.title("Loss averted vs assurance spend")
-    plt.grid(alpha=0.2)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(path, dpi=160)
-    plt.close()
-
-
-def _plot_reliability(
-    interactions: list[Interaction], path: Path, scores: dict[str, float]
+def _reliability_diagnostics(
+    interactions: list[Interaction], scores: dict[str, float]
 ) -> dict[str, dict[str, float]]:
     routes = ("support-assistant", "internal-kb", "finops-agent")
-    figure, axes = plt.subplots(1, len(routes), figsize=(12, 3.6), sharex=True, sharey=True)
     diagnostics: dict[str, dict[str, float]] = {}
-    for axis, route in zip(axes, routes, strict=True):
+    for route in routes:
         route_items = [item for item in interactions if item.route == route]
         probabilities = [scores[item.interaction_id] for item in route_items]
         labels = [item.truth.has_harm() for item in route_items]
@@ -652,34 +622,7 @@ def _plot_reliability(
             "samples": float(len(route_items)),
             "base_rate": sum(labels) / len(labels),
         }
-        confidence, frequency = _reliability_points(probabilities, labels)
-        axis.plot([0, 1], [0, 1], linestyle="--", color="#6B6574")
-        axis.plot(confidence, frequency, marker="o", color="#A100FF")
-        axis.set_title(route)
-        axis.set_xlabel("Predicted risk")
-    axes[0].set_ylabel("Observed harm rate")
-    figure.tight_layout()
-    figure.savefig(path, dpi=160)
-    plt.close(figure)
     return diagnostics
-
-
-def _reliability_points(
-    probabilities: list[float], labels: list[bool], bins: int = 8
-) -> tuple[list[float], list[float]]:
-    confidence: list[float] = []
-    frequency: list[float] = []
-    for index in range(bins):
-        lower, upper = index / bins, (index + 1) / bins
-        members = [
-            (probability, label)
-            for probability, label in zip(probabilities, labels, strict=True)
-            if lower <= probability < upper or (index == bins - 1 and probability == 1.0)
-        ]
-        if members:
-            confidence.append(sum(item[0] for item in members) / len(members))
-            frequency.append(sum(item[1] for item in members) / len(members))
-    return confidence, frequency
 
 
 def _write_markdown(frame: pd.DataFrame, detail: dict[str, Any], path: Path) -> None:

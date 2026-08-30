@@ -51,7 +51,7 @@ only `console/` lands on `sys.path`.
    - **Main file path:** `console/streamlit_app.py`
    - **App URL:** `controlplane-ai` → gives `https://controlplane-ai.streamlit.app`
 4. **Advanced settings → Python version → 3.11** (or newer; `pyproject.toml` requires ≥ 3.11).
-5. Deploy. First build takes three to five minutes while it installs pandas, pyarrow and matplotlib.
+5. Deploy. First build takes a few minutes while it installs the application dependencies.
 
 > **Claim the `controlplane-ai` subdomain exactly.** The landing page in `site/index.html` links to
 > `https://controlplane-ai.streamlit.app`. If you pick a different name, update the two `href`s in
