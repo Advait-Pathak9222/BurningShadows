@@ -317,6 +317,45 @@ DEMOS: list[Demo] = [
 BY_KEY = {demo.key: demo for demo in DEMOS}
 
 
+# Words that mean the customer is asking about the one record this assistant holds.
+TICKET_TERMS = (
+    "ticket", "56", "order", "parts", "replacement", "delivery", "dispatch",
+    "tracking", "sla", "status", "refund", "repair", "escalate", "escalation",
+    "waiting", "delay", "delayed", "late", "chase", "update", "when will",
+)
+# And words that mean they are closing the conversation rather than asking anything.
+CLOSING_TERMS = ("thank", "thanks", "cheers", "that is all", "thats all", "bye", "no worries")
+
+
+def stand_in_reply(prompt: str, demo: Demo | None) -> str:
+    """What the assistant says when no live model is attached.
+
+    A preset carries its own reply, because the whole point of a preset is a known answer
+    to a known prompt. A typed prompt has no such answer, and inventing one is worse than
+    saying nothing. Returning the ticket 56 line to someone who asked about HR files puts
+    words in a model's mouth that no model produced, and it makes a plane that is genuinely
+    computing look like a script. So the stand-in answers only from the record it was
+    actually given, and declines anything else, which is all the system prompt allows it.
+    """
+    if demo and demo.scripted:
+        return demo.scripted
+    lowered = prompt.lower()
+    if any(term in lowered for term in CLOSING_TERMS):
+        return (
+            "Happy to help. Ticket 56 stays open until the replacement is delivered, so "
+            "you will get an update from us either way."
+        )
+    if any(term in lowered for term in TICKET_TERMS):
+        return (
+            "Ticket 56 is currently awaiting parts. The replacement was dispatched on "
+            "27 August 2026 under tracking BLR-4471, and the SLA is due 2 September 2026."
+        )
+    return (
+        "The ticket 56 record is the only source I have been given, so I cannot help with "
+        "that one. A colleague on the right team can pick it up if you would like."
+    )
+
+
 @st.cache_resource(show_spinner="Fitting the calibration maps once, then serving...")
 def load_engine() -> AssessmentEngine:
     """One calibrated engine per server, so a browser reload costs nothing."""
@@ -1032,11 +1071,11 @@ def start(prompt: str, demo: Demo | None) -> None:
             except Exception as error:  # noqa: BLE001 - a dead key must not kill the demo
                 st.session_state.llm_error = str(error)[:160]
         started = time.perf_counter()
-        text = demo.scripted if demo and demo.scripted else (
-            "I can look that up on ticket 56 for you. The replacement is on its way and "
-            "the SLA is due 2 September 2026."
+        return (
+            stand_in_reply(prompt, demo),
+            (time.perf_counter() - started) * 1000.0,
+            "scripted stand-in",
         )
-        return text, (time.perf_counter() - started) * 1000.0, "scripted response"
 
     st.session_state.messages.append(("user", prompt, "user"))
     with st.spinner("Running the request through the plane..."):
@@ -1115,8 +1154,9 @@ def render(standalone: bool = True) -> None:
         st.session_state.model = st.text_input("Model", value="llama-3.3-70b-versatile")
         st.session_state.live = st.toggle("Call the live model", value=True)
         st.caption(
-            "With no key the demo falls back to a fixed reply, and every card says so. "
-            "The control plane behaves identically either way: it only ever sees text."
+            "With no key the assistant is a stand-in that answers only from the ticket 56 "
+            "record and declines the rest. The control plane behaves identically either "
+            "way, because all it ever sees is text."
         )
         st.markdown("#### Recording")
         st.session_state.pace = st.slider("Seconds per step", 0.3, 4.0, 1.3, 0.1)
@@ -1144,8 +1184,15 @@ def render(standalone: bool = True) -> None:
     )
     if st.session_state.llm_error:
         st.warning(
-            "Live model unavailable, using the scripted reply. "
+            "Live model unavailable, so the stand-in answered instead. "
             f"{st.session_state.llm_error}"
+        )
+    elif not (st.session_state.get("api_key") and st.session_state.get("live", True)):
+        st.info(
+            "No live model is attached, so the assistant on the left is a stand-in that "
+            "answers only from the ticket 56 record. Everything on the right is computed "
+            "for real on whatever text it is handed. Add a Groq key in the sidebar to "
+            "watch the plane guard an actual model."
         )
 
     left, right = st.columns([0.46, 0.54], gap="medium")
