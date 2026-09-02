@@ -1,4 +1,7 @@
 .venv/
+# The virtualenv run_submission.sh builds for a reviewer. Untracked so a clone stays clean
+# after the script has been run.
+.venv-submission/
 __pycache__/
 *.py[cod]
 .pytest_cache/

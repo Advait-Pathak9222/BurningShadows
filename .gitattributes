@@ -1,6 +1,14 @@
 # Shell scripts must keep LF endings or the shebang breaks on Linux, which is exactly
 # where a reviewer is most likely to run them from a Windows-authored checkout.
 *.sh text eol=lf
+# The Makefile too. GNU make treats a trailing carriage return as part of the command, so a
+# CRLF checkout fails with `python: command not found` and a confusing trailing quote.
+Makefile text eol=lf
+# Packaging and dependency files, so a Windows checkout cannot produce a different install
+# than a Linux one.
+*.toml text eol=lf
+*.txt text eol=lf
+*.cfg text eol=lf
 
 # Committed evidence is compared byte-for-byte by run_submission.sh, so it must not be
 # rewritten by autocrlf on checkout.

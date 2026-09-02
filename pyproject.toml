@@ -84,6 +84,10 @@ exclude = ["console"]
 module = [
   "pandas",
   "yaml",
+  "matplotlib",
+  "matplotlib.*",
+  "pyarrow",
+  "pyarrow.*",
   "mlflow",
   "mlflow.*",
   "spacy",
