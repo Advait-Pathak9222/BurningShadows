@@ -32,6 +32,10 @@ GENERATORS = {
     "runtime.md": "make loadtest",
     "relearn.json": "make relearn",
     "relearn.md": "make relearn",
+    # Needs a running Ollama, so it is off the demo path and off run_submission.sh. It is
+    # still a published number, so it still has to name the command that reproduces it.
+    "judge_probe.json": "make judge-probe",
+    "judge_probe.md": "make judge-probe",
     "toxicchat.json": "make toxicchat",
     "aegis.json": "make benchmarks",
     "orbench.json": "make benchmarks",
