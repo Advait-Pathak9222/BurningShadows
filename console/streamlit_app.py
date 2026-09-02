@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
-# Sibling module. Streamlit puts the entry script's own directory on sys.path, and
-# importing it renders nothing, because its page section only runs as the entry script.
-import demo_app
 import pandas as pd
 import streamlit as st
 
@@ -18,6 +16,16 @@ from controlplane.sim.scenarios import run_scenarios
 from controlplane.sim.traffic import ensure_corpus
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# The demonstration is a sibling module. Streamlit normally puts the entry script's own
+# directory on sys.path, but that is convenience rather than contract, and a host that
+# does not would fail this import at startup. Adding it explicitly costs nothing.
+# Importing renders nothing: the demonstration's page section runs only when it is
+# itself the entry script.
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import demo_app  # noqa: E402  -- must follow the sys.path line above
 
 st.set_page_config(
     page_title="ControlPlane assurance console",
