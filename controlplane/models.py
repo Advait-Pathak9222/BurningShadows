@@ -249,6 +249,13 @@ class DecisionTrace(BaseModel):
     # Optional because chains written before this field existed must still parse; a refit
     # skips those rows rather than inventing a score for them.
     raw_harm: HarmVector | None = None
+    # Which rules produced the scores above. A detector and its calibration map can drift
+    # apart in a way the cost metrics cannot see: serving a new pattern pack against a map
+    # fitted on the old one corrupts every probability while total spend barely moves. The
+    # hash makes that checkable after the fact, and lets a refit refuse rows scored by a
+    # pack it was not fitted against. Optional because chains written before this field
+    # existed must still parse.
+    pattern_pack_hash: str | None = None
     evidence_regime: EvidenceRegime
     selected_tier: int | None
     forced_by_conformal: bool

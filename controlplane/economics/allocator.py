@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from controlplane.detectors.pattern_pack import pattern_pack_hash
 from controlplane.models import (
     DecisionTrace,
     DetectionBundle,
@@ -62,6 +63,7 @@ def allocate_verification(
         reason=reason,
         harm=bundle.harm,
         raw_harm=raw_harm,
+        pattern_pack_hash=pattern_pack_hash(),
         evidence_regime=bundle.evidence_regime,
         selected_tier=tier_number,
         forced_by_conformal=forced,
