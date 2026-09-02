@@ -4,9 +4,18 @@
 
 - The default model returns seeded text and never calls an external API.
 - Tier 1 is lexical rather than MiniCheck, NLI, or a hosted groundedness model. Tier 2 is a
-  deterministic judge stub. Neither is a stronger detector than the other in any principled sense;
-  they are different keyword sets, and the assumption that Tier 2 catches more is a config value,
-  not a measurement.
+  deterministic judge stub by default. Neither is a stronger detector than the other in any
+  principled sense; they are different keyword sets, and the assumption that Tier 2 catches more
+  is a config value, not a measurement.
+- A route can now serve a real judge instead, by setting `tier2.provider: ollama` in
+  `config/judge.yaml`. **Doing so currently makes detection worse, and that is measured rather
+  than suspected.** On 60 held-out rows, `phi3:mini` scored **AUC 0.5000**, which is chance,
+  against the stub's **0.8067**, at 53 seconds per row. Its best single page reached 0.6167 and
+  it localised the harmful clause in 56.7% of harmful rows, so it is not scoring at random on
+  every task, but as a whole-response harm ranker at this size it is useless here. See
+  `docs/results/judge_probe.md`. The wiring is worth having because it makes the tier
+  replaceable and the claim testable; the model available to test it with does not yet earn its
+  place in the cascade, and no committed figure uses it.
 - Consequence amounts, check prices, delay prices, and initial catch rates are scenario assumptions
   from YAML. They are not customer measurements or vendor prices.
 - Catch outcomes in the evaluator are deterministic pseudo-random draws from assumed `k`; they are
