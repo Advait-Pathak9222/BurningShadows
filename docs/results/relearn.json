@@ -1,6 +1,6 @@
 {
   "accepted": {},
-  "detector_version": "0bcc94d2f1a9512f",
+  "detector_version": "7d80519da8d2e03c",
   "floors": {
     "ece_tolerance": 0.01,
     "max_ece": 0.05,

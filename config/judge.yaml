@@ -9,3 +9,20 @@ seed: 20260824
 # Measured on this machine: 4 calls took 13.3s at concurrency 1 and 5.3s at concurrency 4.
 concurrency: 3
 sample_rows: 60
+
+# Which detector serves tier 2 in the *serving* path (not the probe above).
+#
+#   stub   - the deterministic string matcher in detectors/tier2_judge.py. The default,
+#            because `make demo` must run from a clean clone with no model, and because
+#            every committed figure was produced against it.
+#   ollama - the real local model configured above, through detectors/ollama_judge.py.
+#
+# Switching changes AssessmentEngine.detector_fingerprint(), so a calibration artifact
+# fitted against one scorer is refused rather than served against the other.
+tier2:
+  provider: stub
+  # What a judge that could not be reached scores. 1.0 on every axis means an unrun check
+  # fails closed: the conformal floor forces the safe action rather than letting an
+  # unverified answer through with a spend record for a check that never happened.
+  unavailable_score: 1.0
+  probe_on_start: true

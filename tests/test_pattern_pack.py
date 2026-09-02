@@ -255,3 +255,23 @@ def test_ordinary_support_traffic_is_not_caught(prompt: str) -> None:
     """The other half of widening a phrase list, and the half that usually goes unchecked."""
     scored = Tier0Rules().run(_interaction(prompt=prompt))
     assert scored.scores.injection_or_exfil == pytest.approx(0.01)
+
+
+def test_editing_a_pack_invalidates_a_calibration_map(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A rule change must move the detector fingerprint, without a version bump.
+
+    This is the drift the packs are most dangerous for. A pattern edit changes what a
+    detector outputs while leaving its version alone, so a calibration map fitted before the
+    edit would keep serving against scores it was never fitted on. Cost metrics cannot see
+    that, so the fingerprint has to.
+    """
+    from controlplane.detectors import pattern_pack
+    from controlplane.learning.artifacts import detector_version
+
+    detectors = [Tier0Rules()]
+    before = detector_version(detectors)
+    monkeypatch.setattr(pattern_pack, "pattern_pack_hash", lambda: "0000deadbeef0000")
+    monkeypatch.setattr(
+        "controlplane.learning.artifacts.pattern_pack_hash", lambda: "0000deadbeef0000"
+    )
+    assert detector_version(detectors) != before

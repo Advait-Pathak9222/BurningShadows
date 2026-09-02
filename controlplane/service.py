@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from controlplane.detectors import Tier0Rules, Tier1SmallModels, Tier2Judge
+from controlplane.detectors import Tier0Rules, Tier1SmallModels
+from controlplane.detectors.judge_selection import build_tier2
 from controlplane.economics import CostModel, allocate_verification
 from controlplane.economics.allocator import expected_loss_averted_inr
 from controlplane.effects import gate_effects
@@ -63,7 +64,11 @@ class AssessmentEngine:
         self.cost_model = CostModel(paths.economics)
         self.tier0 = Tier0Rules()
         self.tier1 = Tier1SmallModels()
-        self.tier2 = Tier2Judge()
+        # Which detector this is depends on config/judge.yaml. The default is the stub,
+        # so a clean clone still runs offline; `tier2.provider: ollama` serves a real
+        # local model instead. Switching moves detector_fingerprint(), which is what
+        # stops a calibration map fitted against one scorer serving the other.
+        self.tier2 = build_tier2(root)
         self.ledger = LedgerStore(ledger_path) if ledger_path is not None else None
         self.calibrators: dict[str, dict[str, IsotonicCalibrator]] = {}
         # No invented defaults. Serving a route before calibrate() has fitted it would

@@ -19,6 +19,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from controlplane.detectors.base import Detector
+from controlplane.detectors.pattern_pack import pattern_pack_hash
 from controlplane.risk.calibration import IsotonicCalibrator
 
 ARTIFACT_DIR = Path("data") / "learned"
@@ -86,12 +87,18 @@ class CalibrationArtifact(BaseModel):
 
 
 def detector_version(detectors: list[Detector]) -> str:
-    """Identify the scorers a map was fitted against.
+    """Identify the scorers a map was fitted against, and the rules they scored with.
 
-    Today that is detector names and versions. When the pattern pack lands its content
-    hash joins this string, so changing a rule invalidates the maps fitted before it.
+    Detector names and versions alone are not enough. A pattern pack edit changes what a
+    detector outputs without touching its version, so a map fitted before the edit would
+    keep serving against scores it was never fitted on. That failure is invisible in the
+    cost metrics -- a cruder calibration map once changed 22.4% of tier decisions and
+    removed all 80 blocks while total spend moved 0.3% -- so it cannot be left to
+    monitoring. Joining the pack hash here makes a rule change invalidate the maps fitted
+    before it, automatically and without anyone remembering to bump a version.
     """
     parts = sorted(f"{item.name}@{item.version}" for item in detectors)
+    parts.append(f"patterns@{pattern_pack_hash()}")
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:16]
 
 
