@@ -80,6 +80,10 @@ PANEL_CSS = """
              letter-spacing:-.02em;}
 .cp-title span{font-size:.78rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
 .cp-sub{color:var(--muted);font-size:.85rem;margin:0 0 .9rem 0;}
+.cp-scene{color:var(--muted);font-size:.8rem;line-height:1.55;margin:0 0 1rem 0;
+  padding:.6rem .8rem;border-left:2px solid #A100FF;
+  background:rgba(161,0,255,.06);border-radius:0 8px 8px 0;}
+.cp-scene b{color:#EDE9F5;}
 
 .cp-head{display:flex;align-items:center;gap:.55rem;margin:0 0 .55rem 0;}
 .cp-head b{font-size:.93rem;color:var(--text);letter-spacing:.01em;}
@@ -239,6 +243,8 @@ EMBED_CSS = """
 /* The two panels keep their own dark ground. Everything the demo draws outside them sits
    on the console's light page, so it is recoloured here rather than left unreadable. */
 .cp-sub{color:#4A4458;}
+.cp-scene{color:#4A4458;}
+.cp-scene b{color:#17121F;}
 .cp-head b{color:#17121F;}
 .cp-head i{color:#6B6478;}
 </style>
@@ -325,6 +331,15 @@ TICKET_TERMS = (
 )
 # And words that mean they are closing the conversation rather than asking anything.
 CLOSING_TERMS = ("thank", "thanks", "cheers", "that is all", "thats all", "bye", "no worries")
+# Asking about the people who work here is neither, and it deserves its own answer rather
+# than the generic decline. A support assistant that says "I cannot help" to a question
+# about staff reads as broken. One that says it does not share staff details reads as
+# trained, which is what the plane downstream is there to check.
+STAFF_TERMS = (
+    "who works", "works at", "employee", "employees", "staff", "colleague of",
+    "hr ", "human resources", "manager", "director", "ceo", "team lead", "lead hr",
+    "mr.", "mrs.", "ms.", "dr.",
+)
 
 
 def stand_in_reply(prompt: str, demo: Demo | None) -> str:
@@ -342,8 +357,13 @@ def stand_in_reply(prompt: str, demo: Demo | None) -> str:
     lowered = prompt.lower()
     if any(term in lowered for term in CLOSING_TERMS):
         return (
-            "Happy to help. Ticket 56 stays open until the replacement is delivered, so "
-            "you will get an update from us either way."
+            "Happy to help. Your ticket stays open until the replacement is delivered, so "
+            "you will hear from us either way."
+        )
+    if any(term in lowered for term in STAFF_TERMS):
+        return (
+            "I am not able to share anything about the people who work here. If you have "
+            "an order or a support ticket open, I can help you with that instead."
         )
     if any(term in lowered for term in TICKET_TERMS):
         return (
@@ -351,8 +371,8 @@ def stand_in_reply(prompt: str, demo: Demo | None) -> str:
             "27 August 2026 under tracking BLR-4471, and the SLA is due 2 September 2026."
         )
     return (
-        "The ticket 56 record is the only source I have been given, so I cannot help with "
-        "that one. A colleague on the right team can pick it up if you would like."
+        "I can only help with your own orders and support tickets, so I cannot help with "
+        "that one. Is there anything about your order I can look at instead?"
     )
 
 
@@ -1015,6 +1035,8 @@ def render_chat(placeholder: Any) -> None:
     if not st.session_state.messages and not running:
         html.append(
             '<div class="idle">This is the customer\'s window.<br>'
+            "<br>You are messaging a retailer's support assistant. It holds one record, "
+            "<b>ticket 56</b>, a replacement awaiting parts.<br><br>"
             "Pick one of the three requests below, or type your own.<br><br>"
             "Everything the control plane does to it appears on the right.</div>"
         )
@@ -1179,7 +1201,13 @@ def render(standalone: bool = True) -> None:
         )
     st.markdown(
         '<p class="cp-sub">Left is what the customer sees. Right is every check, price and '
-        "verdict the control plane ran to decide what they were allowed to see.</p>",
+        "verdict the control plane ran to decide what they were allowed to see.</p>"
+        '<p class="cp-scene"><b>The setting.</b> You are the customer, messaging '
+        "the support assistant of a consumer electronics retailer. It has been given "
+        "exactly one record to work from, <b>ticket 56</b>, an open replacement for a "
+        "customer named Meera Nair, awaiting parts, SLA due 2 September 2026. Anything "
+        "it says beyond that record is something it invented, and catching that is what "
+        "the control plane is for.</p>",
         unsafe_allow_html=True,
     )
     if st.session_state.llm_error:
