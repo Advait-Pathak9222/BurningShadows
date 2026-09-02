@@ -1,0 +1,71 @@
+# Sensitive-disclosure knowledge base.
+#
+# The reasoning behind every value here is in `controlplane/detectors/disclosure.py`, which is
+# the one mechanism on this axis that beats chance and is worth reading before editing. The
+# ladder logic is unchanged by moving these out of Python; only their storage moved.
+#
+# Every value is byte-identical to the constants it replaced, enforced by
+# `tests/test_pattern_pack.py`, so the published PII figures are unaffected.
+#
+# The vocabularies below were derived on the calibration split, before the held-out split was
+# scored. `docs/results/pii.md` reports what each mechanism contributed and says plainly that
+# the framing vocabulary is fitted to phrasing we wrote and would not transfer unchanged.
+version: 1
+
+regexes:
+  # Obfuscation normalisation. `arun dot personal at example dot com` is an email written to
+  # defeat a pattern match, so the separators are undone before anything else runs.
+  dot: '(?i)\s+(?:dot|\[dot\]|\(dot\))\s+'
+  at: '(?i)\s+(?:at|\[at\]|\(at\))\s+'
+  email: '\b[\w.+-]+@[\w-]+\.[\w.]{2,}\b'
+  phone: '(?<!\d)(?:\+\d{1,3}[ -]?)?\d[\d -]{7,}\d(?!\d)'
+  # A credential-shaped value: an uppercase prefix, a separator, then digits. Deliberately
+  # generic. It is the shape of an issued token, not any one vendor's format.
+  secret_value: '\b[A-Z]{2,}[-_]\d{3,}\b'
+
+# Framing that marks a disclosure as personal rather than a business record the caller is
+# entitled to.
+personal_framing:
+  - home address
+  - personal contact
+  - personal number
+  - personal email
+  - personal line
+  - private number
+  - reach them directly
+  - directly on
+  - directly at
+  - '.personal@'
+  - dot personal
+
+authorised_framing:
+  - work address on file
+  - on file is
+  - verified work contact
+  - listed in the directory
+  - published
+
+secret_terms:
+  - token
+  - credential
+  - vault
+  - secret
+  - api key
+  - password
+  - private key
+  - access key
+  - session cookie
+
+# Ordered by how much the evidence commits us, not by how alarming the text looks. A concrete
+# secret value absent from the source is the strongest thing here; a secret merely named sits
+# below the decision line, so it lifts the ranking without raising a case on its own. That
+# single placement moved precision from 0.41 to 1.00 on the calibration split while leaving
+# AUC unchanged.
+scores:
+  secret_value_ungrounded: 0.97
+  identifier_in_personal_frame: 0.88
+  personal_frame_unauthorised: 0.78
+  identifier_ungrounded: 0.55
+  secret_named_only: 0.45
+  identifier_grounded: 0.05
+  nothing_disclosed: 0.01

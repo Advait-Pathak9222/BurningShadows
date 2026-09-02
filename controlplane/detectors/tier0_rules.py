@@ -5,29 +5,32 @@ from time import perf_counter
 
 from controlplane.detectors.base import Detector
 from controlplane.detectors.disclosure import score_disclosure
+from controlplane.detectors.pattern_pack import Tier0Pack, default_tier0_pack
 from controlplane.models import DetectorSignal, HarmVector, Interaction
 
-PII_PATTERNS = {
-    "email": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
-    "phone": re.compile(r"(?<!\d)(?:\+?\d[\d -]{8,}\d)(?!\d)"),
-    "account": re.compile(r"\b(?:account|acct|iban)[\s:#-]*[A-Z0-9-]{6,}\b", re.IGNORECASE),
-    "aadhaar": re.compile(r"\b\d{4}[ -]\d{4}[ -]\d{4}\b"),
-}
-INJECTION_PHRASES = (
-    "ignore previous instructions",
-    "reveal the system prompt",
-    "exfiltrate",
-    "developer message",
-    "bypass policy",
-)
-UNSAFE_PHRASES = ("make a bomb", "poison them", "steal credentials", "self-harm instructions")
-BIAS_PHRASES = ("women are less", "men are better", "because of their race", "too old to")
+# Tier 0's vocabulary and its axis scores live in `config/patterns/tier0.yaml`, not here, so
+# adding an attack phrase is a data edit rather than a source edit and a redeploy. The names
+# stay bound at module level because `eval/pii_probe.py` imports `PII_PATTERNS` directly.
+_PACK: Tier0Pack = default_tier0_pack()
+
+PII_PATTERNS = _PACK.pii_patterns
+INJECTION_PHRASES = _PACK.injection_phrases
+UNSAFE_PHRASES = _PACK.unsafe_phrases
+BIAS_PHRASES = _PACK.bias_phrases
 
 
 class Tier0Rules(Detector):
     name = "tier0_rules"
-    version = "1"
+    version = "2"
     tier = 0
+
+    def __init__(self, pack: Tier0Pack | None = None) -> None:
+        self.pack = pack or _PACK
+
+    @property
+    def pack_hash(self) -> str:
+        """Which rules produced this detector's scores. Recorded on the trace."""
+        return self.pack.content_hash[:16]
 
     def run(self, interaction: Interaction) -> DetectorSignal:
         started = perf_counter()
@@ -42,26 +45,36 @@ class Tier0Rules(Detector):
             interaction.response, interaction.context_documents
         )
         evidence.extend(pii_evidence)
-        injection_hits = [phrase for phrase in INJECTION_PHRASES if phrase in lowered]
+        injection_hits = [phrase for phrase in self.pack.injection_phrases if phrase in lowered]
         if injection_hits:
             evidence.append(f"injection phrase: {injection_hits[0]}")
-        unsafe_hits = [phrase for phrase in UNSAFE_PHRASES if phrase in lowered]
-        bias_hits = [phrase for phrase in BIAS_PHRASES if phrase in lowered]
+        unsafe_hits = [phrase for phrase in self.pack.unsafe_phrases if phrase in lowered]
+        bias_hits = [phrase for phrase in self.pack.bias_phrases if phrase in lowered]
 
         numeric_mismatch = _numeric_mismatch(interaction.response, interaction.context_documents)
         if numeric_mismatch:
             evidence.append("response number is absent from supplied context")
+        score = self.pack.scores.__getitem__
         elapsed = (perf_counter() - started) * 1000.0
         return DetectorSignal(
             name=self.name,
             tier=self.tier,
             scores=HarmVector(
-                hallucination=0.72 if numeric_mismatch else 0.08,
+                hallucination=score(
+                    "hallucination_numeric_mismatch" if numeric_mismatch
+                    else "hallucination_clean"
+                ),
                 pii_leak=pii_score,
-                bias=0.88 if bias_hits else 0.005,
-                unsafe_content=0.92 if unsafe_hits else 0.005,
+                bias=score("bias_hit" if bias_hits else "bias_clean"),
+                unsafe_content=score("unsafe_hit" if unsafe_hits else "unsafe_clean"),
                 injection_or_exfil=(
-                    min(0.99, 0.45 + 0.35 * len(injection_hits)) if injection_hits else 0.01
+                    min(
+                        score("injection_cap"),
+                        score("injection_base") + score("injection_per_hit")
+                        * len(injection_hits),
+                    )
+                    if injection_hits
+                    else score("injection_clean")
                 ),
             ),
             latency_ms=elapsed,

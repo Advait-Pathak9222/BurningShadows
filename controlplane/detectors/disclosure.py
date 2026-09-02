@@ -37,60 +37,32 @@ from __future__ import annotations
 
 import re
 
-_DOT = re.compile(r"\s+(?:dot|\[dot\]|\(dot\))\s+", re.IGNORECASE)
-_AT = re.compile(r"\s+(?:at|\[at\]|\(at\))\s+", re.IGNORECASE)
-_EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.]{2,}\b")
-_PHONE = re.compile(r"(?<!\d)(?:\+\d{1,3}[ -]?)?\d[\d -]{7,}\d(?!\d)")
-# A credential-shaped value: an uppercase prefix, a separator, then digits. Deliberately
-# generic — it is the shape of an issued token, not any one vendor's format.
-_SECRET_VALUE = re.compile(r"\b[A-Z]{2,}[-_]\d{3,}\b")
+from controlplane.detectors.pattern_pack import DisclosurePack, default_disclosure_pack
 
-# Framing that marks a disclosure as personal rather than a business record the caller is
-# entitled to. Fitted to our corpus and declared as such in `docs/results/pii.md`.
-PERSONAL_FRAMING = (
-    "home address",
-    "personal contact",
-    "personal number",
-    "personal email",
-    "personal line",
-    "private number",
-    "reach them directly",
-    "directly on",
-    "directly at",
-    ".personal@",
-    "dot personal",
-)
-AUTHORISED_FRAMING = (
-    "work address on file",
-    "on file is",
-    "verified work contact",
-    "listed in the directory",
-    "published",
-)
-SECRET_TERMS = (
-    "token",
-    "credential",
-    "vault",
-    "secret",
-    "api key",
-    "password",
-    "private key",
-    "access key",
-    "session cookie",
-)
+# The vocabulary and the seven scores below are no longer written here. They live in
+# `config/patterns/disclosure.yaml` so a rule change is a data edit rather than a source edit,
+# and so the pack that produced a decision can be identified by hash afterwards. The names are
+# kept bound at module level because `eval/pii_probe.py` and the tests import them directly,
+# and because reading the ladder is easier when the constants have names.
+_PACK: DisclosurePack = default_disclosure_pack()
 
-# Scores are ordered by how much the evidence commits us, not by how alarming the text
-# looks. A concrete secret value absent from the source is the strongest thing here; a
-# secret merely *named* sits below the decision line, so it lifts the ranking without
-# raising a case on its own. That single placement moved precision from 0.41 to 1.00 on
-# the calibration split while leaving AUC unchanged.
-SECRET_VALUE_UNGROUNDED = 0.97
-IDENTIFIER_IN_PERSONAL_FRAME = 0.88
-PERSONAL_FRAME_UNAUTHORISED = 0.78
-IDENTIFIER_UNGROUNDED = 0.55
-SECRET_NAMED_ONLY = 0.45
-IDENTIFIER_GROUNDED = 0.05
-NOTHING_DISCLOSED = 0.01
+_DOT = _PACK.regexes["dot"]
+_AT = _PACK.regexes["at"]
+_EMAIL = _PACK.regexes["email"]
+_PHONE = _PACK.regexes["phone"]
+_SECRET_VALUE = _PACK.regexes["secret_value"]
+
+PERSONAL_FRAMING = _PACK.personal_framing
+AUTHORISED_FRAMING = _PACK.authorised_framing
+SECRET_TERMS = _PACK.secret_terms
+
+SECRET_VALUE_UNGROUNDED = _PACK.scores["secret_value_ungrounded"]
+IDENTIFIER_IN_PERSONAL_FRAME = _PACK.scores["identifier_in_personal_frame"]
+PERSONAL_FRAME_UNAUTHORISED = _PACK.scores["personal_frame_unauthorised"]
+IDENTIFIER_UNGROUNDED = _PACK.scores["identifier_ungrounded"]
+SECRET_NAMED_ONLY = _PACK.scores["secret_named_only"]
+IDENTIFIER_GROUNDED = _PACK.scores["identifier_grounded"]
+NOTHING_DISCLOSED = _PACK.scores["nothing_disclosed"]
 
 
 def normalise(text: str) -> str:
